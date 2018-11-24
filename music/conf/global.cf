@@ -1,0 +1,5 @@
+#! -*- encoding: utf-8
+
+[global]
+minHeight="670"
+minWeight="1120"
