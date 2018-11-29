@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
 	<user>
-		<tag>houxin</tag>
+		<tag value="xvalue" >houxin</tag>
 	</user>
-	<name>favorite</name>
-
+	<name>侯鑫</name>
+	<pss>
+		<tag value="激活" >houxin</tag>
+	</pss>
 </config>
