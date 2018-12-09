@@ -25,15 +25,16 @@ class Mainwindow(QWidget):
         minWeight=self._kvMap['global'].get('minWeight')
         print(minHeight,minWeight)
         self.setMinimumSize(minWeight,minHeight)
-        mainlayout = QVBoxLayout(self)
-        mainlayout.setContentsMargins(0,0,0,0)
+        mainlayout = QVBoxLayout()
+        mainlayout.setSpacing(0)
+        mainlayout.setAlignment(Qt.AlignTop)
         #2.添加自定义layout
         self._createTitleHeader()
         mainlayout.addWidget(self.titleHeader,Qt.AlignTop)
         self._createBodyWidget()
-        mainlayout.addWidget(self.bodywidget)
+        mainlayout.addWidget(self.bodywidget,Qt.AlignCenter)
         self._createBottomWidget()
-        mainlayout.addWidget(self.bottomwidget)
+        mainlayout.addWidget(self.bottomwidget,Qt.AlignBottom)
 
         self.setLayout(mainlayout)
         #3.自定义标题栏
@@ -227,17 +228,19 @@ class Mainwindow(QWidget):
         #body left
         bodyleftWidget=QWidget()
         bodyleftWidget.setContentsMargins(0,0,0,0)
-
-        bodyleftlayout=QGridLayout()
+        bodyleftlayout=QVBoxLayout()
+        bodyleftlayout.setAlignment(Qt.AlignTop)
         #推荐 我的音乐 我的歌单等等
         bodyLeftMidWidget=QWidget()
-        # bodyLeftMidWidget.setMinimumSize(250, 520)
         bodyleftMidlayout=QVBoxLayout()
+        bodyleftMidlayout.setAlignment(Qt.AlignTop)
+        bodyLeftMidWidget.setStyleSheet("border: 1px solid black;")
         label_suggest=QLabel('推荐')
-        label_suggest.setFixedHeight(30)
-        label_suggest.setStyleSheet("color:rgb(124,124,124);font-family:'宋体';font-size:14px;padding-left:2px;")
+        label_suggest.setFixedHeight(20)
+        label_suggest.setStyleSheet("color:rgb(124,124,124);font-family:'宋体';font-size:12px;padding-left:2px;")
         #发现音乐
         found_music_widget=QWidget()
+        found_music_widget.setCursor(QCursor(Qt.PointingHandCursor))
         found_music_layout=QHBoxLayout()
         found_music_widget.setFixedHeight(35)
         label_found_music=QLabel()
@@ -256,6 +259,7 @@ class Mainwindow(QWidget):
 
         #私人FM
         private_FM_widget = QWidget()
+        private_FM_widget.setCursor(QCursor(Qt.PointingHandCursor))
         private_FM_widget.setFixedHeight(35)
         private_FM_layout=QHBoxLayout()
         label_private_FM = QLabel()
@@ -272,6 +276,7 @@ class Mainwindow(QWidget):
         private_FM_widget.setLayout(private_FM_layout)
         #MV
         mv_widget = QWidget()
+        mv_widget.setCursor(QCursor(Qt.PointingHandCursor))
         mv_widget.setFixedHeight(35)
         mv_layout = QHBoxLayout()
         label_mv = QLabel()
@@ -288,6 +293,7 @@ class Mainwindow(QWidget):
         mv_widget.setLayout(mv_layout)
         #pengyou
         friend_widget = QWidget()
+        friend_widget.setCursor(QCursor(Qt.PointingHandCursor))
         friend_widget.setFixedHeight(35)
         friend_layout = QHBoxLayout()
         label_friend = QLabel()
@@ -304,10 +310,11 @@ class Mainwindow(QWidget):
         friend_widget.setLayout(friend_layout)
         #我的音乐
         label_mymusic = QLabel('我的音乐')
-        label_mymusic.setFixedHeight(30)
-        label_mymusic.setStyleSheet("color:rgb(124,124,124);font-family:'宋体';font-size:14px;padding-left:2px;")
+        label_mymusic.setFixedHeight(20)
+        label_mymusic.setStyleSheet("color:rgb(124,124,124);font-family:'宋体';font-size:12px;padding-left:2px;")
         #本地音乐
         localmusic_widget = QWidget()
+        localmusic_widget.setCursor(QCursor(Qt.PointingHandCursor))
         localmusic_widget.setFixedHeight(35)
         localmusic_layout = QHBoxLayout()
         label_localmusic = QLabel()
@@ -324,6 +331,7 @@ class Mainwindow(QWidget):
         localmusic_widget.setLayout(localmusic_layout)
         #下载管理
         downloadMgr_widget = QWidget()
+        downloadMgr_widget.setCursor(QCursor(Qt.PointingHandCursor))
         downloadMgr_widget.setFixedHeight(35)
         downloadMgr_layout = QHBoxLayout()
         label_downloadMgr = QLabel()
@@ -340,6 +348,7 @@ class Mainwindow(QWidget):
         downloadMgr_widget.setLayout(downloadMgr_layout)
         #云盘
         yunpan_widget = QWidget()
+        yunpan_widget.setCursor(QCursor(Qt.PointingHandCursor))
         yunpan_widget.setFixedHeight(35)
         yunpan_layout = QHBoxLayout()
         label_yunpan = QLabel()
@@ -356,6 +365,7 @@ class Mainwindow(QWidget):
         yunpan_widget.setLayout(yunpan_layout)
         #我的收藏
         soucang_widget = QWidget()
+        soucang_widget.setCursor(QCursor(Qt.PointingHandCursor))
         soucang_widget.setFixedHeight(35)
         soucang_layout = QHBoxLayout()
         label_soucang = QLabel()
@@ -370,12 +380,43 @@ class Mainwindow(QWidget):
         soucang_layout.addWidget(label_soucang)
         soucang_layout.addWidget(label_soucang_1)
         soucang_widget.setLayout(soucang_layout)
-        # 我的音乐
-        label_ss = QLabel('我的音乐')
-        label_ss.setFixedHeight(30)
-        label_ss.setStyleSheet("color:rgb(124,124,124);font-family:'宋体';font-size:14px;padding-left:2px;")
+        # 创建的歌单
+        create_music_list_widget = QWidget()
+        create_music_list_layout = QHBoxLayout()
+        #创建的歌单
+        label_create_music_list=QLabel("创建的歌单")
+        label_create_music_list.setFixedHeight(20)
+        label_create_music_list.setStyleSheet("color:rgb(124,124,124);font-family:'宋体';font-size:12px;padding-left:2px;")
+        btn_create_music_list = QPushButton()
+        btn_create_music_list.setIcon(QIcon("./res/yuanxingjiahao.png"))
+        btn_create_music_list.setFixedSize(20,20)
+        btn_create_music_list.setStyleSheet("font-size:14px;font-weight:bold;color:")
+        btn_expand_music_list = QPushButton()
+        btn_expand_music_list.setIcon(QIcon("./res/right.png"))
+        btn_expand_music_list.setFixedSize(20, 20)
+        btn_expand_music_list.setStyleSheet("font-size:14px;font-weight:bold;")
+        create_music_list_layout.addWidget(label_create_music_list)
+        create_music_list_layout.addWidget(btn_create_music_list)
+        create_music_list_layout.addWidget(btn_expand_music_list)
+        create_music_list_widget.setLayout(create_music_list_layout)
 
-        bodyleftMidlayout.setSpacing(0)
+        #收藏的歌单
+        soucang_music_list_widget=QWidget()
+        soucang_music_list_layout = QHBoxLayout()
+        label_soucang_music_list = QLabel("收藏的歌单")
+        label_soucang_music_list.setFixedHeight(20)
+        label_soucang_music_list.setStyleSheet("color:rgb(124,124,124);font-family:'宋体';font-size:12px;padding-left:2px;")
+
+        btn_soucang_music_list = QPushButton()
+        btn_soucang_music_list.setIcon(QIcon("./res/right.png"))
+        btn_soucang_music_list.setFixedSize(20, 20)
+        btn_soucang_music_list.setStyleSheet("font-size:14px;font-weight:bolder;")
+        soucang_music_list_layout.addWidget(label_soucang_music_list)
+        soucang_music_list_layout.addWidget(btn_soucang_music_list)
+
+        soucang_music_list_widget.setLayout(soucang_music_list_layout)
+
+        bodyleftMidlayout.setStretch(0,0)
         bodyleftMidlayout.addWidget(label_suggest )
         bodyleftMidlayout.addWidget(found_music_widget )
         bodyleftMidlayout.addWidget(private_FM_widget )
@@ -386,25 +427,77 @@ class Mainwindow(QWidget):
         bodyleftMidlayout.addWidget(downloadMgr_widget )
         bodyleftMidlayout.addWidget(yunpan_widget )
         bodyleftMidlayout.addWidget(soucang_widget )
-        # bodyleftMidlayout.addWidget(label_ss)
-
+        bodyleftMidlayout.addWidget(create_music_list_widget)
+        bodyleftMidlayout.addWidget(soucang_music_list_widget)
         bodyLeftMidWidget.setLayout(bodyleftMidlayout)
 
         #播放信息窗口
         bodyleftBottomWidget=QWidget()
+        bodyleftBottomWidget.setFixedHeight(54)
+        bodyleftBottomWidget.setStyleSheet("border:1px solid green;padding:0;")
+        bodyleftBottomlayout = QHBoxLayout()
+        bodyleftBottomlayout.setAlignment(Qt.AlignLeft)
+        # music logo
+        label_music_info =QPushButton("music logo")
+        label_music_info.setCursor(QCursor(Qt.PointingHandCursor))
+        label_music_info.setFixedSize(40,40)
 
-        bodyleftBottomWidget.setFixedHeight(50)
-        bodyleftlayout.addWidget(bodyLeftMidWidget,0,0,1,1)
-        bodyleftlayout.addWidget(bodyleftBottomWidget,1,0,1,1)
+        music_info_widget = QWidget()
+        music_info_widget.setFixedWidth(140)
+        music_info_layout = QVBoxLayout()
+        music_info_layout.setSpacing(0)
+        music_info_layout.setContentsMargins(0,0,0,0)
+        # label_music_name
+        label_music_info_name = QLabel("music_name")
+        label_music_info_name.setCursor(QCursor(Qt.PointingHandCursor))
+        label_music_info_name.setStyleSheet("color:white;font-size:16px")
+        label_music_info_author = QLabel("music_author")
+        label_music_info_author.setCursor(QCursor(Qt.PointingHandCursor))
+        label_music_info_name.setStyleSheet("color:#fffeee;font-size:16px")
+        music_info_layout.addWidget(label_music_info_name)
+        music_info_layout.addWidget(label_music_info_author)
+        music_info_widget.setLayout(music_info_layout)
 
+        # music_tools
+        music_tools_widget = QWidget()
+        music_tools_layout = QVBoxLayout()
+        music_tools_layout.setSpacing(1)
+        music_tools_layout.setContentsMargins(0,0,0,0)
+        label_music_tools_love = QLabel()
+        label_music_tools_love.setFixedSize(16,16)
+        pixmap_tools_love = QPixmap("./res/xinaixin.png")
+        pixmap_tools_love.scaled(label_music_tools_love.size(), Qt.KeepAspectRatioByExpanding)
+        label_music_tools_love.setScaledContents(True)
+        label_music_tools_love.setPixmap(pixmap_tools_love)
+        label_music_tools_love.setCursor(QCursor(Qt.PointingHandCursor))
+        label_music_tools_share = QLabel()
+        label_music_tools_share.setFixedSize(16,16)
+        pixmap_tools_share = QPixmap("./res/fenxiang.png")
+        pixmap_tools_share.scaled(label_music_tools_share.size(), Qt.KeepAspectRatioByExpanding)
+        label_music_tools_share.setScaledContents(True)
+        label_music_tools_share.setPixmap(pixmap_tools_share)
+        label_music_tools_share.setCursor(QCursor(Qt.PointingHandCursor))
+
+        music_tools_layout.addWidget(label_music_tools_love)
+        music_tools_layout.addWidget(label_music_tools_share)
+        music_tools_widget.setLayout(music_tools_layout)
+
+        bodyleftBottomlayout.addWidget(label_music_info)
+        bodyleftBottomlayout.addWidget(music_info_widget)
+        bodyleftBottomlayout.addWidget(music_tools_widget)
+        bodyleftBottomWidget.setLayout(bodyleftBottomlayout)
+
+        bodyleftlayout.addWidget(bodyLeftMidWidget,Qt.AlignCenter)
+        bodyleftlayout.addWidget(bodyleftBottomWidget,Qt.AlignBottom)
         bodyleftWidget.setLayout(bodyleftlayout)
+
         #body right
         bodyrightWidget=QWidget(self.bodywidget)
         bodyrightlayout=QVBoxLayout()
         bodyrightlayout.addWidget(QPushButton('he'))
         bodyrightWidget.setLayout(bodyrightlayout)
 
-        bodylayout.addWidget(bodyLeftMidWidget,0,0,1,1)
+        bodylayout.addWidget(bodyleftWidget,0,0,1,1)
         bodylayout.addWidget(bodyrightWidget,0,1,1,4)
         self.bodywidget.setLayout(bodylayout)
 
