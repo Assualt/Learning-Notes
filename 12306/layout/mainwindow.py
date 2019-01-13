@@ -168,18 +168,18 @@ class MainWindow(QWidget):
             QMessageBox.information(self, "12306查询器", "当前查询车站没有车站代码，无法进行本次查询")
             return
         start_time=time.time()
-        result=getResult(strFrom,strTo,strTime)
+        result=getResult(strFrom, strTo, strTime)
         end_time = time.time()
         self.labelSearchCost.setText("搜索到结果,耗时:%d s" % int(end_time - start_time))
         if type(result) == bool and result == False:
             QMessageBox.information(self, "12306查询器", "12306查询异常")
-        elif len(result) == 0 :
-            self.rresult = result
+        elif len(result) == 0:
             QMessageBox.information(self, "12306查询器", "当前查询的车站无效或者返回结果为空")
         else:
+            self.rresult = result
             self.page_num= int(len(result)/20)+1
             self.page_current = 1
-            self.labelpageState.setText("总共%d页, 共%d条记录"%(self.page_num,len(result)))
+            self.labelpageState.setText("总共%d页, 共%d条记录"%(self.page_num, len(result)))
             self.labelpageCurrent.setText("当前第1页")
             # ["车次", "始发站", "终点站", "出发站", "到达站", "出发时间", "到达时间", "历时",
             # "商务座/特等座", "一等座", "二等座", "高级软卧", "软卧", "动卧","硬卧", "软座","硬座", "无座", "其他", "备注"]
@@ -210,6 +210,6 @@ class MainWindow(QWidget):
             self.bodytablewdiget.setItem(i, 17, QTableWidgetItem(val['train_null_seat']))
             self.bodytablewdiget.setItem(i, 18, QTableWidgetItem('-'))
             self.bodytablewdiget.setItem(i, 19, QTableWidgetItem('-'))
-            for j in range(0,20):
-                self.bodytablewdiget.item(i,j).setTextAlignment(Qt.AlignHCenter|Qt.AlignVCenter)
+            for j in range(0, 20):
+                self.bodytablewdiget.item(i,j).setTextAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
             pass
