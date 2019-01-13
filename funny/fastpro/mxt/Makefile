@@ -6,7 +6,7 @@ CFLAGS 	= $(FLAG)  -g -Wall -I./include -O3 $(SYSFLAGS) -std=c++11
 VPATH = src: src/base: test:
 #LIBS 指定链接文件库
 
-BASEOBJS = xstring.o xstringbuilder.o xtoken.o xdatetimer.o \
+BASEOBJS = xstring.o xstringbuilder.o xtoken.o \
 
 ALLOBJS =  $(BASEOBJS)
 

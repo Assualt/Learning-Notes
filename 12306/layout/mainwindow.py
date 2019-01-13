@@ -2,8 +2,8 @@
 __author__ = 'xhou'
 import sys
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt,QDateTime,QTimer,pyqtSlot,pyqtSignal
-import json,time
+from PyQt5.QtCore import Qt, QDateTime, QTimer, pyqtSlot, pyqtSignal
+import json, time
 from getResult import getResult
 
 class MainWindow(QWidget):
@@ -66,7 +66,7 @@ class MainWindow(QWidget):
         headlayout.addWidget(labelDate, 2, 0, 1, 2)
         headlayout.addWidget(self.labelCalender, 2, 2, 1, 2)
         headlayout.addWidget(labelHide, 0, 7, 3, 1)
-        headlayout.addWidget(self.labelSearchCost,0,9,1,1)
+        headlayout.addWidget(self.labelSearchCost, 0, 9, 1, 1)
         headlayout.addWidget(ButtonSearch, 0, 9, 3, 2)
 
         # event
@@ -106,7 +106,7 @@ class MainWindow(QWidget):
         pass
 
     def startTimers(self):
-        timer=QTimer(self)#初始化一个定时器
+        timer=QTimer(self)  # 初始化一个定时器
         timer.timeout.connect(self.onTimeUpdate)
         timer.start(1000)
     def getName(self,strCode):
@@ -114,7 +114,7 @@ class MainWindow(QWidget):
             if item.find(strCode)!=-1:
                 return item[:item.find(strCode)-1]
         pass
-    def getStationCode(self,strStation):
+    def getStationCode(self, strStation):
         for dic in self.load_dict:
             if dic['name'] == strStation:
                 return dic['code']
@@ -169,10 +169,12 @@ class MainWindow(QWidget):
             return
         start_time=time.time()
         result=getResult(strFrom,strTo,strTime)
-        end_time=time.time()
-        self.labelSearchCost.setText("搜索到结果,耗时:%d s"%int(end_time-start_time))
-        self.rresult = result
-        if len(result) == 0 or result == False:
+        end_time = time.time()
+        self.labelSearchCost.setText("搜索到结果,耗时:%d s" % int(end_time - start_time))
+        if type(result) == bool and result == False:
+            QMessageBox.information(self, "12306查询器", "12306查询异常")
+        elif len(result) == 0 :
+            self.rresult = result
             QMessageBox.information(self, "12306查询器", "当前查询的车站无效或者返回结果为空")
         else:
             self.page_num= int(len(result)/20)+1

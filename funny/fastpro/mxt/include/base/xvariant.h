@@ -37,7 +37,7 @@ public:
 
 	typedef std::vector<TVariant> typeArry;			//Ë³Ðò±í
 	typedef std::map<tstring, TVariant> typeStruct; //Ê÷½á¹¹
-
+	
 public:
 	//static
 	static const TVariant g_varNULL;
