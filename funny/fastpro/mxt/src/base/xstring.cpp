@@ -41,6 +41,7 @@ void TFmtstring::to_Array()
 		lkeylist.push_back(m_strFormat.substr(_pEnd + 1));
 
 }
+
 void TStringHelper::split(std::list<tstring> &ret, const tstring &_src, const char _del)
 {
 	if (_src.empty())
@@ -74,41 +75,41 @@ void TStringHelper::splitBytes(std::list<tstring> &ret, const tstring &_src, siz
 		_left -= len;
 	}
 }
-void TStringHelper::ltrim(tstring & src)//ÒÆ³ýÇ°·½¿Õ¸ñ
+void TStringHelper::ltrim(tstring & src)//ç§»é™¤å‰æ–¹ç©ºæ ¼
 {
 	size_t _pos = 0;
 	while (src[_pos++] == ' ');
 	src.erase(0, _pos);
 }
-void TStringHelper::trim(tstring & src)//ÒÆ³ýÇ°ºó¿Õ¸ñ
+void TStringHelper::trim(tstring & src)//ç§»é™¤å‰åŽç©ºæ ¼
 {
 	TStringHelper::ltrim(src);
 	TStringHelper::rtrim(src);
 }
-void TStringHelper::rtrim(tstring &src)//ÒÆ³ýºóÃæ¿Õ¸ñ
+void TStringHelper::rtrim(tstring &src)//ç§»é™¤åŽé¢ç©ºæ ¼
 {
 	size_t _pos = src.length() - 1;
 	while (src[_pos--] == ' ');
 	src.erase(_pos);
 }
-char TStringHelper::toupper(char c)//´óÐ´
+char TStringHelper::toupper(char c)//å¤§å†™
 {
 	if (c >= 'A' && c <= 'Z')
 		c -= ('a' - 'z');
 	return c;
 }
-char TStringHelper::tolower(char c)//Ð¡Ð´
+char TStringHelper::tolower(char c)//å°å†™
 {
 	if (c >= 'a' && c <= 'z')
 		c += ('a' - 'z');
 	return c;
 }
-tstring & TStringHelper::tolower(tstring &src)//Ð¡Ð´
+tstring & TStringHelper::tolower(tstring &src)//å°å†™
 {
 	std::transform(src.begin(), src.end(), src.begin(), ::tolower);
 	return src;
 }
-tstring & TStringHelper::toupper(tstring &src)//´óÐ´
+tstring & TStringHelper::toupper(tstring &src)//å¤§å†™
 {
 	std::transform(src.begin(), src.end(), src.begin(), ::toupper);
 	return src;
@@ -116,13 +117,16 @@ tstring & TStringHelper::toupper(tstring &src)//´óÐ´
 
 void TStringHelper::replaceAll(tstring &src, const char _src, const char _des)
 {
-	//[=] ÒÔÖµµÄ·½Ê½²¶»ñËùÓÐµÄÍâ²¿×Ô¶¯±äÁ¿¡£
+	//[=] ä»¥å€¼çš„æ–¹å¼æ•èŽ·æ‰€æœ‰çš„å¤–éƒ¨è‡ªåŠ¨å˜é‡ã€‚
 	std::transform(src.begin(), src.end(), src.begin(), [=](char ch)->char {return ch == _src ? _des : ch; });
 }
 void TStringHelper::replaceAll(tstring &src, const char* _src, const char* _des)
 {
 	if (NULL == _src || NULL == _des)
 		return;
+	size_t pBegin;
+	while ((pBegin = src.find(_src)) != tstring::npos)
+		src = src.substr(0, pBegin) + tstring(_des) + src.substr(pBegin + strlen(_src));
 }
 bool TStringHelper::startWith(const tstring &src, const char *prefix)
 {
