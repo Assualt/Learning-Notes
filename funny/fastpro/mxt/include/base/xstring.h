@@ -130,8 +130,8 @@ public:
 	static char tolower(char c);//小写
 	static tstring & tolower(tstring &src);//小写
 	static tstring & toupper(tstring &src);//大写
-	static void replaceAll(tstring &src, const char _src, const char _des);
-	static void replaceAll(tstring &src, const char* _src, const char* _des);
+	static void replaceAll(tstring &src, const char _src, const char _des);//完全替换字符
+	static void replaceAll(tstring &src, const char* _src, const char* _des);//完全替换字符串
 	static bool startWith(const tstring &src, const char *prefix);
 	static bool endWith(const tstring &src, const char *backfix);
 	static int toInt(const tstring &src, int base = 10);

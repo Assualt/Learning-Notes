@@ -1,10 +1,10 @@
-CC 	= g++
+CC  = g++
 CXX = gcc
 FLAG = -Wno-literal-suffix -Wno-deprecated -Wsign-compare  -D_POSIX_PTHREAD_SEMANTICS -D_POSIX_THREAD_PRIORITY_SCHEDULING
 CFLAGS 	= $(FLAG)  -g -Wall -I./include -O3 $(SYSFLAGS) -std=c++11
-#VPATH 指定cpp文件的路径
-VPATH = src: src/base: test:
-#LIBS 指定链接文件库
+#VPATH
+VPATH = src:src/base:test:
+#LIBS
 
 BASEOBJS = xstring.o xstringbuilder.o xtoken.o \
 
@@ -25,10 +25,10 @@ clean:
 r: clean all
 
 # TEST
-test: test_Base.o  $(ALLOBJS)
-	$(CC) $(CFLAGS) -o tests test_Base.o $(ALLOBJS) 
+test_tstring: test_tstring.o  $(ALLOBJS)
+	$(CC) $(CFLAGS) -o teststring test_tstring.o $(ALLOBJS) 
 cleanTest:
-	rm -rf test_Base.o test_Base test_Base.d
+	rm -rf test_tstring.o test test_tstring.d
 
 ## Commands to generate dependency files
 GEN_DEPS.c= $(CC) -E -MM $(DEFS) $(CFLAGS)
