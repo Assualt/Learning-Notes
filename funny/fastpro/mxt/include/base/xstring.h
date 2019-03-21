@@ -21,20 +21,21 @@ typedef std::ostream tostream;
 typedef std::ifstream tifstream;
 typedef std::ofstream tofstream;
 
-
-inline void _ltrim(tstring & src, const char ch)//
+inline void _ltrim(tstring &src, const char ch) //
 {
 	size_t _pos = 0;
-	while (src[_pos++] == ch);
+	while (src[_pos++] == ch)
+		;
 	src.erase(0, _pos);
 }
-inline void _rtrim(tstring &src, const char ch)//ÒÆ³ýºóÃæ¿Õ¸ñ
+inline void _rtrim(tstring &src, const char ch) //ï¿½Æ³ï¿½ï¿½ï¿½ï¿½ï¿½Õ¸ï¿½
 {
 	size_t _pos = src.length() - 1;
-	while (src[_pos--] == ch);
+	while (src[_pos--] == ch)
+		;
 	src.erase(_pos);
 }
-inline void _trim(tstring & src, const char ch)//ÒÆ³ýÇ°ºó¿Õ¸ñ
+inline void _trim(tstring &src, const char ch) //ï¿½Æ³ï¿½Ç°ï¿½ï¿½Õ¸ï¿½
 {
 	_ltrim(src, ch);
 	_rtrim(src, ch);
@@ -49,8 +50,8 @@ extern tstring toString(val_type val)
 
 class TFmtstring
 {
-public:
-	TFmtstring()
+  public:
+	TFmtstring(void)
 	{
 		key_num = 0;
 		m_strDel = '%';
@@ -64,10 +65,14 @@ public:
 		to_Array();
 	}
 	void setDel(const char strDel) { m_strDel = strDel; }
-	void setFormat(const char *strFormat) { m_strFormat = strFormat; to_Array(); }
-	char * c_str();
+	void setFormat(const char *strFormat)
+	{
+		m_strFormat = strFormat;
+		to_Array();
+	}
+	char *c_str();
 	template <class val_type>
-	TFmtstring & arg(val_type val)
+	TFmtstring &arg(val_type val)
 	{
 		if (key_num--)
 		{
@@ -84,7 +89,7 @@ public:
 		lvallist.clear();
 	}
 
-	// src:Ô´×Ö·û´® nSize:´óÐ¡ ch:Ìî³ä×Ö·û bFront:ÏòÇ°Ìî³ä
+	// src:Ô´ï¿½Ö·ï¿½ï¿½ï¿½ nSize:ï¿½ï¿½Ð¡ ch:ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ bFront:ï¿½ï¿½Ç°ï¿½ï¿½ï¿½
 	static tstring format(const char *src, size_t nSize, char ch, bool bFront = true)
 	{
 		if (strlen(src) == nSize)
@@ -94,21 +99,22 @@ public:
 				return tstring(src).substr(0, nSize);
 			else
 				return tstring(src).substr(strlen(src) - nSize);
+		else if (bFront)
+			return tstring(nSize - strlen(src), ch) + tstring(src);
 		else
-			if (bFront)
-				return tstring(nSize - strlen(src), ch) + tstring(src);
-			else
-				return tstring(src) + tstring(nSize - strlen(src), ch);
+			return tstring(src) + tstring(nSize - strlen(src), ch);
 	}
 
 	template <typename typeChar>
-	static tstring toFixed(typeChar src, size_t nSize,char ch,bool bFront=true)
+	static tstring toFixed(typeChar src, size_t nSize, char ch, bool bFront = true)
 	{
 		return TFmtstring::format(toString(src).c_str(), nSize, ch, bFront);
 	}
-private:
+
+  private:
 	void to_Array();
-private:
+
+  private:
 	int key_num, nMaxSize;
 	char m_strDel;
 	tstring m_strFormat;
@@ -116,29 +122,28 @@ private:
 	tstring m_strCache;
 };
 
-
 class TStringHelper
 {
-public:
+  public:
 	static tstring m_strEmptyString;
 	static void split(std::list<tstring> &ret, const tstring &_src, const char _del = ',');
 	static void splitBytes(std::list<tstring> &ret, const tstring &_src, size_t len = 8);
-	static void ltrim(tstring & src);//ÒÆ³ýÇ°·½¿Õ¸ñ
-	static void trim(tstring & src);//ÒÆ³ýÇ°ºó¿Õ¸ñ
-	static void rtrim(tstring & src);//ÒÆ³ýºóÃæ¿Õ¸ñ
-	static char toupper(char c);//´óÐ´
-	static char tolower(char c);//Ð¡Ð´
-	static tstring & tolower(tstring &src);//Ð¡Ð´
-	static tstring & toupper(tstring &src);//´óÐ´
-	static void replaceAll(tstring &src, const char _src, const char _des);//ÍêÈ«Ìæ»»×Ö·û
-	static void replaceAll(tstring &src, const char* _src, const char* _des);//ÍêÈ«Ìæ»»×Ö·û´®
+	static tstring &ltrim(tstring &src);									  //ï¿½Æ³ï¿½Ç°ï¿½ï¿½ï¿½Õ¸ï¿½
+	static tstring &trim(tstring &src);										  //ï¿½Æ³ï¿½Ç°ï¿½ï¿½Õ¸ï¿½
+	static tstring &rtrim(tstring &src);									  //ï¿½Æ³ï¿½ï¿½ï¿½ï¿½ï¿½Õ¸ï¿½
+	static char toupper(char c);											  //ï¿½ï¿½Ð´
+	static char tolower(char c);											  //Ð¡Ð´
+	static tstring &tolower(tstring &src);									  //Ð¡Ð´
+	static tstring &toupper(tstring &src);									  //ï¿½ï¿½Ð´
+	static void replaceAll(tstring &src, const char _src, const char _des);   //ï¿½ï¿½È«ï¿½æ»»ï¿½Ö·ï¿½
+	static void replaceAll(tstring &src, const char *_src, const char *_des); //ï¿½ï¿½È«ï¿½æ»»ï¿½Ö·ï¿½ï¿½ï¿½
 	static bool startWith(const tstring &src, const char *prefix);
 	static bool endWith(const tstring &src, const char *backfix);
 	static int toInt(const tstring &src, int base = 10);
 	static float toFloat(const tstring &src);
 	static double toDouble(const tstring &src);
-	static tstring toBytes(const char c, tstring & byteArry);
-	static tstring toBytes(const tstring &src, tstring & byteArry);
+	static tstring toBytes(const char c, tstring &byteArry);
+	static tstring toBytes(const tstring &src, tstring &byteArry);
 	template <typename typeChar>
 	static bool strncmp(const typeChar *str1, const typeChar *str2)
 	{

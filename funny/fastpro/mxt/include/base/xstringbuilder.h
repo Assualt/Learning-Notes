@@ -8,7 +8,6 @@
 #include <numeric>
 #include <algorithm>
 
-
 NAMESPACE_BEGIN
 
 class tstringbuilder
@@ -18,7 +17,7 @@ class tstringbuilder
 	typedef typename std::list<tstring>::const_iterator iter_t_con;
 	typedef typename std::list<tstring>::iterator iter_t;
 
-private:
+  private:
 	container_t m_Data;
 	size_type m_totalSize;
 
@@ -27,7 +26,7 @@ private:
 		m_Data.push_back(src);
 		m_totalSize += src.size();
 	}
-	void Append(const char * src)
+	void Append(const char *src)
 	{
 		m_Data.push_back(tstring(src));
 		m_totalSize += strlen(src);
@@ -63,7 +62,8 @@ private:
 		m_Data.push_back(to_string(src));
 		m_totalSize += to_string(src).size();
 	}
-public:
+
+  public:
 	tstringbuilder()
 	{
 		m_totalSize = 0;
@@ -94,7 +94,7 @@ public:
 		return m_totalSize;
 	}
 	template <typename val_type>
-	tstringbuilder& append(const val_type &val)
+	tstringbuilder &append(const val_type &val)
 	{
 		Append(val);
 		return *this;
@@ -118,9 +118,9 @@ public:
 	{
 		return toString().substr(_pBegin, _len);
 	}
-	tstringbuilder & deleter(size_t _pBegin, size_t _len)
+	tstringbuilder &deleter(size_t _pBegin, size_t _len)
 	{
-		if (_pBegin == 0)//clear all
+		if (_pBegin == 0) //clear all
 		{
 			m_Data.clear();
 			m_totalSize = 0;
@@ -136,7 +136,7 @@ public:
 		{
 			size_t _isize = iter->size();
 			_posEnd = _posBegin + iter->size();
-			if (_pBegin >= _posBegin && _pEnd <= _posEnd)// deleter length belong to one iter
+			if (_pBegin >= _posBegin && _pEnd <= _posEnd) // deleter length belong to one iter
 			{
 				if (_pEnd == _posEnd)
 				{
@@ -153,18 +153,20 @@ public:
 			{
 				iter->erase(_pBegin - _posBegin, _posEnd - _pBegin + 1);
 			}
-			else {}
+			else
+			{
+			}
 			_pBegin = bFirst ? _pBegin + _isize - 1 : _pBegin + _isize;
 			_posBegin = _posEnd;
 			bFirst = false;
 		}
 		return *this;
 	}
-	tstringbuilder & deleter(size_t _pBegin)
+	tstringbuilder &deleter(size_t _pBegin)
 	{
 		return deleter(_pBegin, m_totalSize - _pBegin);
 	}
-	tstringbuilder & insert(size_t _pos, const char* c)
+	tstringbuilder &insert(size_t _pos, const char *c)
 	{
 		if (_pos > m_totalSize - 1)
 			throw XException(TFmtstring("can't insert such char:% at pos:%").arg(c).arg(_pos).c_str());
@@ -184,37 +186,54 @@ public:
 		}
 		return *this;
 	}
-	tstringbuilder & insert(size_t _pos, const char c)
+	tstringbuilder &insert(size_t _pos, const char c)
 	{
 		return insert(_pos, tstring(1, c).c_str());
 	}
-	tstringbuilder & replace(size_t _pos, size_t _len, const char c)
+	tstringbuilder &replace(size_t _pos, size_t _len, const char c)
 	{
 		return replace(_pos, _len, tstring(1, c).c_str());
 	}
-	tstringbuilder & replace(size_t _pos, size_t _len, const char *s)
+	tstringbuilder &replace(size_t _pos, size_t _len, const char *s)
 	{
 		deleter(_pos, _len);
 		insert(_pos, s);
 		return *this;
 	}
-	tstringbuilder & replaceAll(const char src, const char dest)
+	tstringbuilder &replaceAll(const char src, const char dest)
 	{
 		if (m_totalSize == 0)
 			return *this;
 		iter_t iter(m_Data.begin()), iterend(m_Data.end());
 		for (; iter != iterend; iter++)
-			std::transform(iter->begin(), iter->end(), iter->begin(), [=](unsigned char ch)->char {return ch == src ? dest : ch; });
+			std::transform(iter->begin(), iter->end(), iter->begin(), [=](unsigned char ch) -> char { return ch == src ? dest : ch; });
 		return *this;
 	}
-	size_t getCharSize(const char c)const
+	size_t getCharSize(const char c) const
 	{
 		tstring tmp = toString();
-		size_t ret = std::count_if(tmp.begin(), tmp.end(), [=](char ch) {return ch == c ? true : false; });
+		size_t ret = std::count_if(tmp.begin(), tmp.end(), [=](char ch) { return ch == c ? true : false; });
 		return ret;
 	}
+	template <typename val_type>
+	void setCharAt(size_t index, val_type ch)
+	{
+		if (index > m_totalSize)
+			return;
+		size_t _pBegin = 0;
+		iter_t iter(m_Data.begin()), iterend(m_Data.end());
+		for (; iter != iterend; iter++)
+		{
+			if(_pBegin < index && _pBegin + iter->size() > index)
+			{
+				(*iter)[index-_pBegin] = ch;
+				break;
+			}
+		}
+	}
 };
+
+ 
 NAMESPACE_END
 
 #endif
-

@@ -1,11 +1,12 @@
 #include "base/xstring.h"
 #include "base/xstringbuilder.h"
-
+#include <algorithm>
+#include <iostream>
 NAMESPACE_BEGIN
 //static args Init
 tstring TStringHelper::m_strEmptyString = "";
 
-char * TFmtstring::c_str()
+char *TFmtstring::c_str()
 {
 	m_strCache.reserve(nMaxSize);
 	std::list<tstring>::iterator iter(lkeylist.begin()), iterend(lkeylist.end());
@@ -39,7 +40,6 @@ void TFmtstring::to_Array()
 	size_t _pEnd = m_strFormat.rfind(m_strDel);
 	if (_pEnd != tstring::npos && _pEnd < m_strFormat.size())
 		lkeylist.push_back(m_strFormat.substr(_pEnd + 1));
-
 }
 
 void TStringHelper::split(std::list<tstring> &ret, const tstring &_src, const char _del)
@@ -75,41 +75,40 @@ void TStringHelper::splitBytes(std::list<tstring> &ret, const tstring &_src, siz
 		_left -= len;
 	}
 }
-void TStringHelper::ltrim(tstring & src)//移除前方空格
+string &TStringHelper::ltrim(tstring &src) //移除前方空格
 {
-	size_t _pos = 0;
-	while (src[_pos++] == ' ');
-	src.erase(0, _pos);
+	string::iterator p = std::find_if(src.begin(), src.end(), not1(ptr_fun(::isspace)));
+	src.erase(src.begin(), p);
+	return src;
 }
-void TStringHelper::trim(tstring & src)//移除前后空格
+tstring &TStringHelper::trim(tstring &src) //移除前后空格
 {
-	TStringHelper::ltrim(src);
-	TStringHelper::rtrim(src);
+	return TStringHelper::rtrim(TStringHelper::ltrim(src));
 }
-void TStringHelper::rtrim(tstring &src)//移除后面空格
+tstring &TStringHelper::rtrim(tstring &src) //移除后面空格
 {
-	size_t _pos = src.length() - 1;
-	while (src[_pos--] == ' ');
-	src.erase(_pos);
+	string::reverse_iterator p = find_if(src.rbegin(), src.rend(), not1(ptr_fun(::isspace)));
+	src.erase(p.base(), src.end());
+	return src;
 }
-char TStringHelper::toupper(char c)//大写
+char TStringHelper::toupper(char c) //大写
 {
 	if (c >= 'A' && c <= 'Z')
 		c -= ('a' - 'z');
 	return c;
 }
-char TStringHelper::tolower(char c)//小写
+char TStringHelper::tolower(char c) //小写
 {
 	if (c >= 'a' && c <= 'z')
 		c += ('a' - 'z');
 	return c;
 }
-tstring & TStringHelper::tolower(tstring &src)//小写
+tstring &TStringHelper::tolower(tstring &src) //小写
 {
 	std::transform(src.begin(), src.end(), src.begin(), ::tolower);
 	return src;
 }
-tstring & TStringHelper::toupper(tstring &src)//大写
+tstring &TStringHelper::toupper(tstring &src) //大写
 {
 	std::transform(src.begin(), src.end(), src.begin(), ::toupper);
 	return src;
@@ -118,9 +117,9 @@ tstring & TStringHelper::toupper(tstring &src)//大写
 void TStringHelper::replaceAll(tstring &src, const char _src, const char _des)
 {
 	//[=] 以值的方式捕获所有的外部自动变量。
-	std::transform(src.begin(), src.end(), src.begin(), [=](char ch)->char {return ch == _src ? _des : ch; });
+	std::transform(src.begin(), src.end(), src.begin(), [=](char ch) -> char { return ch == _src ? _des : ch; });
 }
-void TStringHelper::replaceAll(tstring &src, const char* _src, const char* _des)
+void TStringHelper::replaceAll(tstring &src, const char *_src, const char *_des)
 {
 	if (NULL == _src || NULL == _des)
 		return;
@@ -152,7 +151,7 @@ double TStringHelper::toDouble(const tstring &src)
 {
 	return std::stod(src, nullptr);
 }
-tstring TStringHelper::toBytes(const char c, tstring & byteArry)
+tstring TStringHelper::toBytes(const char c, tstring &byteArry)
 {
 	byteArry.clear();
 	byteArry.reserve(8);
@@ -165,7 +164,7 @@ tstring TStringHelper::toBytes(const char c, tstring & byteArry)
 	byteArry = tmep;
 	return byteArry;
 }
-tstring TStringHelper::toBytes(const tstring &src, tstring & byteArry)
+tstring TStringHelper::toBytes(const tstring &src, tstring &byteArry)
 {
 	byteArry.clear();
 	size_t _pos = 0, _len = src.size();
@@ -179,4 +178,3 @@ tstring TStringHelper::toBytes(const tstring &src, tstring & byteArry)
 }
 
 NAMESPACE_END
-

@@ -4,8 +4,10 @@
 #include "xmtdef.h"
 #include <exception>
 
-//·â×°ÖÇÄÜÖ¸Õë
+
+
 NAMESPACE_BEGIN
+
 
 template<class Ty>
 	class auto_ptr_ary;

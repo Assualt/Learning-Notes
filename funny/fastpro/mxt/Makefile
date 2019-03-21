@@ -3,10 +3,10 @@ CXX = gcc
 FLAG = -Wno-literal-suffix -Wno-deprecated -Wsign-compare  -D_POSIX_PTHREAD_SEMANTICS -D_POSIX_THREAD_PRIORITY_SCHEDULING
 CFLAGS 	= $(FLAG)  -g -Wall -I./include -O3 $(SYSFLAGS) -std=c++11
 #VPATH
-VPATH = src:src/base:test:
+VPATH = src:src/base:test:src/conf
 #LIBS
 
-BASEOBJS = xstring.o xstringbuilder.o xtoken.o \
+BASEOBJS = xstring.o xstringbuilder.o xtoken.o xconfmgrbase.o\
 
 ALLOBJS =  $(BASEOBJS)
 
