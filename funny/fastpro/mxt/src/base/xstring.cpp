@@ -139,6 +139,15 @@ bool TStringHelper::endWith(const tstring &src, const char *backfix)
 		return false;
 	return src.substr(src.size() - strlen(backfix), strlen(backfix)) == tstring(backfix);
 }
+bool TStringHelper::startWith(const char *src, const char *prefix)
+{
+	return TStringHelper::startWith(tstring(src), prefix);
+}
+bool TStringHelper::endWith(const char *src, const char *backfix)
+{
+	return TStringHelper::endWith(tstring(src), backfix);
+}
+
 int TStringHelper::toInt(const tstring &src, int base)
 {
 	return std::stoi(src, nullptr, base);

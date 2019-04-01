@@ -139,6 +139,8 @@ class TStringHelper
 	static void replaceAll(tstring &src, const char *_src, const char *_des); //��ȫ�滻�ַ���
 	static bool startWith(const tstring &src, const char *prefix);
 	static bool endWith(const tstring &src, const char *backfix);
+	static bool endWith(const char *src, const char *backfix);
+	static bool startWith(const char *src, const char *prefix);
 	static int toInt(const tstring &src, int base = 10);
 	static float toFloat(const tstring &src);
 	static double toDouble(const tstring &src);

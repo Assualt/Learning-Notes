@@ -2,6 +2,7 @@
 #include "base/xstring.h"
 #include "base/xtoken.h"
 #include "base/xstringbuilder.h"
+#include "conf/xconfmgrbase.h"
 using namespace NAMESPACE_NAME;
 int main(int agrc, char *argv[])
 {
@@ -29,5 +30,11 @@ int main(int agrc, char *argv[])
 	std::cout << builder.toString() << ":" << builder.size() << std::endl;
 	builder.setCharAt(8,'B');
 	std::cout << builder.toString() << ":" << builder.size() << std::endl;
+
+	//
+	std::cout << "Test Configure--- " << std::endl;
+	TInIConfigureManager configure(argv[1]);
+	configure.onInit();
+
 	return 0;
 }
