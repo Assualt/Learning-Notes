@@ -6,8 +6,8 @@
 using namespace NAMESPACE_NAME;
 int main(int agrc, char *argv[])
 {
-	std::cout << "hello world" << std::endl;
-	std::cout << "TFmtstring" << std::endl;
+    std::cout << "Test For TFmtString........." << std::endl;
+    std::cout << "............................." << std::endl;
 
 	std::cout << TFmtstring().c_str() << std::endl;
 	std::cout << TFmtstring("arg1:% arg2:% arg3:% arg4:% arg5:%")
@@ -20,6 +20,8 @@ int main(int agrc, char *argv[])
 			  << std::endl;
 	std::cout << TFmtstring::toFixed(151, 5, 'A') << std::endl;
 
+    std::cout << "Test For tstringbuilder ....." << std::endl;
+    std::cout << "............................." << std::endl;
 	tstringbuilder builder;
 	builder.append("hello world").append(123);
 
@@ -30,11 +32,6 @@ int main(int agrc, char *argv[])
 	std::cout << builder.toString() << ":" << builder.size() << std::endl;
 	builder.setCharAt(8,'B');
 	std::cout << builder.toString() << ":" << builder.size() << std::endl;
-
-	//
-	std::cout << "Test Configure--- " << std::endl;
-	TInIConfigureManager configure(argv[1]);
-	configure.onInit();
 
 	return 0;
 }
