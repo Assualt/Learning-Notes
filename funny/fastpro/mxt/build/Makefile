@@ -1,19 +1,21 @@
 CC  = g++
 CXX = gcc
 FLAG = -Wno-literal-suffix -Wno-deprecated -Wsign-compare  -D_POSIX_PTHREAD_SEMANTICS -D_POSIX_THREAD_PRIORITY_SCHEDULING
-CFLAGS 	= $(FLAG)  -g -Wall -I./include  $(SYSFLAGS) -std=c++11 
+CFLAGS 	= $(FLAG)  -g -Wall -I../include  $(SYSFLAGS) -std=c++11 
 #VPATH
-VPATH = src:src/base:test:src/conf
+VPATH = ../src:../src/base:../src/conf:../unittest/
 #LIBS
+TESTLIBS=-L /usr/local/lib/ -lgtest -pthread
 
-BASEOBJS = xstring.o xstringbuilder.o xtoken.o xconfmgrbase.o\
+BASEOBJS = xstring.o xstringbuilder.o xtoken.o xconfmgrbase.o
 
 ALLOBJS =  $(BASEOBJS)
 
 libxmt.a: $(ALLOBJS)
-	rm -f libxmt.a
+	rm ../lib/libxmt.a -f
 	ar cr libxmt.a $(ALLOBJS)
 	ranlib libxmt.a
+	mv libxmt.a ../lib/ -f
 .cpp.o:
 	$(CC) -c $(CFLAGS) $(OPT) $<
 .cc.o:
@@ -26,13 +28,10 @@ r: clean all
 
 EXECPATH="out"
 
-# TEST
-test_tstring: test_tstring.o  $(ALLOBJS)
-	$(CC) $(CFLAGS) -o $(EXECPATH)/teststring test_tstring.o $(ALLOBJS) 
-test_tconfmgr: test_tconfig.o  $(ALLOBJS)
-	$(CC) $(CFLAGS) -o $(EXECPATH)/testconfig test_tconfig.o $(ALLOBJS)
-cleanTest:
-	rm -rf test_tstring.o test test_tstring.d
+# Unit_TEST
+unit_string:unit_tstring.o
+	$(CC) $(CFLAGS) unit_tstring.o -o unittstring $(TESTLIBS) -L../lib -lxmt
+
 
 ## Commands to generate dependency files
 GEN_DEPS.c= $(CC) -E -MM $(DEFS) $(CFLAGS)
