@@ -31,7 +31,12 @@ EXECPATH="out"
 # Unit_TEST
 unit_string:unit_tstring.o
 	$(CC) $(CFLAGS) unit_tstring.o -o unittstring $(TESTLIBS) -L../lib -lxmt
+unit_conf:unit_tconf.o
+	$(CC) $(CFLAGS) unit_tconf.o -o unittconf $(TESTLIBS) -L../lib -lxmt
 
+#case test 
+test_app:testApp.o
+	$(CC) $(CFLAGS) testApp.o -o testApp -L../lib -lxmt
 
 ## Commands to generate dependency files
 GEN_DEPS.c= $(CC) -E -MM $(DEFS) $(CFLAGS)

@@ -6,7 +6,7 @@
 #ifdef XMT_WIN_32
 
 #else
-//#include <pthread.h>
+#include <pthread.h>
 #endif  // XMT_WIN_32
 
 NAMESPACE_BEGIN
@@ -19,11 +19,11 @@ public:
     virtual ~TThreadBase(void) {}
 
     enum THREAD_PRIORITY {
-        PRIORITY_HIGHEST = 4,        //最高
-        PRIORITY_ABOVE_NORMAL = 2,   //高于一般
-        PRIORITY_NORMAL = 1,         //普通
-        PRIORITY_BELOW_NORMAL = -2,  //低于一般
-        PRIORITY_LOWEST = -4         //最低
+        PRIORITY_HIGHEST = 4,        //
+        PRIORITY_ABOVE_NORMAL = 2,   //
+        PRIORITY_NORMAL = 1,         //
+        PRIORITY_BELOW_NORMAL = -2,  //
+        PRIORITY_LOWEST = -4         //
     };
 
 protected:
@@ -39,7 +39,7 @@ protected:
 #endif
     typeThreadID m_nThraedID;
 
-    virtual void start(void);  //启动线程
+    virtual void start(void);  //
 };
 
 class TThread : public TThreadBase {

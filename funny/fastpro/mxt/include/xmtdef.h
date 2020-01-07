@@ -36,16 +36,7 @@
 #define XMT_UNIC
 #endif
 
-enum VAL_TYPE {
-    TYPE_CHAR,
-    TYPE_SHORT,
-    TYPE_INT,
-    TYPE_FLOAT,
-    TYPE_DOUBLE,
-    TYPE_LONG,
-    TYPE_LONGLONG,
-    TYPE_STRING
-};
+enum VAL_TYPE { TYPE_CHAR, TYPE_SHORT, TYPE_INT, TYPE_FLOAT, TYPE_DOUBLE, TYPE_LONG, TYPE_LONGLONG, TYPE_STRING };
 // Data defined
 typedef unsigned long long ulonglong;
 

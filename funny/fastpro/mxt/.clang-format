@@ -30,7 +30,7 @@ BinPackParameters: false
 # 在构造函数的初始化列表的冒号之后换行
 BreakConstructorInitializers: AfterColon
 # 每行字符的限制
-ColumnLimit: 80
+ColumnLimit: 120
 # 构造函数的初始化列表的缩进宽度
 ConstructorInitializerIndentWidth: 8
 # 延续的行的缩进宽度

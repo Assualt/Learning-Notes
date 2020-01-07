@@ -6,9 +6,7 @@ class TTokens {
     typedef std::list<tstring> tstringList;
 
 public:
-    TTokens() :
-            m_strSrc(TStringHelper::m_strEmptyString),
-            m_strDel(TStringHelper::m_strEmptyString) {}
+    TTokens() : m_strSrc(TStringHelper::m_strEmptyString), m_strDel(TStringHelper::m_strEmptyString) {}
     TTokens(const char *lpszSrc,
             const char *lpszDel,
             size_t _pBegin = 0,
@@ -16,10 +14,7 @@ public:
             m_strDel(lpszDel) {
         if (_pBegin > strlen(lpszSrc) - 1)
             throw XException(
-                    TFmtstring("% arg(_pBegin) error")
-                            .arg(__FUNCTION__)
-                            .c_str(),
-                    XException::XEP_INVALID_ARGS);
+                    TFmtString("% arg(_pBegin) error").arg(__FUNCTION__).str().c_str(), XException::XEP_INVALID_ARGS);
         m_strSrc = tstring(lpszSrc).substr(_pBegin, _pEnd - _pBegin);
     }
     void setDelimiter(const char *lpszDel) {

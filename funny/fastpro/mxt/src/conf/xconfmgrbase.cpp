@@ -1,15 +1,8 @@
 #include "conf/xconfmgrbase.h"
 
 NAMESPACE_BEGIN
-TConfigureManagerBase::TConfigureManagerBase(const xmt::tstring &strConfDir) :
-        m_strConfigureDir(strConfDir),
-        m_nConfType(TYPE_INI) {
-    ScanFilePath(m_strConfigureDir);
-}
 
-TConfigureManagerBase::TConfigureManagerBase(
-        const xmt::tstring &strConfDir,
-        CONF_TYPE nType) :
+TConfigureManagerBase::TConfigureManagerBase(const xmt::tstring &strConfDir, CONF_TYPE nType) :
         m_strConfigureDir(strConfDir),
         m_nConfType(nType) {
     ScanFilePath(m_strConfigureDir);
@@ -58,21 +51,15 @@ void TConfigureManagerBase::ScanFilePath(const xmt::tstring &strDirName) {
     struct stat st;
     if (stat(strDirName.c_str(), &st) == -1)
         throw new TConfigureException(
-                TFmtstring("config dir is not found. stat error.msg:%")
-                        .arg(strerror(errno))
-                        .c_str(),
+                TFmtString("config dir is not found. stat error.msg:%").arg(strerror(errno)).str(),
                 XException::XEP_ERROR);
     DIR *dir;
     if ((dir = opendir(m_strConfigureDir.c_str())) != NULL) {
         struct dirent *cur_dirent;
         while ((cur_dirent = readdir(dir)) != NULL) {
-            if (!strcmp(cur_dirent->d_name, ".") ||
-                !strcmp(cur_dirent->d_name, ".."))
+            if (!strcmp(cur_dirent->d_name, ".") || !strcmp(cur_dirent->d_name, ".."))
                 continue;
-            tstring strTmpFile = TFmtstring("%/%")
-                                         .arg(strDirName)
-                                         .arg(cur_dirent->d_name)
-                                         .c_str();
+            tstring strTmpFile = TFmtString("%/%").arg(strDirName).arg(cur_dirent->d_name).str();
             struct stat tmp;
             stat(strTmpFile.c_str(), &tmp);
             switch (tmp.st_mode & S_IFMT) {
@@ -91,8 +78,7 @@ void TConfigureManagerBase::ScanFilePath(const xmt::tstring &strDirName) {
     closedir(dir);
 }
 
-TInIConfigureManager::TInIConfigureManager(const tstring &strConfDir) :
-        TConfigureManagerBase(strConfDir) {}
+TInIConfigureManager::TInIConfigureManager(const tstring &strConfDir) : TConfigureManagerBase(strConfDir, TYPE_INI) {}
 
 bool TInIConfigureManager::init() {
     return initIniFiles();
@@ -104,108 +90,153 @@ bool TInIConfigureManager::initIniFiles() {
         TFileListMap tmp;
         initSingerFile(tmp, it);
         if (m_mKVMap.find(it) == m_mKVMap.end()) {
-            m_mKVMap[it] = tmp;
+            // it-> /a/b/c/d/e/f/x.cf
+            // base->/a/b/c/d/e/f/
+            // key->x
+            tstring strKey;
+            if (it.find(m_strConfigureDir) != tstring::npos) {
+                strKey = it.substr(it.find(m_strConfigureDir) + m_strConfigureDir.size());
+            }
+            // remove suffix
+            strKey = strKey.substr(1, strKey.rfind(getConfType()) - 1);
+            m_mKVMap[strKey] = tmp;
         }
     }
     return true;
 }
 
-void TInIConfigureManager::initSingerFile(
-        TFileListMap &t,
-        const tstring &confPath) {
+void TInIConfigureManager::initSingerFile(TFileListMap &t, const tstring &confPath) {
     try {
         if (confPath.empty())
-            throw TConfigureException(
-                    TFmtstring("Input ConfPath is empty").c_str());
+            throw TConfigureException(TFmtString("Input ConfPath is empty").str());
         std::ifstream fin(confPath);
         if (!fin.is_open()) {
-            throw TConfigureException(TFmtstring("Can't Open % file conf path.")
-                                              .arg(confPath)
-                                              .c_str());
+            throw TConfigureException(TFmtString("Can't Open % file conf path.").arg(confPath).str());
         }
         tstring lineTmp;
+        tstring strSectionKey;
+        std::map<tstring, tstring> SectionKvMap;
         while (getline(fin, lineTmp)) {
-            if (lineTmp.empty())
+            lineTmp = TStringHelper::trim(lineTmp);
+            if (lineTmp.empty() || TStringHelper::startWith(lineTmp, "#") || TStringHelper::startWith(lineTmp, "//"))
                 continue;
-            TStringHelper::trim(lineTmp);
-            if (!TStringHelper::startWith(lineTmp, "#")) {
-                // Search Section First
-                tstring strSectionName;
-                size_t nPos;
-                if ((nPos = lineTmp.find("[")) != tstring::npos) {
-                    size_t nEnd = lineTmp.find("]" + nPos + 1);
-                    if (nEnd != tstring::npos) {
-                        if (nEnd == nPos + 1)
-                            continue;
-                        strSectionName =
-                                lineTmp.substr(nPos + 1, nEnd - nPos - 1);
-                        // Search Key Val
-                        size_t nSeekPos;  // 记录
-                        std::map<tstring, tstring> tmpMap;
-                        tstring tmpLine;
-                        while (1) {
-                            nSeekPos = fin.tellg();
-                            if (getline(fin, tmpLine)) {
-                                TStringHelper::trim(tmpLine);
-                                if (tmpLine.empty())
-                                    continue;
-                                size_t nBegin;
-                                if ((nBegin = tmpLine.find("=")) !=
-                                    tstring::npos) {
-                                    tstring strKey = tmpLine.substr(0, nBegin);
-                                    tstring strLeftVal =
-                                            tmpLine.substr(nBegin + 1);
-                                    TStringHelper::trim(strLeftVal);
-                                    if (TStringHelper::startWith(
-                                                strLeftVal, "\"")) {
-                                        size_t b = strLeftVal.find("\"", 1);
-                                        if (b != tstring::npos) {
-                                            tstring strVal =
-                                                    strLeftVal.substr(1, b - 1);
-                                            TStringHelper::trim(strVal);
-                                            if (tmpMap.find(strKey) ==
-                                                tmpMap.end())
-                                                tmpMap[strKey] = strVal;
-                                        }
-                                    } else {
-                                        if (strLeftVal.find("#") !=
-                                            tstring::npos) {
-                                            tstring strVal = strLeftVal.substr(
-                                                    0, strLeftVal.find("#"));
-                                            TStringHelper::trim(strVal);
-                                            if (tmpMap.find(strKey) ==
-                                                tmpMap.end())
-                                                tmpMap[strKey] = strVal;
-                                        }
-                                    }
-                                }
-                                if (TStringHelper::startWith(
-                                            tmpLine, "[")) {  // find Next Key
-                                    if (t.find(strSectionName) == t.end()) {
-                                        t[strSectionName] = tmpMap;
-                                        fin.seekg(nSeekPos);
-                                        break;
-                                    }
-                                }
-                            } else {
-                                if (t.find(strSectionName) == t.end()) {
-                                    t[strSectionName] = tmpMap;
-                                }
-                                break;
-                            }
+            // found section
+            if (TStringHelper::startWith(lineTmp, "[")) {
+                size_t nPos = lineTmp.find("]");
+                if (nPos != tstring::npos && nPos != 1) {  // Found New Keys
+                    if (!strSectionKey.empty()) {
+                        if (t.find(strSectionKey) != t.end()) {
+                            std::cout << TFmtString(
+                                                 "duplicate Section key(%) has "
+                                                 "been found")
+                                                 .arg(strSectionKey)
+                                                 .str()
+                                      << std::endl;
                         }
-                    } else
+                        t[strSectionKey] = SectionKvMap;
+                        SectionKvMap.clear();
+                    }
+                    strSectionKey = TStringHelper::trim(lineTmp.substr(1, nPos - 1));
+                }
+            } else if (!strSectionKey.empty()) {  // found key=val
+                size_t nPos = lineTmp.find("=");
+                tstring strKey, strVal;
+                if (nPos != tstring::npos) {  // found =
+                    strKey = TStringHelper::trim(lineTmp.substr(0, nPos));
+                    // next to found val
+                    strVal = TStringHelper::trim(lineTmp.substr(nPos + 1));
+                    if (strVal.find("#") != tstring::npos) {  //发现有注释需要剔除掉注释部分
+                        strVal = strVal.substr(0, strVal.find("#"));
+                    }
+                    if (strKey.empty() || strVal.empty())
                         continue;
+                    if (TStringHelper::startWith(strVal, "\"") && TStringHelper::endWith(strVal, "\"")) {
+                        strVal.erase(0);
+                        strVal.erase(strVal.size() - 1);
+                    }
+                    SectionKvMap[strKey] = strVal;
                 }
             }
         }
-        fin.close();
 
+        if (t.find(strSectionKey) != t.end()) {
+            std::cout << TFmtString("duplicate key(%) has been found").arg(strSectionKey).str() << std::endl;
+        }
+        t[strSectionKey] = SectionKvMap;
+        fin.close();
+    } catch (TConfigureException &e) {
+        std::cout << "Catch Configuration Exception: " << e.what() << std::endl;
     } catch (std::exception &e) {
         std::cout << "Catch exception: " << e.what() << std::endl;
     } catch (...) {
         std::cout << "Catch unknown exception: " << std::endl;
     }
+}
+
+int TInIConfigureManager::getInt(int nDefault, const tstring &strPrefix, const tstring &strSuffix) {
+    bool isDeault;
+    tstring strVal = getBaseString("", strPrefix, strSuffix, isDeault);
+    if (isDeault)
+        return nDefault;
+    return TStringHelper::toInt(strVal);
+}
+bool TInIConfigureManager::getBool(bool nDefault, const tstring &strPrefix, const tstring &strSuffix) {
+    bool isDeault;
+    tstring strVal = getBaseString("", strPrefix, strSuffix, isDeault);
+    if (isDeault)
+        return nDefault;
+    if (TStringHelper::strncmp(strVal.c_str(), "true"))
+        return true;
+    else if (TStringHelper::strncmp(strVal.c_str(), "false"))
+        return false;
+    int n = TStringHelper::toInt(strVal);
+    if (n >= 1)
+        return true;
+    return false;
+}
+float TInIConfigureManager::getFloat(float nDefault, const tstring &strPrefix, const tstring &strSuffix) {
+    bool isDeault;
+    tstring strVal = getBaseString("", strPrefix, strSuffix, isDeault);
+    if (isDeault)
+        return nDefault;
+    return TStringHelper::toFloat(strVal);
+}
+double TInIConfigureManager::getDouble(double nDefault, const tstring &strPrefix, const tstring &strSuffix) {
+    bool isDeault;
+    tstring strVal = getBaseString("", strPrefix, strSuffix, isDeault);
+    if (isDeault)
+        return nDefault;
+    return TStringHelper::toDouble(strVal);
+}
+tstring TInIConfigureManager::getString(tstring nDefault, const tstring &strPrefix, const tstring &strSuffix) {
+    bool isDefault;
+    return getBaseString(nDefault, strPrefix, strSuffix, isDefault);
+}
+tstring TInIConfigureManager::getBaseString(
+        tstring nDefault,
+        const tstring &strPrefix,
+        const tstring &strSuffix,
+        bool &isDefault) {
+    isDefault = true;
+    if (m_mKVMap.find(strPrefix) == m_mKVMap.end()) {
+        return nDefault;
+    }
+    size_t nPos;
+    if ((nPos = strSuffix.rfind("/")) == tstring::npos) {
+        return nDefault;
+    }
+    tstring strSection = strSuffix.substr(0, nPos);
+    tstring strKey = strSuffix.substr(nPos + 1);
+    TFileListMap fileMap = m_mKVMap[strPrefix];
+    if (fileMap.find(strSection) == fileMap.end()) {
+        return nDefault;
+    }
+    std::map<tstring, tstring> kvMap = fileMap[strSection];
+    if (kvMap.find(strKey) == kvMap.end()) {
+        return nDefault;
+    }
+    isDefault = false;
+    return kvMap[strKey];
 }
 
 NAMESPACE_END

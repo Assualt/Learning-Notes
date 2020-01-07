@@ -107,10 +107,11 @@ public:
             return *this;
         }
         if (_pBegin > m_totalSize - 1 || (_pBegin + _len) > m_totalSize)
-            throw XException(TFmtstring("Can't delete the % length,while the "
+            throw XException(TFmtString("Can't delete the % length,while the "
                                         "total length is %")
                                      .arg(_len)
                                      .arg(m_totalSize)
+                                     .str()
                                      .c_str());
         iter_t iter(m_Data.begin()), iterend(m_Data.end());
         size_t _posBegin = 0, _posEnd = 0, _pEnd = _len + _pBegin;
@@ -119,8 +120,7 @@ public:
         for (; iter != iterend; iter++) {
             size_t _isize = iter->size();
             _posEnd = _posBegin + iter->size();
-            if (_pBegin >= _posBegin &&
-                _pEnd <= _posEnd)  // deleter length belong to one iter
+            if (_pBegin >= _posBegin && _pEnd <= _posEnd)  // deleter length belong to one iter
             {
                 if (_pEnd == _posEnd) {
                     iter->erase(_pBegin - _posBegin);
@@ -143,10 +143,7 @@ public:
     }
     tstringbuilder &insert(size_t _pos, const char *c) {
         if (_pos > m_totalSize - 1)
-            throw XException(TFmtstring("can't insert such char:% at pos:%")
-                                     .arg(c)
-                                     .arg(_pos)
-                                     .c_str());
+            throw XException(TFmtString("cant't insert such char:% at pos:%").arg(c).arg(_pos).str().c_str());
         if (m_totalSize == 0)
             return append(c);
         iter_t iter(m_Data.begin()), iterend(m_Data.end());
@@ -177,20 +174,14 @@ public:
             return *this;
         iter_t iter(m_Data.begin()), iterend(m_Data.end());
         for (; iter != iterend; iter++)
-            std::transform(
-                    iter->begin(),
-                    iter->end(),
-                    iter->begin(),
-                    [=](unsigned char ch) -> char {
-                        return ch == src ? dest : ch;
-                    });
+            std::transform(iter->begin(), iter->end(), iter->begin(), [=](unsigned char ch) -> char {
+                return ch == src ? dest : ch;
+            });
         return *this;
     }
     size_t getCharSize(const char c) const {
         tstring tmp = toString();
-        size_t ret = std::count_if(tmp.begin(), tmp.end(), [=](char ch) {
-            return ch == c ? true : false;
-        });
+        size_t ret = std::count_if(tmp.begin(), tmp.end(), [=](char ch) { return ch == c ? true : false; });
         return ret;
     }
     template <typename val_type>

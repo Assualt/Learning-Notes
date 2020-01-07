@@ -5,43 +5,7 @@
 NAMESPACE_BEGIN
 // static args Init
 tstring TStringHelper::m_strEmptyString = "";
-
-char *TFmtstring::c_str() {
-    m_strCache.reserve(nMaxSize);
-    std::list<tstring>::iterator iter(lkeylist.begin()),
-            iterend(lkeylist.end());
-    std::list<tstring>::iterator iterval(lvallist.begin()),
-            itervalend(lvallist.end());
-    for (; iter != iterend; iter++) {
-        if (!iter->empty())
-            m_strCache += *iter;
-        if (iterval != itervalend) {
-            m_strCache += static_cast<tstring>(*iterval);
-            iterval++;
-        }
-    }
-    return (char *)m_strCache.c_str();
-}
-void TFmtstring::to_Array() {
-    if (m_strFormat.empty())
-        return;
-    size_t _pos = 0, _len = m_strFormat.size(), _pBegin = 0;
-    for (; _pos < _len; _pos++) {
-        if (m_strFormat[_pos] == m_strDel) {
-            key_num++;
-            lkeylist.push_back(m_strFormat.substr(_pBegin, _pos - _pBegin));
-            _pBegin = _pos + 1;
-        }
-    }
-    size_t _pEnd = m_strFormat.rfind(m_strDel);
-    if (_pEnd != tstring::npos && _pEnd < m_strFormat.size())
-        lkeylist.push_back(m_strFormat.substr(_pEnd + 1));
-}
-
-void TStringHelper::split(
-        std::list<tstring> &ret,
-        const tstring &_src,
-        const char _del) {
+void TStringHelper::split(std::list<tstring> &ret, const tstring &_src, const char _del) {
     if (_src.empty())
         return;
     ret.clear();
@@ -55,10 +19,7 @@ void TStringHelper::split(
     if (_pBegin != _src.size())
         ret.push_back(_src.substr(_pBegin));
 }
-void TStringHelper::splitBytes(
-        std::list<tstring> &ret,
-        const tstring &_src,
-        size_t len) {
+void TStringHelper::splitBytes(std::list<tstring> &ret, const tstring &_src, size_t len) {
     ret.clear();
     size_t _pos = 0, _len = _src.size(), _left = _src.size();
     if (_len < len) {
@@ -76,8 +37,7 @@ void TStringHelper::splitBytes(
 }
 tstring TStringHelper::ltrim(tstring src)  //移除前方空格
 {
-    string::iterator p =
-            std::find_if(src.begin(), src.end(), not1(ptr_fun(::isspace)));
+    string::iterator p = std::find_if(src.begin(), src.end(), not1(ptr_fun(::isspace)));
     src.erase(src.begin(), p);
     return src;
 }
@@ -87,8 +47,7 @@ tstring TStringHelper::trim(tstring src)  //移除前后空格
 }
 tstring TStringHelper::rtrim(tstring src)  //移除后面空格
 {
-    string::reverse_iterator p =
-            find_if(src.rbegin(), src.rend(), not1(ptr_fun(::isspace)));
+    string::reverse_iterator p = find_if(src.rbegin(), src.rend(), not1(ptr_fun(::isspace)));
     src.erase(p.base(), src.end());
     return src;
 }
@@ -115,26 +74,17 @@ tstring TStringHelper::toupper(tstring src)  //大写
     return src;
 }
 
-tstring TStringHelper::replaceAll(
-        tstring src,
-        const char _src,
-        const char _des) {
+tstring TStringHelper::replaceAll(tstring src, const char _src, const char _des) {
     //[=] 以值的方式捕获所有的外部自动变量。
-    std::transform(src.begin(), src.end(), src.begin(), [=](char ch) -> char {
-        return ch == _src ? _des : ch;
-    });
+    std::transform(src.begin(), src.end(), src.begin(), [=](char ch) -> char { return ch == _src ? _des : ch; });
     return src;
 }
-tstring TStringHelper::replaceAll(
-        tstring src,
-        const char *_src,
-        const char *_des) {
+tstring TStringHelper::replaceAll(tstring src, const char *_src, const char *_des) {
     if (NULL == _src || NULL == _des)
         return src;
     size_t pBegin;
     while ((pBegin = src.find(_src)) != tstring::npos)
-        src = src.substr(0, pBegin) + tstring(_des) +
-                src.substr(pBegin + strlen(_src));
+        src = src.substr(0, pBegin) + tstring(_des) + src.substr(pBegin + strlen(_src));
     return src;
 }
 bool TStringHelper::startWith(const tstring &src, const char *prefix) {
@@ -172,7 +122,7 @@ tstring TStringHelper::toBytes(const tstring &src) {
     for (; _pos < _len; _pos++) {
         tstring temp;
         temp = TStringHelper::toBytes(src[_pos]);
-        byteArry.assign(temp);
+        byteArry += temp;
     }
     return byteArry;
 }

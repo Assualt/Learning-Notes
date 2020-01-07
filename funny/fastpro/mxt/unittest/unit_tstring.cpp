@@ -2,31 +2,11 @@
 #include "base/xstring.h"
 using namespace xmt;
 TEST(TFmtString___Test, format) {
-    tstring tmp1 = TFmtstring("temp:%,from:%").arg("123").arg('c').c_str();
+    tstring tmp1 = TFmtString("temp:%,from:%").arg("123").arg('c').str();
     EXPECT_EQ(tmp1, "temp:123,from:c");
 
-    tstring tmp2 = TFmtstring("1:%,2:%,3:%,4:%")
-                           .arg('c')
-                           .arg("string")
-                           .arg(1)
-                           .arg(1.23)
-                           .c_str();
+    tstring tmp2 = TFmtString("1:%,2:%,3:%,4:%").arg('c').arg("string").arg(1).arg(1.23).str();
     EXPECT_EQ(tmp2, "1:c,2:string,3:1,4:1.23");
-
-    tstring fixedString = TFmtstring::toFixed(4, 2, '0');
-    EXPECT_EQ(fixedString, "04");
-
-    tstring fixedString1 = TFmtstring::toFixed(4, 2, '0', false);
-    EXPECT_EQ(fixedString1, "40");
-
-    tstring fixedString2 = TFmtstring::toFixed(23.313, 4, '0');
-    EXPECT_EQ(fixedString2, "23.3");
-
-    tstring fixedString3 = TFmtstring::toFixed("123", 4, ' ');
-    EXPECT_EQ(fixedString3, " 123");
-
-    tstring fixedString4 = TFmtstring::toFixed("123", 4, ' ', false);
-    EXPECT_EQ(fixedString4, "123 ");
 }
 
 TEST(TStringHelper___Test, Split) {

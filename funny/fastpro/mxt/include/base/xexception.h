@@ -16,34 +16,27 @@ NAMESPACE_BEGIN
 // 	from	1101 used by Database
 // */
 
-#define DECLARE_EXCEPTION(exp, expParent)                             \
-    class exp : public expParent {                                    \
-    public:                                                           \
-        explicit exp(const char *lpszMsg, XEP_CODE nCode) throw() :   \
-                expParent(lpszMsg, nCode) {}                          \
-        explicit exp(const tstring &strMsg, XEP_CODE nCode) throw() : \
-                expParent(strMsg.c_str(), nCode) {}                   \
-        explicit exp(const tstring &lpszMsg) throw() :                \
-                expParent(lpszMsg.c_str()) {}                         \
-        exp(const exp &re) throw() : expParent(re) {}                 \
+#define DECLARE_EXCEPTION(exp, expParent)                                                                 \
+    class exp : public expParent {                                                                        \
+    public:                                                                                               \
+        explicit exp(const char *lpszMsg, XEP_CODE nCode) throw() : expParent(lpszMsg, nCode) {}          \
+        explicit exp(const tstring &strMsg, XEP_CODE nCode) throw() : expParent(strMsg.c_str(), nCode) {} \
+        explicit exp(const tstring &lpszMsg) throw() : expParent(lpszMsg.c_str()) {}                      \
+        exp(const exp &re) throw() : expParent(re) {}                                                     \
     };
 
-const char m_strErrorMsg[6][20] = {"NORMAL",
-                                   "Normal Error",
-                                   "Invalid Args",
-                                   "Handler Error",
-                                   "Internal Error",
-                                   "Unknown Error"};
+const char m_strErrorMsg[6][20] =
+        {"NORMAL", "Normal Error", "Invalid Args", "Handler Error", "Internal Error", "Unknown Error"};
 
 class XException : public std::exception {
 public:
     enum XEP_CODE {
-        XEP_NORMAIL,         //正常
-        XEP_ERROR,           //一般错误
-        XEP_INVALID_ARGS,    //错误参数
-        XEP_HADNLER_ERROR,   //处理错误
-        XEP_INTERNAL_ERROR,  //内部错误
-        XEP_UNKNOWN_ERROR    //未知错误
+        XEP_NORMAIL,         //
+        XEP_ERROR,           //
+        XEP_INVALID_ARGS,    //
+        XEP_HADNLER_ERROR,   //
+        XEP_INTERNAL_ERROR,  //
+        XEP_UNKNOWN_ERROR    //
     };
     XException(const char *what, XEP_CODE code = XEP_ERROR) throw() {
         m_nCode = code;
