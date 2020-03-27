@@ -124,7 +124,7 @@ protected:
             flushFormat();
         return *this;
     }
-    typeStream &getOutput(void) {
+    typeStream &getSelf(void) {
         return *this;
     }
     static char g_nEndFlags;

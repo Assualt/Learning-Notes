@@ -3,7 +3,7 @@
 
 #ifndef NOT_USE_NAME_SPACE
 //! The begining of the namespace
-#define NAMESPACE_BEGIN namespace xmt {
+#define NAMESPACE_BEGIN namespace hmt {
 //! The namespace's name
 #define NAMESPACE_NAME xmt
 //! The end of the namespace

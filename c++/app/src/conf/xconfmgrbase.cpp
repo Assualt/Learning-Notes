@@ -2,7 +2,7 @@
 
 NAMESPACE_BEGIN
 
-TConfigureManagerBase::TConfigureManagerBase(const xmt::tstring &strConfDir, CONF_TYPE nType) :
+TConfigureManagerBase::TConfigureManagerBase(const tstring &strConfDir, CONF_TYPE nType) :
         m_strConfigureDir(strConfDir),
         m_nConfType(nType) {
     ScanFilePath(m_strConfigureDir);
@@ -45,7 +45,7 @@ const std::vector<tstring> &TConfigureManagerBase::getAllConfFiles() const {
     return m_strFileNames;
 }
 
-void TConfigureManagerBase::ScanFilePath(const xmt::tstring &strDirName) {
+void TConfigureManagerBase::ScanFilePath(const tstring &strDirName) {
     if (strDirName.empty())
         return;
     struct stat st;

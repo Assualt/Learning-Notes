@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "base/xstring.h"
-using namespace xmt;
+using namespace hmt;
 TEST(TFmtString___Test, format) {
     tstring tmp1 = TFmtString("temp:%,from:%").arg("123").arg('c').str();
     EXPECT_EQ(tmp1, "temp:123,from:c");
