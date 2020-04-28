@@ -8,7 +8,7 @@ vpath %.cpp ../src:../src/base/:../src/conf/:../unittest
 #LIBS
 TESTLIBS=-pthread -L/usr/local/lib/ -lgtest
 
-BASEOBJS = xstring.o xstringbuilder.o xtoken.o xconfmgrbase.o
+BASEOBJS = xstring.o xstringbuilder.o xtoken.o xconfmgrbase.o xxmlconfmgr.o
 
 ALLOBJS =  $(BASEOBJS)
 
