@@ -3,8 +3,7 @@ CXX = gcc
 FLAG = -Wno-literal-suffix -Wno-deprecated -Wsign-compare  -D_POSIX_PTHREAD_SEMANTICS -D_POSIX_THREAD_PRIORITY_SCHEDULING
 CFLAGS 	= $(FLAG)  -g -Wall -I../include  $(SYSFLAGS) -std=c++11 
 
-#VPATH
-VPATH = ../src:../src/base:../src/conf:../unittest/
+vpath %.cpp ../src:../src/base/:../src/conf/:../unittest
 
 #LIBS
 TESTLIBS=-pthread -L/usr/local/lib/ -lgtest

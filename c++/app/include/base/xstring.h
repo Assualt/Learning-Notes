@@ -80,9 +80,9 @@ public:
     TFormatStream(void) : typeStream(), m_lpszFormat(&g_nEndFlags) {}
     ~TFormatStream(void) {}
 
-    TFormatStream &format(const tstring &lpszFormat) {
+    TFormatStream &format(const char *lpszFormat) { // 此处不能使用lpszFormat为string类型,否则会出现错误
         flushFormat();
-        m_lpszFormat = lpszFormat.c_str();
+        m_lpszFormat = lpszFormat;
         return outPrefix();
     }
     template <typename typeArg>
@@ -120,13 +120,15 @@ protected:
             m_lpszFormat = lpPos + 1;
             if (*m_lpszFormat == '%' && *(m_lpszFormat + 1) != '%')
                 return outLoop();
-        } else
+        } else{
             flushFormat();
+        }
         return *this;
     }
     typeStream &getSelf(void) {
         return *this;
     }
+protected:
     static char g_nEndFlags;
     const char *m_lpszFormat;
 };
