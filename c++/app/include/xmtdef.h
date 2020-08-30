@@ -5,9 +5,9 @@
 //! The begining of the namespace
 #define NAMESPACE_BEGIN namespace hmt {
 //! The namespace's name
-#define NAMESPACE_NAME xmt
+#define NAMESPACE_NAME hmt
 //! The end of the namespace
-#define NAMESPACE_END }
+#define NAMESPACE_END }  // namespace hmt
 #else
 //! The begining of the namespace
 #define NAMESPACE_BEGIN
@@ -36,9 +36,4 @@
 #define XMT_UNIC
 #endif
 
-enum VAL_TYPE { TYPE_CHAR, TYPE_SHORT, TYPE_INT, TYPE_FLOAT, TYPE_DOUBLE, TYPE_LONG, TYPE_LONGLONG, TYPE_STRING };
-// Data defined
-typedef unsigned long long ulonglong;
-
-// contain some necessary .h
 #endif

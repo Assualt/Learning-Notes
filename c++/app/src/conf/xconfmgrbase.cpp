@@ -1,10 +1,9 @@
 #include "conf/xconfmgrbase.h"
-
+#include "system/xlog.h"
 NAMESPACE_BEGIN
 
 TConfigureManagerBase::TConfigureManagerBase(const tstring &strConfDir, CONF_TYPE nType) :
-        m_strConfigureDir(strConfDir),
-        m_nConfType(nType) {
+        m_strConfigureDir(strConfDir), m_nConfType(nType) {
     ScanFilePath(m_strConfigureDir);
 }
 
@@ -16,29 +15,19 @@ bool TConfigureManagerBase::ChangeAccessPath(const tstring &strConfDir) {
 }
 
 tstring TConfigureManagerBase::getConfType() {
-    int type = static_cast<int>(m_nConfType);
-    tstring strType;
-    switch (type) {
+    switch (static_cast<int>(m_nConfType)) {
     case TYPE_UNKNOWN:
-        strType = "";
-        break;
-    case TYPE_INI:
-        strType = ".ini";
-        break;
-    case TYPE_XML:
-        strType = ".xml";
-        break;
-    case TYPE_JSON:
-        strType = ".json";
-        break;
-    case TYPE_YML:
-        strType = ".yml";
-        break;
+        return "";
     default:
-        strType = ".ini";
-        break;
+    case TYPE_INI:
+        return ".ini";
+    case TYPE_XML:
+        return ".xml";
+    case TYPE_JSON:
+        return ".json";
+    case TYPE_YML:
+        return ".yml";
     }
-    return strType;
 }
 
 const std::vector<tstring> &TConfigureManagerBase::getAllConfFiles() const {
@@ -125,14 +114,8 @@ void TInIConfigureManager::initSingerFile(TFileListMap &t, const tstring &confPa
                 size_t nPos = lineTmp.find("]");
                 if (nPos != tstring::npos && nPos != 1) {  // Found New Keys
                     if (!strSectionKey.empty()) {
-                        if (t.find(strSectionKey) != t.end()) {
-                            std::cout << TFmtString(
-                                                 "duplicate Section key(%) has "
-                                                 "been found")
-                                                 .arg(strSectionKey)
-                                                 .str()
-                                      << std::endl;
-                        }
+                        if (t.find(strSectionKey) != t.end())
+                            logger.info("duplicate section key (%s) has been found", strSectionKey);
                         t[strSectionKey] = SectionKvMap;
                         SectionKvMap.clear();
                     }
@@ -159,17 +142,16 @@ void TInIConfigureManager::initSingerFile(TFileListMap &t, const tstring &confPa
             }
         }
 
-        if (t.find(strSectionKey) != t.end()) {
-            std::cout << TFmtString("duplicate key(%) has been found").arg(strSectionKey).str() << std::endl;
-        }
+        if (t.find(strSectionKey) != t.end())
+            logger.info("duplicate key(%s) has been found", strSectionKey);
         t[strSectionKey] = SectionKvMap;
         fin.close();
     } catch (TConfigureException &e) {
-        std::cout << "Catch Configuration Exception: " << e.what() << std::endl;
+        logger.info("Catch Configuration Execption: %s", e.what());
     } catch (std::exception &e) {
-        std::cout << "Catch exception: " << e.what() << std::endl;
+        logger.info("Catch Standrd Exception: %s", e.what());
     } catch (...) {
-        std::cout << "Catch unknown exception: " << std::endl;
+        logger.info("Catch unknown Exception.");
     }
 }
 

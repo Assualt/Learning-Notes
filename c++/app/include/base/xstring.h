@@ -3,7 +3,7 @@
 
 #include <list>
 #include "xmtdef.h"
-#include "string.h"
+#include <cstring>
 #include "xexception.h"
 #include <algorithm>
 #include <string>
@@ -46,7 +46,7 @@ extern tstring toString(val_type val) {
 class TStringHelper {
 public:
     static tstring m_strEmptyString;
-    static void split(std::list<tstring> &ret, const tstring &_src, const char _del = ',');
+    static void split(std::list<tstring> &ret, const tstring &_src, char _del = ',');
     static void splitBytes(std::list<tstring> &ret, const tstring &_src, size_t len = 8);
     static tstring ltrim(tstring src);    //去掉左方空格
     static tstring trim(tstring src);     //去掉左右方空格
@@ -55,8 +55,8 @@ public:
     static char tolower(char c);          //小写
     static tstring tolower(tstring src);  //小写
     static tstring toupper(tstring src);  //大写
-    static tstring replaceAll(tstring src, const char _src,
-                              const char _des);  //字符替换
+    static tstring replaceAll(tstring src, char _src,
+                              char _des);  //字符替换
     static tstring replaceAll(tstring src, const char *_src,
                               const char *_des);  //字符串替换，建议
     static bool startWith(const tstring &src, const char *prefix);
@@ -64,23 +64,22 @@ public:
     static int toInt(const tstring &src, int base = 10);
     static float toFloat(const tstring &src);
     static double toDouble(const tstring &src);
-    static tstring toBytes(const char c);
+    static tstring toBytes(char c);
     static tstring toBytes(const tstring &src);
     template <typename typeChar>
     static bool strncmp(const typeChar *str1, const typeChar *str2) {
         tstring _s1 = toString(str1), _s2 = toString(str2);
         if (_s1.length() != _s2.length())
             return false;
-        return TStringHelper::tolower(_s1) == TStringHelper::tolower(_s2) ? true : false;
+        return TStringHelper::tolower(_s1) == TStringHelper::tolower(_s2);
     }
 };
 template <class typeStream>
 class TFormatStream : public typeStream {
 public:
-    TFormatStream(void) : typeStream(), m_lpszFormat(&g_nEndFlags) {}
-    ~TFormatStream(void) {}
+    TFormatStream() : typeStream(), m_lpszFormat(&g_nEndFlags) {}
 
-    TFormatStream &format(const char *lpszFormat) { // 此处不能使用lpszFormat为string类型,否则会出现错误
+    TFormatStream &format(const char *lpszFormat) {  // 此处不能使用lpszFormat为string类型,否则会出现错误
         flushFormat();
         m_lpszFormat = lpszFormat;
         return outPrefix();
@@ -90,7 +89,7 @@ public:
         getSelf() << val;
         return outPrefix();
     }
-    void flushFormat(void) {
+    void flushFormat() {
         if (*m_lpszFormat) {
             getSelf() << m_lpszFormat;
             m_lpszFormat = &g_nEndFlags;
@@ -98,10 +97,10 @@ public:
     }
 
 protected:
-    TFormatStream &outLoop(void) {
+    TFormatStream &outLoop() {
         while (*m_lpszFormat == '%') {
             const char *lpPos = strchr(m_lpszFormat + 1, '%');
-            if (lpPos != NULL) {
+            if (lpPos != nullptr) {
                 typeStream::write(m_lpszFormat, static_cast<std::streamsize>(lpPos - m_lpszFormat));
                 m_lpszFormat = lpPos + 1;
                 if (*m_lpszFormat != '%' || *(m_lpszFormat + 1) == '%')
@@ -113,21 +112,22 @@ protected:
         }
         return *this;
     }
-    TFormatStream &outPrefix(void) {
+    TFormatStream &outPrefix() {
         const char *lpPos = strchr(m_lpszFormat, '%');
-        if (lpPos != NULL) {
+        if (lpPos != nullptr) {
             typeStream::write(m_lpszFormat, static_cast<std::streamsize>(lpPos - m_lpszFormat));
             m_lpszFormat = lpPos + 1;
             if (*m_lpszFormat == '%' && *(m_lpszFormat + 1) != '%')
                 return outLoop();
-        } else{
+        } else {
             flushFormat();
         }
         return *this;
     }
-    typeStream &getSelf(void) {
+    typeStream &getSelf() {
         return *this;
     }
+
 protected:
     static char g_nEndFlags;
     const char *m_lpszFormat;
@@ -135,11 +135,11 @@ protected:
 class TFmtString : public TFormatStream<tostrstream> {
 public:
     typedef TFormatStream<tostrstream> typeParent;
-    TFmtString(void) : typeParent() {}
-    TFmtString(const char *lpszFormat) : typeParent() {
+    TFmtString() : typeParent() {}
+    explicit TFmtString(const char *lpszFormat) : typeParent() {
         typeParent::format(lpszFormat);
     }
-    tstring toString(void) const {
+    tstring toString() const {
         return typeParent::str();
     }
 };

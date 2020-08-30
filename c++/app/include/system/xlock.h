@@ -7,25 +7,25 @@ NAMESPACE_BEGIN
 DECLARE_EXCEPTION(LockException, XException);
 class TLock {
 public:
-    TLock(void) {
-        pthread_mutex_init(&m_lock, NULL);
+    TLock() {
+        pthread_mutex_init(&m_lock, nullptr);
     }  //初始化所变量
-    ~TLock(void) {
+    ~TLock() {
         pthread_mutex_destroy(&m_lock);
     }  //销毁锁变量
-    void lock(void) {
+    void lock() {
         int RetCode = pthread_mutex_lock(&m_lock);
         if (RetCode) {
             throw LockException(TFmtString("try to mutex lock error. code:%").arg(RetCode).str());
         }
     }  //未能锁住当前变量　抛异常出去
-    void release(void) {
+    void release() {
         int RetCode = pthread_mutex_unlock(&m_lock);
         if (RetCode) {
             throw LockException(TFmtString("try to mutex unlock error. code:%").arg(RetCode).str());
         }
     }  //未能释放当前锁变量　抛异常出去
-    void trylock(void) {
+    void trylock() {
         int RetCode = pthread_mutex_trylock(&m_lock);
         if (RetCode) {
             throw LockException(TFmtString("try to mutex trylock error. code:%").arg(RetCode).str());
@@ -33,29 +33,29 @@ public:
     }
 
 protected:
-    mutable pthread_mutex_t m_lock;  //定义可变的变量　锁变量
+    mutable pthread_mutex_t m_lock{};  //定义可变的变量　锁变量
 };
 
 class TSpinLock {
-    TSpinLock(void) {
+    TSpinLock() {
         pthread_spin_init(&m_lock, 0);
     }  //初始化所变量
-    ~TSpinLock(void) {
+    ~TSpinLock() {
         pthread_spin_destroy(&m_lock);
     }  //销毁锁变量
-    void lock(void) {
+    void lock() {
         int RetCode = pthread_spin_lock(&m_lock);
         if (RetCode) {
             throw LockException(TFmtString("try to spin lock error. code:%").arg(RetCode).str());
         }
     }  //未能锁住当前变量　抛异常出去
-    void release(void) {
+    void release() {
         int RetCode = pthread_spin_unlock(&m_lock);
         if (RetCode) {
             throw LockException(TFmtString("try to spin unlock error. code:%").arg(RetCode).str());
         }
     }  //未能释放当前锁变量　抛异常出去
-    bool trylock(void) {
+    bool trylock() {
         int RetCode = pthread_spin_trylock(&m_lock);
         if (RetCode == 0) {
             return 0;
@@ -66,43 +66,43 @@ class TSpinLock {
     }
 
 protected:
-    mutable pthread_spinlock_t m_lock;  //定义可变的变量　锁变量
+    mutable pthread_spinlock_t m_lock{};  //定义可变的变量　锁变量
 };
 
 //基类实现　ReadLock WriteLock
 class TRWLock {
-    TRWLock(void) {
-        pthread_rwlock_init(&m_lock, NULL);
+    TRWLock() {
+        pthread_rwlock_init(&m_lock, nullptr);
     }  //初始化所变量
-    ~TRWLock(void) {
+    ~TRWLock() {
         pthread_rwlock_destroy(&m_lock);
     }  //销毁锁变量
-    void readLock(void) {
+    void readLock() {
         int RetCode = pthread_rwlock_rdlock(&m_lock);
         if (RetCode) {
             throw LockException(TFmtString("try to rwlock readlock error. code:%").arg(RetCode).str());
         }
     }
-    void writeLock(void) {
+    void writeLock() {
         int RetCode = pthread_rwlock_wrlock(&m_lock);
         if (RetCode) {
             throw LockException(TFmtString("try to rwlock writelock error. code:%").arg(RetCode).str());
         }
     }
-    void release(void) {
+    void release() {
         int RetCode = pthread_rwlock_unlock(&m_lock);
         if (RetCode) {
             throw LockException(TFmtString("try to rwlock relaselock error. code:%").arg(RetCode).str());
         }
     }  //未能释放当前锁变量　抛异常出去
-    void tryReadlock(void) {
+    void tryReadlock() {
         int RetCode = pthread_rwlock_tryrdlock(&m_lock);
         if (RetCode) {
             throw LockException(TFmtString("try to rwlock tryReadlock error. code:%").arg(RetCode).str());
         }
     }
     //未能释放当前锁变量　抛异常出去
-    void tryWritelock(void) {
+    void tryWritelock() {
         int RetCode = pthread_rwlock_trywrlock(&m_lock);
         if (RetCode) {
             throw LockException(TFmtString("try to rwlock trywritelock error. code:%").arg(RetCode).str());
@@ -110,16 +110,16 @@ class TRWLock {
     }
 
 protected:
-    mutable pthread_rwlock_t m_lock;  //定义可变的变量　锁变量
+    mutable pthread_rwlock_t m_lock{};  //定义可变的变量　锁变量
 };
 
 template <class type_lock>
 class TAutoLockImpl {
 public:
-    TAutoLockImpl(type_lock &lock) : m_lock(&lock) {
+    explicit TAutoLockImpl(type_lock &lock) : m_lock(&lock) {
         m_lock->lock();
     }
-    void release(void) {
+    void release() {
         m_lock->release();
         m_lock = nullptr;
     }
@@ -133,10 +133,10 @@ protected:
 template <class type_lock>
 class TAutoReadLockImpl {
 public:
-    TAutoReadLockImpl(type_lock &lock) : m_lock(&lock) {
+    explicit TAutoReadLockImpl(type_lock &lock) : m_lock(&lock) {
         m_lock->readLock();
     }
-    void release(void) {
+    void release() {
         m_lock->release();
         m_lock = nullptr;
     }
@@ -150,10 +150,10 @@ protected:
 template <class type_lock>
 class TAutoWriteLockImpl {
 public:
-    TAutoWriteLockImpl(type_lock &lock) : m_lock(&lock) {
+    explicit TAutoWriteLockImpl(type_lock &lock) : m_lock(&lock) {
         m_lock->writeLock();
     }
-    void release(void) {
+    void release() {
         m_lock->release();
         m_lock = nullptr;
     }
@@ -168,6 +168,6 @@ typedef TAutoReadLockImpl<TRWLock> TAutoReadLock;
 typedef TAutoWriteLockImpl<TRWLock> TAutoWriteLock;
 typedef TAutoLockImpl<TLock> TAutoLock;
 
-NAMESPACE_END
+NAMESPACE_END  // namespace hmt
 
 #endif
