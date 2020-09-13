@@ -1,10 +1,10 @@
 #ifndef _XLOCK_H_2020_01_04
 #define _XLOCK_H_2020_01_04
 #include <pthread.h>
-#include "base/xstring.h"
-#include "base/xexception.h"
+#include "base/tstring.h"
+#include "base/texception.h"
 NAMESPACE_BEGIN
-DECLARE_EXCEPTION(LockException, XException);
+DECLARE_EXCEPTION(LockException, TException);
 class TLock {
 public:
     TLock() {

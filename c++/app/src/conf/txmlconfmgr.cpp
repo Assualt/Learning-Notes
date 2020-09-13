@@ -1,4 +1,4 @@
-#include "conf/xxmlconfmgr.h"
+#include "conf/txmlconfmgr.h"
 
 NAMESPACE_BEGIN
 

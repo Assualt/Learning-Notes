@@ -2,7 +2,7 @@
 #define _X_THREAD_H_2018_12_18
 
 #include "xmtdef.h"
-#include "base/xstring.h"
+#include "base/tstring.h"
 #ifdef XMT_WIN_32
 
 #else

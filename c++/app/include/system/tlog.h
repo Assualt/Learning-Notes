@@ -122,9 +122,9 @@ Level getLevelFromString(const string &basicString);
 class Logger {
 public:
     Logger(const std::string &loggerName) :
-            m_strLoggerName(loggerName),
             m_strMessageFmt("%(asctime)s :%(levelname)s: %(message)s"),
-            m_nLevel(detail::Level::DEBUG) {}
+            m_nLevel(detail::Level::DEBUG),
+            m_strLoggerName(loggerName) {}
     void setLevel(detail::Level level) {
         m_nLevel = level;
     }

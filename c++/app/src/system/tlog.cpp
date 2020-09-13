@@ -1,7 +1,7 @@
 //
 // Created by Sunshine on 2020/8/30.
 //
-#include "system/xlog.h"
+#include "system/tlog.h"
 
 NAMESPACE_BEGIN
 
@@ -114,11 +114,11 @@ std::string getFormatTimeString(const char *strFmt) {
 
 void FormatBasicMsg(const std::string &FilledString, const char op, std::stringstream &ss, const std::string &item) {
     char FilledChar = ' ';
-    int FilledLength = 0;
+    size_t FilledLength = 0;
     bool Find_start = false;
     bool Find_Pointer = false;
-    int FilledWithPointer = 0;
-    int FilledWithZS;
+    size_t FilledWithPointer = 0;
+    size_t FilledWithZS;
     for (char i : FilledString) {
         if (i >= '0' && i <= '9' && Find_start && !Find_Pointer) {
             FilledLength = FilledLength * 10 + i - '0';

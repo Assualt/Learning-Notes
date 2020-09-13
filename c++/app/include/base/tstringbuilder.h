@@ -2,7 +2,7 @@
 #define _X_STRINGBUILDER_H
 
 #include "xmtdef.h"
-#include "xstring.h"
+#include "tstring.h"
 #include <list>
 #include <cstring>
 #include <numeric>
@@ -107,7 +107,7 @@ public:
             return *this;
         }
         if (_pBegin > m_totalSize - 1 || (_pBegin + _len) > m_totalSize)
-            throw XException(TFmtString("Can't delete the % length,while the "
+            throw TException(TFmtString("Can't delete the % length,while the "
                                         "total length is %")
                                      .arg(_len)
                                      .arg(m_totalSize)
@@ -143,7 +143,7 @@ public:
     }
     tstringbuilder &insert(size_t _pos, const char *c) {
         if (_pos > m_totalSize - 1)
-            throw XException(TFmtString("cant't insert such char:% at pos:%").arg(c).arg(_pos).str().c_str());
+            throw TException(TFmtString("cant't insert such char:% at pos:%").arg(c).arg(_pos).str().c_str());
         if (m_totalSize == 0)
             return append(c);
         iter_t iter(m_Data.begin()), iterend(m_Data.end());

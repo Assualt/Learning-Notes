@@ -5,6 +5,7 @@
 
 #include <exception>
 #include <iostream>
+#include <string.h>
 
 using namespace std;
 
@@ -28,7 +29,7 @@ NAMESPACE_BEGIN
 const char m_strErrorMsg[6][20] =
         {"NORMAL", "Normal Error", "Invalid Args", "Handler Error", "Internal Error", "Unknown Error"};
 
-class XException : public std::exception {
+class TException : public std::exception {
 public:
     enum XEP_CODE {
         XEP_NORMAIL,         //
@@ -38,7 +39,7 @@ public:
         XEP_INTERNAL_ERROR,  //
         XEP_UNKNOWN_ERROR    //
     };
-    XException(const char *what, XEP_CODE code = XEP_ERROR) throw() {
+    TException(const char *what, XEP_CODE code = XEP_ERROR) throw() {
         m_nCode = code;
         if (NULL == what) {
             m_strMsg = new char[1];
@@ -59,10 +60,10 @@ public:
         return m_strErrorMsg[m_nCode];
     }
 
-    ~XException() throw() {
+    ~TException() throw() {
         delete[] m_strMsg;
     }
-    friend ostream &operator<<(ostream &out, XException &e) {
+    friend ostream &operator<<(ostream &out, TException &e) {
         out << e.what();
         return out;
     }

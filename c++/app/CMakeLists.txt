@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.10)
 project(app)
 
 set(CMAKE_CXX_STANDARD 14)
@@ -10,33 +10,34 @@ include_directories(include/net)
 include_directories(include/system)
 include_directories(src)
 
+add_definitions("-Wall -g")
 add_executable(app
-        include/base/xexception.h
-        include/base/xref.h
-        include/base/xstring.h
-        include/base/xstringbuilder.h
-        include/base/xtoken.h
-        include/base/xvariant.h
-        include/conf/xconfmgrbase.h
-        include/conf/xxmlconfmgr.h
-        include/net/xtcpsocket.h
-        include/system/xfile.h
-        include/system/xlock.h
-        include/system/xlog.h
-        include/system/xrunable.h
-        include/system/xthread.h
+        include/base/texception.h
+        include/base/tref.h
+        include/base/tstring.h
+        include/base/tstringbuilder.h
+        include/base/ttoken.h
+        include/base/tvariant.h
+        include/conf/tconfmgrbase.h
+        include/conf/txmlconfmgr.h
+        include/net/ttcpsocket.h
+        include/system/tfile.h
+        include/system/tlock.h
+        include/system/tlog.h
+        include/system/trunable.h
+        include/system/tthread.h
         include/xmtdef.h
-        src/base/xref.cpp
-        src/base/xstring.cpp
-        src/base/xtoken.cpp
-        src/base/xvariant.cpp
-        src/conf/xconfmgrbase.cpp
-        src/conf/xxmlconfmgr.cpp
-        src/net/xtcpsocket.cpp
-        src/system/xfile.cpp
-        src/system/xrunable.cpp
-        src/system/xthread.cpp
-        src/system/xlog.cpp
+        src/base/tref.cpp
+        src/base/tstring.cpp
+        src/base/ttoken.cpp
+        src/base/tvariant.cpp
+        src/conf/tconfmgrbase.cpp
+        src/conf/txmlconfmgr.cpp
+        src/net/ttcpsocket.cpp
+        src/system/tfile.cpp
+        src/system/trunable.cpp
+        src/system/tthread.cpp
+        src/system/tlog.cpp
         main.cpp)
 #        unittest/unit_tconf.cpp
 #        unittest/unit_tstring.cpp)

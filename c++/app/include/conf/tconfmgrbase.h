@@ -1,21 +1,20 @@
 #ifndef _X_CONFMGRBASE_H_2018_12_14_
 #define _X_CONFMGRBASE_H_2018_12_14_
-#include <base/xstring.h>
-
 #include <algorithm>
 #include <map>
 #include <list>
 #include <vector>
-#include <base/xexception.h>
 #include <fstream>
 
+#include <base/texception.h>
+#include <base/tstring.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <errno.h>
 
 NAMESPACE_BEGIN
 
-DECLARE_EXCEPTION(TConfigureException, XException);
+DECLARE_EXCEPTION(TConfigureException, TException);
 
 class TConfigureManagerBase {
 public:

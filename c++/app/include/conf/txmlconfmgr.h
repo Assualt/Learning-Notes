@@ -1,8 +1,8 @@
 #ifndef _X_XMLCONFMGR_H_2020_04_28
 #define _X_XMLCONFMGR_H_2020_04_28
 
-#include "xconfmgrbase.h"
-#include "base/xexception.h"
+#include "tconfmgrbase.h"
+#include "base/texception.h"
 #include <map>
 #include <vector>
 NAMESPACE_BEGIN

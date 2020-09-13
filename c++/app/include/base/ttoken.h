@@ -1,5 +1,5 @@
 #include "xmtdef.h"
-#include "xstring.h"
+#include "tstring.h"
 NAMESPACE_BEGIN
 
 class TTokens {
@@ -13,12 +13,12 @@ public:
             size_t _pEnd = std::basic_string<char>::npos) :
             m_strDel(lpszDel) {
         if (_pBegin > strlen(lpszSrc) - 1)
-            throw XException(
-                    TFmtString("% arg(_pBegin) error").arg(__FUNCTION__).str().c_str(), XException::XEP_INVALID_ARGS);
+            throw TException(
+                    TFmtString("% arg(_pBegin) error").arg(__FUNCTION__).str().c_str(), TException::XEP_INVALID_ARGS);
         m_strSrc = tstring(lpszSrc).substr(_pBegin, _pEnd - _pBegin);
     }
     void setDelimiter(const char *lpszDel) {
-        if (NULL == lpszDel)
+        if (nullptr == lpszDel)
             return;
         m_strDel = lpszDel;
     }

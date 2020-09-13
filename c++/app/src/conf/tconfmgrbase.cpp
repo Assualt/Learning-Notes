@@ -1,5 +1,5 @@
-#include "conf/xconfmgrbase.h"
-#include "system/xlog.h"
+#include "conf/tconfmgrbase.h"
+#include "system/tlog.h"
 NAMESPACE_BEGIN
 
 TConfigureManagerBase::TConfigureManagerBase(const tstring &strConfDir, CONF_TYPE nType) :
@@ -41,7 +41,7 @@ void TConfigureManagerBase::ScanFilePath(const tstring &strDirName) {
     if (stat(strDirName.c_str(), &st) == -1)
         throw new TConfigureException(
                 TFmtString("config dir is not found. stat error.msg:%").arg(strerror(errno)).str(),
-                XException::XEP_ERROR);
+                TException::XEP_ERROR);
     DIR *dir;
     if ((dir = opendir(m_strConfigureDir.c_str())) != NULL) {
         struct dirent *cur_dirent;
