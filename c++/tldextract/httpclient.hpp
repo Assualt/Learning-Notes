@@ -36,6 +36,7 @@ using namespace std;
 #define TransferEncoding "Transfer-Encoding"
 #define AcceptRanges "Accept-Ranges"
 #define Location "Location"
+#define Cookie "Cookie"
 
 #define HTTP1_1 "HTTP/1.1"
 #define HTTP1_0 "HTTP/1.0"
@@ -202,7 +203,7 @@ public:
             if (obj.getResponseItem(ContentType).find("text/") != std::string::npos)
                 os << obj.m_strResponseText << CTRL;
             else
-                os << "[Binary]" << obj.m_nBodyBytes << "Bytes" << CTRL;
+                os << "[Binary] " << obj.m_nBodyBytes << "Bytes" << CTRL;
         }
         // os << CTRL << "Recv Body Size:" << obj.m_nBodyBytes << " Decode Bytes:" << obj.m_nBodyDecodeBytes << std::endl;
         return os;
@@ -214,6 +215,17 @@ public:
         }
         return "";
     }
+
+    std::string getCookie() {
+        for (auto &item : ResponseBody) {
+            std::string firstItem = item.first;
+            std::transform(firstItem.begin(), firstItem.end(), firstItem.begin(), ::tolower);
+            if (firstItem.find("cookie") != std::string::npos)
+                return item.second;
+        }
+        return "";
+    }
+
     void WriteBodyBytes(const char *buf, size_t nBytes) {
         m_ResponseBuffer.sputn(buf, nBytes);
         m_nBodyBytes += nBytes;
@@ -283,12 +295,17 @@ public:
 };
 
 enum HTTP_TYPE { TYPE_GET, TYPE_POST, TYPE_DELETE, TYPE_PUT };
-#define MAX_SIZE 8192
+#define MAX_SIZE 16384
 class SocketClient {
 public:
-    SocketClient() {
+    SocketClient()
+        : m_nConnectFd(-1)
+        , m_nChunkSize(0)
+        , m_nConnectTimeout(10)
+        , m_bUseSSL(false) {
 #ifdef USE_OPENSSL
         initSSL();
+        m_pConnection = nullptr;
 #endif
     }
     ~SocketClient() {
@@ -335,14 +352,16 @@ private:
     }
 
     void SSLDisConnect() {
-        if (m_pConnection->m_ptrHandle) {
-            SSL_shutdown(m_pConnection->m_ptrHandle);
-            SSL_free(m_pConnection->m_ptrHandle);
-        }
-        if (m_pConnection->m_ptrContext)
-            SSL_CTX_free(m_pConnection->m_ptrContext);
+        if (m_pConnection) {
+            if (m_pConnection->m_ptrHandle) {
+                SSL_shutdown(m_pConnection->m_ptrHandle);
+                SSL_free(m_pConnection->m_ptrHandle);
+            }
+            if (m_pConnection->m_ptrContext)
+                SSL_CTX_free(m_pConnection->m_ptrContext);
 
-        delete m_pConnection;
+            delete m_pConnection;
+        }
     }
 
     ssize_t SSLRecv(int fd, void *buf, ssize_t size) {
@@ -377,10 +396,9 @@ private:
                         logger.error("Recv Bytes Error. Exit now...");
                         return 0;
                     }
-
                 } else {
                     strChunkSize.push_back(buffer[ nPos ]);
-                    // printf("\033[31m%02x\033[0m ", buffer[ nPos ]);
+                    // printf("+ \033[31m%02x\033[0m ", buffer[ nPos ]);
                     nPos += 1;
                 }
             } else if (ChunkState == 1) {
@@ -398,6 +416,7 @@ private:
                 }
             } else if (ChunkState == 2) {
                 ChunkState = 0;
+                // printf("%d \n", m_nChunkSize);
                 logger.debug("Recv %dth block data, current block size:%d total recv blocks Bytes:%d", ++blockCount, m_nChunkSize, AllChunkBodySize);
                 strChunkSize.clear();
             }
@@ -459,6 +478,7 @@ private:
                 int    ChunkState = 0;
                 size_t chunkSize  = 0;
                 size_t blockCount = 0;
+                // Server Apache mode_deflate is not suitable for zlib.
                 RecvChunkData(buffer, i, size, Response, ChunkState, chunkSize, recvBodySize, blockCount);
                 break;
             }
@@ -469,7 +489,6 @@ private:
                         size, BodySizeInResponse, LeftBodySize, EncodingType);
         } else if (EncodingType == EncodingChunk) {
             // printf("\n");
-            logger.info("----------------------Chunked Buffer-----------------------");
         } else if (BodySizeInResponse == -1 && Response.getResponseItem(ContentEncoding) == "gzip") {
             EncodingType = EncodingGzip;
         }
@@ -552,8 +571,9 @@ public:
                 speed = getCurrentSpeed(tBegin, recvBodySize, 'k');
 
                 double leftTime = LeftSize / 1000.0 / speed;
-                logger.debug("Process:%.2f%%, Recv Size:%d bytes , LeftSize:%d bytes, recvBodySize:%d, speed:%.2f kb/s left time:%.2fs",
-                             recvBodySize * 100.0 / BodySizeInResponse, nRead, LeftSize, recvBodySize, speed, leftTime);
+                double Progress = recvBodySize * 100.0 / BodySizeInResponse;
+                logger.debug("Process:%.2f%%, Recv Size:%d bytes , LeftSize:%d bytes, recvBodySize:%d, speed:%.2f kb/s left time:%.2fs", Progress,
+                             nRead, LeftSize, recvBodySize, speed, leftTime);
             }
         } else if (EncodingType == EncodingGzip) {
             while (1) {
@@ -572,11 +592,11 @@ public:
         }
         speed = getCurrentSpeed(tBegin, recvBodySize, 'k');
         logger.info("total size:%d [%.2fKB], cost Time:%.2fs, Response Header:%d Bytes, dataSize:%d bytes speed:%.2f kb/s", nTotal, nTotal / 1000.0,
-                    getCurrentTime(tBegin), HeaderSize, BodySize, speed);
+                    getSpendTime(tBegin), HeaderSize, BodySize, speed);
         return nTotal;
     }
 
-    double getCurrentTime(std::chrono::system_clock::time_point &tBegin) {
+    double getSpendTime(std::chrono::system_clock::time_point &tBegin) {
         auto end      = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - tBegin);
         return double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
@@ -600,68 +620,147 @@ public:
 #ifndef USE_OPENSSL
         return ::send(m_nConnectFd, writeBuf, nSize, MSG_DONTWAIT);
 #else
-        return SSLSend(writeBuf, nSize);
+        if (m_bUseSSL)
+            return SSLSend(writeBuf, nSize);
+        return ::send(m_nConnectFd, writeBuf, nSize, MSG_DONTWAIT);
 #endif
     }
+
     bool connect(const Url &url) {
         m_strConnectUrl    = url.fullurl;
         std::string netloc = url.host;
         int         nPort  = url.port;
-        if (url.scheme == "https")
-            nPort = 443;
+        if (url.scheme == "https") {
+            nPort     = 443;
+            m_bUseSSL = true;
+        }
+        auto currentTime = std::chrono::system_clock::now();
         logger.info("begin to Connect %s:%d ...", netloc, nPort);
         hostent *host = gethostbyname(netloc.c_str());
-        if (nullptr == host)
+        if (nullptr == host) {
+            logger.error("can't get host[%s] ip addr yet", netloc);
             return false;
+        }
         bool ConnectOK = false;
-        for (int i = 0; host->h_addr_list[ i ]; ++i) {
+        int  i         = 0;
+        logger.info("get host[%s] by name cost time %.4f s", netloc, getSpendTime(currentTime));
+        std::string ipAddress;
+        for (; host->h_addr_list[ i ]; ++i) {
             int AFType   = host->h_addrtype;
             m_nConnectFd = socket(AFType, SOCK_STREAM, 0);
-            if (m_nConnectFd == -1)
+            if (m_nConnectFd == -1) {
+                logger.info("Create Socket error. errmsg:%s", strerror(errno));
                 continue;
+            }
             sockaddr_in ServerAddress;
             memset(&ServerAddress, 0, sizeof(ServerAddress));
             ServerAddress.sin_family = AFType;
             ServerAddress.sin_port   = htons(nPort);
             ServerAddress.sin_addr   = *(struct in_addr *)host->h_addr_list[ i ];
-            std::string ipAddress    = inet_ntoa(*(struct in_addr *)host->h_addr_list[ i ]);
-            if (::connect(m_nConnectFd, (struct sockaddr *)&ServerAddress, sizeof(sockaddr_in)) < 0) {
+            ipAddress                = inet_ntoa(*(struct in_addr *)host->h_addr_list[ i ]);
+            logger.info("Begin to connect address %s[%s:%d] with timeout:%d", url.fullurl, ipAddress, nPort, m_nConnectTimeout);
+            // Set connect timeout
+            int oldFlag   = setFDnonBlock(m_nConnectFd);
+            int connected = ::connect(m_nConnectFd, (struct sockaddr *)&ServerAddress, sizeof(sockaddr_in));
+            if (connected == 0) {
+                fcntl(m_nConnectFd, F_SETFL, oldFlag);
+                ConnectOK = true;
+                logger.info("Connect to Server %s[%s:%d] immediately", url.fullurl, ipAddress, nPort);
+                break;
+            } else if (errno != EINPROGRESS) {
                 logger.error("connect address %s[%s:%d] error ...", url.fullurl, ipAddress, nPort);
                 continue;
+            } else {
+                logger.debug("unblock mode socket is connecting %s[%s:%d]...", url.fullurl, ipAddress, nPort);
+                struct timeval tm;
+                tm.tv_sec  = m_nConnectTimeout;
+                tm.tv_usec = 0;
+                fd_set WriteSet;
+                FD_ZERO(&WriteSet);
+                FD_SET(m_nConnectFd, &WriteSet);
+                int res = select(m_nConnectFd + 1, nullptr, &WriteSet, nullptr, &tm);
+                if (res < 0) {
+                    logger.error("connect address %s[%s:%d] error ..., try next url", url.fullurl, ipAddress, nPort);
+                    continue;
+                } else if (res == 0) {
+                    logger.error("connect address %s[%s:%d] timeout[%d] ... try next url", url.fullurl, ipAddress, nPort, m_nConnectTimeout);
+                    continue;
+                }
+                if (!FD_ISSET(m_nConnectFd, &WriteSet)) {
+                    logger.warning("no Events on socket:%d found", m_nConnectFd);
+                    close(m_nConnectFd);
+                    continue;
+                }
+                int       error = -1;
+                socklen_t len   = sizeof(error);
+                if (getsockopt(m_nConnectFd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+                    logger.warning("get socket option failed");
+                    close(m_nConnectFd);
+                    continue;
+                }
+                if (error != 0) {
+                    logger.warning("connection failed after select with the error:%d", error);
+                    close(m_nConnectFd);
+                    continue;
+                }
+                logger.info("connection ready after select with the socket:%d", m_nConnectFd);
+                fcntl(m_nConnectFd, F_SETFL, oldFlag);
+                ConnectOK = true;
+                break;
             }
-            ConnectOK = true;
-            logger.info("connect address %s[%s:%d] Success ...", url.fullurl, ipAddress, nPort);
-            break;
         }
-        if (url.scheme == "https") {
+
+        // if (::connect(m_nConnectFd, (struct sockaddr *)&ServerAddress, sizeof(sockaddr_in)) < 0) {
+        //     logger.error("connect address %s[%s:%d] error ...", url.fullurl, ipAddress, nPort);
+        //     continue;
+        // }
+        if (ConnectOK) {
+            logger.info("connect address %s[%s:%d] Success ...", url.fullurl, ipAddress, nPort);
+            if (url.scheme == "https") {
 #if USE_OPENSSL
-            ConnectOK = SSLConnect();
-            logger.info("Switch to SSL Connection Channle... and Result is :%d, SSL_VERSION %s", ConnectOK, OPENSSL_VERSION_TEXT);
+                ConnectOK = SSLConnect();
+                logger.info("Switch to SSL Connection Channle... and Result is :%d, SSL_VERSION %s", ConnectOK, OPENSSL_VERSION_TEXT);
 #endif
+            }
+        } else {
+            logger.error("connect address %s error ... try times:%d", url.fullurl, i);
+            close(m_nConnectFd);
         }
 
         return ConnectOK;
     }
-    bool disconnect() {
+    void disconnect() {
         ::close(m_nConnectFd);
 #if USE_OPENSSL
         SSLDisConnect();
-
 #endif
     }
-
     ssize_t recvData(int fd, void *buf, size_t size, int ops) {
 #ifndef USE_OPENSSL
         return ::recv(fd, buf, size, ops);
 #else
-        return SSLRecv(fd, buf, size);
+        if (m_bUseSSL)
+            return SSLRecv(fd, buf, size);
+        return ::recv(fd, buf, size, ops);
 #endif
+    }
+    void setConnectTimeout(size_t nSecond) {
+        m_nConnectTimeout = nSecond;
+    }
+
+    int setFDnonBlock(int fd) {
+        int flag = fcntl(fd, F_GETFL, 0);
+        fcntl(fd, F_SETFL, flag | O_NONBLOCK); // 保留原始状态 flag
+        return flag;
     }
 
 private:
     int         m_nConnectFd;
     std::string m_strConnectUrl;
     int         m_nChunkSize;
+    size_t      m_nConnectTimeout;
+    bool        m_bUseSSL;
+    bool        m_bSSLOpened;
 
 #ifdef USE_OPENSSL
     typedef struct {
@@ -670,15 +769,14 @@ private:
     } SSL_Connection;
     SSL_Connection *m_pConnection;
 #endif
-};
+}; // namespace http
 
 class HttpClient {
 public:
     HttpResult Request(const std::string &reqUrl, HTTP_TYPE ntype, bool bRedirect = false, bool verbose = false) {
-        Url          tempUrl(reqUrl);
-        SocketClient client;
-        if (!client.connect(tempUrl)) {
-            return HttpResult(400, "", "Connect TimeOut.");
+        Url tempUrl(reqUrl);
+        if (!m_SocketClient.connect(tempUrl)) {
+            return HttpResult(400, "", "Connect timeout.");
         }
         std::stringstream header;
         switch (ntype) {
@@ -703,10 +801,10 @@ public:
         std::string HttpResouceString = m_ReqHeader.toStringHeader();
         if (verbose)
             std::cout << "* Request Header\n" << m_ReqHeader << ">\n";
-        ssize_t nWrite = client.write(HttpResouceString.c_str(), HttpResouceString.size());
+        ssize_t nWrite = m_SocketClient.write(HttpResouceString.c_str(), HttpResouceString.size());
         if (nWrite != HttpResouceString.size())
             return HttpResult(500, "", "Write data to server error");
-        ssize_t nRead = client.read(m_Response);
+        ssize_t nRead = m_SocketClient.read(m_Response);
         if (!m_Response.getResponseItem(ContentEncoding).empty()) {
             m_Response.tryDecodeBody();
         }
@@ -716,11 +814,17 @@ public:
         }
         std::string itemVal = m_Response.getResponseItem(Location);
         if (!itemVal.empty() && bRedirect) {
-            logger.info("begin to redirect %s url...", itemVal);
-            m_ReqHeader.setRequestPath(m_ReqHeader.getRequestPath() + "/" + itemVal);
+            std::string RequestPath = m_ReqHeader.getRequestPath();
+            if (RequestPath.rfind("/") != std::string::npos)
+                RequestPath = RequestPath.substr(0, RequestPath.rfind("/"));
+            RequestPath.append("/");
+            RequestPath.append(itemVal);
+            m_ReqHeader.setRequestPath(RequestPath);
+            logger.info("begin to redirect %s url...", RequestPath);
             m_Response.clear();
             goto request;
         }
+
         return HttpResult(atoi(m_Response.getResponseItem("code").c_str()), m_Response.getResponseText(), m_Response.getResponseItem("message"));
     }
 
@@ -788,8 +892,18 @@ public:
         this->m_ReqHeader.set(key, val);
     }
 
+    void setConnectTimeout(size_t nSeconds) {
+        m_SocketClient.setConnectTimeout(nSeconds);
+    }
+
+    void setCookie(const std::string &strCookie) {
+        m_ReqHeader.set(Cookie, strCookie);
+    }
+
 protected:
-    HttpResouce m_ReqHeader;
-    HttpResouce m_Response;
+    HttpResouce                           m_ReqHeader;
+    HttpResouce                           m_Response;
+    std::chrono::system_clock::time_point m_ConnectTime;
+    SocketClient                          m_SocketClient;
 };
 } // namespace http
