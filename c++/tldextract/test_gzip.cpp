@@ -1,5 +1,5 @@
 #include "hashutils.hpp"
-#include "logging.hpp"
+#include "logging.h"
 #include <iostream>
 #include <sstream>
 
@@ -41,7 +41,7 @@ int uncompress(MyStringBuffer &in, std::stringstream &out) {
     strm.opaque   = Z_NULL;
     strm.avail_in = 0;
     strm.next_in  = Z_NULL;
-    int ret       = inflateInit2(&strm, 47);
+    int ret       = inflateInit2(&strm, -MAX_WBITS);
 
     if (ret != Z_OK) {
         std::cout << "Init infalteInit2 Failed" << std::endl;
@@ -92,12 +92,22 @@ int uncompress(MyStringBuffer &in, std::stringstream &out) {
 }
 
 int main(int argc, char **argv) {
-    if (argc < 2) {
+    if (argc < 3) {
         Usage();
     }
     process_file(argv[ 1 ]);
     std::stringstream out;
-    int               size = HashUtils::GZipDecompress(stringBuf, out);
+    int               size = uncompress(stringBuf, out);
+	logger.info("Decode buffer size:%d", size);
+
+    std::ofstream fout(argv[2], std::ios_base::binary);
+    if(!fout.is_open()){
+        logger.info("open %s file error.", argv[2]);
+        return 0;
+    }
+    fout.write(out.str().c_str(), size);
+    fout.close();
+    logger.info("end to save %s file.", argv[2]);
 
     return 0;
 }
