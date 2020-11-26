@@ -13,7 +13,11 @@
 #include <unistd.h>
 #include <vector>
 
+#ifdef USE_GURL
 #include "gurl/url/gurl.h"
+#else
+#include "url/url.h"
+#endif
 #include "hashutils.hpp"
 #include "logging.h"
 using namespace std;
@@ -40,6 +44,8 @@ using namespace std;
 
 #define HTTP1_1 "HTTP/1.1"
 #define HTTP1_0 "HTTP/1.0"
+
+#define TempFile ".httpclient.download"
 
 namespace http
 {
@@ -103,7 +109,7 @@ namespace http
     } // namespace utils
 
     struct HttpResource;
-    struct Url
+    struct HttpUrl
     {
     public:
         std::string scheme;
@@ -118,18 +124,19 @@ namespace http
         std::string netloc;
 
     public:
-        Url(const std::string &url)
+        HttpUrl(const std::string &url)
             : fullurl(url), scheme("http"), port(80)
         {
             parse();
         }
-        Url() = default;
+        HttpUrl() = default;
 
     private:
         void parse()
         {
             if (fullurl.find("://") == std::string::npos)
                 fullurl = "http://" + fullurl;
+#ifdef USE_GURL
             GURL url(fullurl);
             if (!url.is_valid() || !url.IsStandard())
                 return;
@@ -149,6 +156,19 @@ namespace http
                 query = url.query();
             if (url.has_ref())
                 fragment = url.ref();
+#else
+            Url url = Url::create(fullurl);
+            host = url.getHost();
+            if(host.empty())
+                return;
+            scheme = url.getScheme();
+            username = url.getUsername();
+            password = url.getPassword();
+            port = url.getPort();
+            path = url.getPath();
+            query = url.getQuery();
+            fragment = url.getFragment();
+#endif
             netloc = host + ":" + to_string(port);
         }
     };
@@ -156,6 +176,7 @@ namespace http
     struct HttpResource
     {
     public:
+        typedef std::vector<std::pair<std::string, std::string>> ResourceMap;
         HttpResource()
             : m_nBodyBytes(0), m_nBodyDecodeBytes(0), m_bDecodeBodyStatus(false)
         {
@@ -360,8 +381,12 @@ namespace http
             m_ResponseBuffer.clear();
         }
 
+        const ResourceMap &GetResponse() const{
+            return ResponseBody;
+        }
+
     private:
-        typedef std::vector<std::pair<std::string, std::string>> ResourceMap;
+        
         ResourceMap ReqestHeader;
         ResourceMap ResponseBody;
         std::string m_strRequestType, m_strRequestPath, m_strRequestHttpVersion;
@@ -427,7 +452,7 @@ namespace http
 
     private:
 #ifdef USE_OPENSSL
-        bool initSSL()
+        void initSSL()
         {
             // Register the error strings for libcrypto & libssl
             SSL_load_error_strings();
@@ -822,7 +847,7 @@ namespace http
 #endif
         }
 
-        bool connect(const Url &url)
+        bool connect(const HttpUrl &url)
         {
             m_strConnectUrl = url.fullurl;
             std::string netloc = url.host;
@@ -1018,7 +1043,7 @@ namespace http
     public:
         HttpResult Request(const std::string &reqUrl, bool bRedirect = false, bool verbose = false)
         {
-            Url tempUrl(reqUrl);
+            HttpUrl tempUrl(reqUrl);
             if (!m_SocketClient.connect(tempUrl))
             {
                 return HttpResult(400, "", "Connect timeout.");
@@ -1036,7 +1061,10 @@ namespace http
             if (nWrite != HttpRequestString.size())
                 return HttpResult(500, "", "Write data to server error");
             ssize_t nRead = m_SocketClient.read(m_Response);
-            if (!m_Response.getResponseItem(ContentEncoding).empty())
+            if(m_Response.getResponseBytesSize() == 0){
+                logger.info("get response data is empty.");
+            }
+            else if (!m_Response.getResponseItem(ContentEncoding).empty())
             {
                 m_Response.tryDecodeBody();
             }
@@ -1155,6 +1183,25 @@ namespace http
         void setCookie(const std::string &strCookie)
         {
             m_ReqHeader.set(Cookie, strCookie);
+        }
+
+        void SaveTempFile(){
+            std::ofstream fout(TempFile, std::ios::binary);
+            if(!fout.is_open()) return;
+            fout << "Request Header:\n" << m_ReqHeader.toStringHeader() << std::endl
+                 << "<" << std::endl;
+            if(m_Response.getResponseBytesSize() != 0) {
+                std::string strvalue = m_Response.getResponseItem(CotentLength);
+                fout << "BodyBytes:";
+                if(!strvalue.empty())
+                    fout << strvalue << std::endl;
+                fout << "ContentEncoding:" << m_Response.getResponseItem(ContentEncoding) << std::endl;
+                fout << "ContentRecvLength:" << m_Response.getResponseBytesSize() << std::endl;
+                fout << "Bytes:\n" ;
+                m_Response.getResponseBytes(fout);
+            }
+            fout.close();
+            m_SocketClient.disconnect();
         }
 
     protected:

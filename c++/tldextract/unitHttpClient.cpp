@@ -1,9 +1,18 @@
 #include "httpclient.hpp"
-
+#include <signal.h>
 void Usage()
 {
     std::cout << "./program [url string] [destFile string]" << std::endl;
     exit(0);
+}
+http::HttpClient client;
+
+static void sigint_Handler(int sig){
+    if(sig == SIGINT){
+        logger.info("get Ctrl + C Pressed.");
+        client.SaveTempFile();
+        exit(0);
+    }
 }
 
 int main(int argc, char **argv)
@@ -12,12 +21,11 @@ int main(int argc, char **argv)
     {
         Usage();
     }
+    signal(SIGINT, sigint_Handler);
 
-    http::HttpClient client;
-    logger.setLevel(Log::detail::DEBUG);
+    logger.setLevel(log::detail::DEBUG);
     // client.setBasicAuthUserPass("xhou", "houXIN19960917");
     client.setConnectTimeout(3);
-    // Apache + deflate may be unsuitable for zlib
     client.setAcceptEncoding("gzip, deflate, br");
     client.setAccept("*/*");
     client.setAcceptLanguage("zh-CN,zh;q=0.9");
