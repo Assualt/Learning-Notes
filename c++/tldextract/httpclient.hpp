@@ -41,6 +41,7 @@ using namespace std;
 #define AcceptRanges "Accept-Ranges"
 #define Location "Location"
 #define Cookie "Cookie"
+#define Referer "Referer"
 
 #define HTTP1_1 "HTTP/1.1"
 #define HTTP1_0 "HTTP/1.0"
@@ -302,14 +303,17 @@ namespace http
 
         std::string getCookie()
         {
+            std::string strCookie;
             for (auto &item : ResponseBody)
             {
                 std::string firstItem = item.first;
                 std::transform(firstItem.begin(), firstItem.end(), firstItem.begin(), ::tolower);
-                if (firstItem.find("cookie") != std::string::npos)
-                    return item.second;
+                if (firstItem.find("cookie") != std::string::npos){
+                    strCookie.append(item.second);
+                    strCookie.append("; ");
+                }
             }
-            return "";
+            return strCookie;
         }
 
         void WriteBodyBytes(const char *buf, size_t nBytes)
@@ -379,6 +383,7 @@ namespace http
             ResponseBody.clear();
             m_nBodyBytes = m_nBodyDecodeBytes = 0;
             m_ResponseBuffer.clear();
+            m_strResponseText.clear();
         }
 
         const ResourceMap &GetResponse() const{
@@ -987,7 +992,7 @@ namespace http
 
         ssize_t recvData(int fd, void *buf, size_t size, int ops)
         {
-#ifndef USE_OPENSSL
+#ifndef USE_OPENSSL 
             return ::recv(fd, buf, size, ops);
 #else
             if (m_bUseSSL)
@@ -1044,13 +1049,23 @@ namespace http
         HttpResult Request(const std::string &reqUrl, bool bRedirect = false, bool verbose = false)
         {
             HttpUrl tempUrl(reqUrl);
-            if (!m_SocketClient.connect(tempUrl))
-            {
-                return HttpResult(400, "", "Connect timeout.");
+            m_Response.clear();
+            if(tempUrl.host != m_strRequestHost){ // last has been created. no need to connect again.
+                m_SocketClient.disconnect();
+                if (!m_SocketClient.connect(tempUrl)){
+                    return HttpResult(400, "", "Connect timeout.");
+                }
+                m_ReqHeader.set("Host", tempUrl.host);
+                m_strRequestHost = tempUrl.host;
+            }else{
+                logger.info("last conencted host %s is same to this requst. skip connect again.", m_strRequestHost);
             }
             std::stringstream header;
-            m_ReqHeader.setRequestPath(tempUrl.path);
-            m_ReqHeader.set("Host", tempUrl.host);
+            std::string RequestPath = tempUrl.path;
+            if(!tempUrl.query.empty()){
+                RequestPath.append(tempUrl.query);
+            }
+            m_ReqHeader.setRequestPath(RequestPath);
         request:
             // 请求数据部分
             std::string HttpRequestString = m_ReqHeader.toStringHeader();
@@ -1204,11 +1219,20 @@ namespace http
             m_SocketClient.disconnect();
         }
 
+        void setReferer(const std::string &strReferer){
+            m_ReqHeader.set(Referer, strReferer);
+        }
+
+        std::string getCookie(){
+            return m_Response.getCookie();
+        }
+
     protected:
         HttpResource m_ReqHeader;
         HttpResource m_Response;
         std::chrono::system_clock::time_point m_ConnectTime;
         SocketClient m_SocketClient;
+        std::string m_strRequestHost;
     };
 
 } // namespace http
