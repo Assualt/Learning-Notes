@@ -6,6 +6,7 @@ all1:
 
 tld: 
 	g++ unitTldExtract.cpp logging.cpp tldextract.cpp -o tldextract -I./gurl -L./gurl/ -lgurl -lz -g -std=c++11 -DUSE_OPENSSL -DUSE_GURL -lssl -lcrypto -pthread
+
 tld1:
 	g++ unitTldExtract.cpp logging.cpp tldextract.cpp -o tldextract -I./gurl -L./gurl/ -lgurl -lz -g -std=c++11 -DUSE_OPENSSL -lssl -lcrypto -pthread
 
