@@ -409,6 +409,7 @@ namespace http
         std::string m_strRelayError;
 
     public:
+        HttpResult() : m_nStatusCode(200){}
         HttpResult(int code, const std::string &text, const std::string &relayError)
             : m_nStatusCode(code), m_strText(text), m_strRelayError(relayError)
         {
