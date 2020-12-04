@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     }
     signal(SIGINT, sigint_Handler);
 
-    logger.setLevel(log::detail::DEBUG);
+    logger.setLevel(tlog::detail::DEBUG);
     // client.setBasicAuthUserPass("xhou", "houXIN19960917");
     client.setConnectTimeout(3);
     client.setAcceptEncoding("gzip, deflate, br");
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     // http::HttpResult Result = client.Get(argv[ 1 ], true, true);
     // http::HttpResult Result = client.Post(argv[1], "requstOK", false, true);
 
-    http::HttpResult Result = client.Get(argv[1], false, true);
+    http::HttpResult Result = client.Get(argv[1], true, true);
 
     std::cout << "\nStatus Code:" << Result.status_code() << std::endl
               << "Text Size:" << Result.text().size() << std::endl

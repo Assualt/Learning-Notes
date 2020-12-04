@@ -183,6 +183,7 @@ private:
 
     bool downloadRemoteUrl(const std::string &destFileName) {
         http::HttpClient client;
+        client.setConnectTimeout(TLDExtract::remote_req_timeout);
         client.setAcceptEncoding("gzip, deflate, br");
         client.setAccept("*/*");
         client.setAcceptLanguage("zh-CN,zh;q=0.9");
@@ -191,7 +192,7 @@ private:
         for (auto &reqUrl : suffix_list_urls) {
             http::HttpResult result = client.Get(reqUrl);
             if (result.status_code() == 200) {
-                client.DownloadToFile(destFileName);
+                client.SaveResultToFile(destFileName);
                 logger.info("download file %s from %s success.", destFileName, reqUrl);
                 return true;
             }

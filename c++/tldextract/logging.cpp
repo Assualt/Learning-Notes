@@ -1,6 +1,6 @@
 #include "logging.h"
 
-namespace log {
+namespace tlog {
 std::vector<std::string> detail::levelVec = {"Debug", "Info", "Warning", "Error", "Alert", "Emergency"};
 
 std::map<std::string, int>  detail::levelMap = {{"Debug", 0}, {"Info", 1}, {"Warning", 2}, {"Error", 3}, {"Alert", 4}, {"Emergency", 5}};

@@ -45,13 +45,12 @@ using namespace std;
 
 #define HTTP1_1 "HTTP/1.1"
 #define HTTP1_0 "HTTP/1.0"
-
+#include <exception>
 #define TempFile ".httpclient.download"
 
 namespace http
 {
-    typedef enum
-    {
+    typedef enum {
         EncodingLength,
         EncodingChunk,
         EncodingGzip,
@@ -160,7 +159,7 @@ namespace http
 #else
             Url url = Url::create(fullurl);
             host = url.getHost();
-            if(host.empty())
+            if (host.empty())
                 return;
             scheme = url.getScheme();
             username = url.getUsername();
@@ -183,7 +182,7 @@ namespace http
         {
         }
 
-        void set(const std::string &key, const std::string &val)
+        void setHeader(const std::string &key, const std::string &val)
         {
             ReqestHeader.push_back(std::pair<std::string, std::string>(key, val));
         }
@@ -308,7 +307,8 @@ namespace http
             {
                 std::string firstItem = item.first;
                 std::transform(firstItem.begin(), firstItem.end(), firstItem.begin(), ::tolower);
-                if (firstItem.find("cookie") != std::string::npos){
+                if (firstItem.find("cookie") != std::string::npos)
+                {
                     strCookie.append(item.second);
                     strCookie.append("; ");
                 }
@@ -386,12 +386,12 @@ namespace http
             m_strResponseText.clear();
         }
 
-        const ResourceMap &GetResponse() const{
+        const ResourceMap &GetResponse() const
+        {
             return ResponseBody;
         }
 
     private:
-        
         ResourceMap ReqestHeader;
         ResourceMap ResponseBody;
         std::string m_strRequestType, m_strRequestPath, m_strRequestHttpVersion;
@@ -437,6 +437,15 @@ namespace http
         TYPE_DELETE,
         TYPE_PUT
     };
+
+    enum CHUNK_STATE
+    {
+        CHUNK_BEGIN,
+        CHUNK_PROCESS_1,
+        CHUNK_PROCESS_2,
+        CHUNK_END
+    };
+
 #define MAX_SIZE 16384
     class SocketClient
     {
@@ -532,24 +541,25 @@ namespace http
 
 #endif
 
-        int RecvChunkData(const char *buffer, size_t &nPos, int size, HttpResource &Response, int &ChunkState, size_t &ChunkSize,
+        int RecvChunkData(const char *buffer, size_t &nPos, int size, HttpResource &Response, CHUNK_STATE &ChunkState, size_t &ChunkSize,
                           ssize_t &AllChunkBodySize, size_t &blockCount)
         {
             size_t nWriteBytes = 0;
             std::string strChunkSize;
             for (; nPos < size;)
             {
-                if (ChunkState == 0)
+                if (ChunkState == CHUNK_BEGIN)
                 {
                     if ((nPos + 1) < size && buffer[nPos] == '\r' && buffer[nPos + 1] == '\n')
                     {
                         ChunkSize = utils::chunkSize(strChunkSize);
                         m_nChunkSize = ChunkSize;
-                        ChunkState = 1;
-                        // printf(" %02x %02x ChunkSize:%d %s\n",buffer[nPos], buffer[nPos+1], ChunkSize, strChunkSize.c_str());
+                        ChunkState = CHUNK_PROCESS_1;
+                        // printf(" %02x %02x ChunkSize:%d %s\n", buffer[nPos], buffer[nPos + 1], ChunkSize, strChunkSize.c_str());
                         nPos += 2;
                         if (ChunkSize == 0)
                         {
+                            ChunkState = CHUNK_END;
                             logger.debug("read chunkdata size is  0. Exit now..");
                             return 0;
                         }
@@ -562,15 +572,15 @@ namespace http
                     else
                     {
                         strChunkSize.push_back(buffer[nPos]);
-                        // printf("+ \033[31m%02x\033[0m ", buffer[ nPos ]);
+                        // printf("+ \033[31m%02x\033[0m ", buffer[nPos]);
                         nPos += 1;
                     }
                 }
-                else if (ChunkState == 1)
+                else if (ChunkState == CHUNK_PROCESS_1)
                 {
                     if ((nPos + 1) < size && buffer[nPos] == '\r' && buffer[nPos + 1] == '\n' && ChunkSize == 0)
                     {
-                        ChunkState = 2;
+                        ChunkState = CHUNK_PROCESS_2;
                         nPos += 2;
                     }
                     else if (ChunkSize)
@@ -586,9 +596,9 @@ namespace http
                     {
                     }
                 }
-                else if (ChunkState == 2)
+                else if (ChunkState == CHUNK_PROCESS_2)
                 {
-                    ChunkState = 0;
+                    ChunkState = CHUNK_BEGIN;
                     // printf("%d \n", m_nChunkSize);
                     logger.debug("Recv %dth block data, current block size:%d total recv blocks Bytes:%d", ++blockCount, m_nChunkSize, AllChunkBodySize);
                     strChunkSize.clear();
@@ -610,9 +620,11 @@ namespace http
             Encoding EncodingType = EncodingGzip; // 0: Content-Length 1: Chunked 2: other way
             int nCnt = 0;
             MyStringBuffer chunkedBuffer;
-            int chunkState = 0;
-            int chunkSize = 0;
-            std::string strChunkSize;
+
+            // Chunk mode
+            CHUNK_STATE ChunkState = CHUNK_BEGIN;
+            size_t chunkSize = 0;
+            size_t blockCount = 0;
 
             for (size_t i = 0; i < size;)
             {
@@ -623,8 +635,13 @@ namespace http
                         std::string HttpVersion, statusMessage;
                         int StatusCode;
                         ParseFirstLine(strLine, HttpVersion, StatusCode, statusMessage);
+                        if (to_string(StatusCode).size() != 3)
+                        {
+                            continue;
+                        }
                         Response.setBody("code", to_string(StatusCode));
                         Response.setBody("message", statusMessage);
+                        logger.info("code:%s, message:%s, Line:%s", to_string(StatusCode), statusMessage, strLine);
                         LineCnt++;
                     }
                     else if (!strLine.empty())
@@ -665,12 +682,13 @@ namespace http
                 }
                 else if (EncodingType == EncodingChunk && bFindBody)
                 {
-                    int ChunkState = 0;
-                    size_t chunkSize = 0;
-                    size_t blockCount = 0;
                     // Server Apache mode_deflate is not suitable for zlib.
                     RecvChunkData(buffer, i, size, Response, ChunkState, chunkSize, recvBodySize, blockCount);
                     break;
+                }
+                else
+                {
+                    logger.info("write mode 3");
                 }
             }
             if (EncodingType == EncodingLength && BodySizeInResponse != 0 && BodySizeInResponse != -1)
@@ -681,7 +699,11 @@ namespace http
             }
             else if (EncodingType == EncodingChunk)
             {
-                // printf("\n");
+                if (chunkSize == 0 && ChunkState != CHUNK_END)
+                {
+                    size_t tempPos = size;
+                    RecvChunkData(buffer, tempPos, size, Response, ChunkState, chunkSize, recvBodySize, blockCount);
+                }
             }
             else if (BodySizeInResponse == -1 && Response.getResponseItem(ContentEncoding) == "gzip")
             {
@@ -746,9 +768,7 @@ namespace http
             ssize_t recvBodySize = 0;
             ssize_t nRead = recvData(m_nConnectFd, tempBuf, MAX_SIZE, 0);
             if (nRead < 0)
-            {
                 return 0;
-            }
             size_t nTotal = 0;
             // GET Content Length From first Buffer
             std::string temp;
@@ -809,9 +829,25 @@ namespace http
                 }
             }
             speed = getCurrentSpeed(tBegin, recvBodySize, 'k');
-            logger.info("total size:%d [%.2fKB], cost Time:%.2fs, Response Header:%d Bytes, dataSize:%d bytes speed:%.2f kb/s", nTotal, nTotal / 1000.0,
-                        getSpendTime(tBegin), HeaderSize, BodySize, speed);
+
+            logger.info("total size:%d [%.2fKB], cost Time:%.2fs, Response Header:%d Bytes, dataSize:%d bytes speed:%.2f kb/s, EncodingType:%s", nTotal, nTotal / 1000.0,
+                        getSpendTime(tBegin), HeaderSize, BodySize, speed, getChunkString(EncodingType));
             return nTotal;
+        }
+
+        std::string getChunkString(Encoding nType)
+        {
+            switch (nType)
+            {
+            case EncodingLength:
+                return "Content-Length";
+            case EncodingChunk:
+                return "Chunked";
+            case EncodingGzip:
+            default:
+                return "Gzip";
+            }
+            return "Gzip";
         }
 
         double getSpendTime(std::chrono::system_clock::time_point &tBegin)
@@ -992,7 +1028,7 @@ namespace http
 
         ssize_t recvData(int fd, void *buf, size_t size, int ops)
         {
-#ifndef USE_OPENSSL 
+#ifndef USE_OPENSSL
             return ::recv(fd, buf, size, ops);
 #else
             if (m_bUseSSL)
@@ -1050,19 +1086,26 @@ namespace http
         {
             HttpUrl tempUrl(reqUrl);
             m_Response.clear();
-            if(tempUrl.host != m_strRequestHost){ // last has been created. no need to connect again.
+            if (tempUrl.host != m_strRequestHost)
+            { // last has been created. no need to connect again.
                 m_SocketClient.disconnect();
-                if (!m_SocketClient.connect(tempUrl)){
+                if (!m_SocketClient.connect(tempUrl))
+                {
                     return HttpResult(400, "", "Connect timeout.");
                 }
-                m_ReqHeader.set("Host", tempUrl.host);
+                m_ReqHeader.setHeader("Host", tempUrl.host);
                 m_strRequestHost = tempUrl.host;
-            }else{
+            }
+            else
+            {
                 logger.info("last conencted host %s is same to this requst. skip connect again.", m_strRequestHost);
             }
             std::stringstream header;
             std::string RequestPath = tempUrl.path;
-            if(!tempUrl.query.empty()){
+            if (!tempUrl.query.empty())
+            {
+                if (RequestPath.back() != '?')
+                    RequestPath.append("?");
                 RequestPath.append(tempUrl.query);
             }
             m_ReqHeader.setRequestPath(RequestPath);
@@ -1076,7 +1119,8 @@ namespace http
             if (nWrite != HttpRequestString.size())
                 return HttpResult(500, "", "Write data to server error");
             ssize_t nRead = m_SocketClient.read(m_Response);
-            if(m_Response.getResponseBytesSize() == 0){
+            if (m_Response.getResponseBytesSize() == 0)
+            {
                 logger.info("get response data is empty.");
             }
             else if (!m_Response.getResponseItem(ContentEncoding).empty())
@@ -1092,11 +1136,7 @@ namespace http
             std::string itemVal = m_Response.getResponseItem(Location);
             if (!itemVal.empty() && bRedirect)
             {
-                std::string RequestPath = m_ReqHeader.getRequestPath();
-                if (RequestPath.rfind("/") != std::string::npos)
-                    RequestPath = RequestPath.substr(0, RequestPath.rfind("/"));
-                RequestPath.append("/");
-                RequestPath.append(itemVal);
+                std::string RequestPath = GetRedirectLocation(itemVal, m_ReqHeader.getRequestPath());
                 m_ReqHeader.setRequestPath(RequestPath);
                 logger.info("begin to redirect %s url...", RequestPath);
                 m_Response.clear();
@@ -1104,6 +1144,33 @@ namespace http
             }
 
             return HttpResult(atoi(m_Response.getResponseItem("code").c_str()), m_Response.getResponseText(), m_Response.getResponseItem("message"));
+        }
+
+        std::string GetRedirectLocation(const std::string &strLocation, const std::string &RequestPath)
+        {
+            std::string strTempLocation;
+            // remove #fragment
+            std::string strLocationWithOutFragment = strLocation;
+            if (strLocation.find("#") != std::string::npos)
+                strLocationWithOutFragment = strLocationWithOutFragment.substr(0, strLocation.find("#"));
+            if (strLocation.find("http//") == 0)
+            {
+                strTempLocation = "http://";
+                strTempLocation.append(strLocationWithOutFragment.substr(std::string("http//").size()));
+            }
+            else if (strLocationWithOutFragment.find("https//") == 0)
+            {
+                strTempLocation = "https://";
+                strTempLocation.append(strLocationWithOutFragment.substr(std::string("https//").size()));
+            }
+            else
+            {
+                if (RequestPath.rfind("/") != std::string::npos)
+                    strTempLocation = RequestPath.substr(0, RequestPath.rfind("/"));
+                strTempLocation.append("/");
+                strTempLocation.append(strLocationWithOutFragment);
+            }
+            return strTempLocation;
         }
 
         HttpResult Get(const std::string &reqUrl, bool bRedirect = false, bool verbose = false)
@@ -1149,32 +1216,32 @@ namespace http
             ss << user << ":" << passwd;
             std::string Base64String;
             HashUtils::EncodeBase64(ss.str(), Base64String);
-            this->set(Authorization, "Basic " + Base64String);
+            this->setHeader(Authorization, "Basic " + Base64String);
         }
 
         void setUserAgent(const std::string &AgentVal)
         {
-            this->set(UserAgent, AgentVal);
+            this->setHeader(UserAgent, AgentVal);
         }
 
         void setContentType(const std::string &ContentTypeVal)
         {
-            this->set(ContentType, ContentTypeVal);
+            this->setHeader(ContentType, ContentTypeVal);
         }
 
         void setAcceptLanguage(const std::string &AcceptLanguageVal)
         {
-            this->set(AcceptLanguage, AcceptLanguageVal);
+            this->setHeader(AcceptLanguage, AcceptLanguageVal);
         }
 
         void setAcceptEncoding(const std::string &AcceptEncodingVal)
         {
-            this->set(AcceptEncoding, AcceptEncodingVal);
+            this->setHeader(AcceptEncoding, AcceptEncodingVal);
         }
 
         void setAccept(const std::string &AcceptVal)
         {
-            this->set(Accept, AcceptVal);
+            this->setHeader(Accept, AcceptVal);
         }
 
         void setHttpVersion(utils::HttpVersion version)
@@ -1185,9 +1252,9 @@ namespace http
                 this->m_ReqHeader.setHttpVersion(HTTP1_1);
         }
 
-        void set(const std::string &key, const std::string &val)
+        void setHeader(const std::string &key, const std::string &val)
         {
-            this->m_ReqHeader.set(key, val);
+            this->m_ReqHeader.setHeader(key, val);
         }
 
         void setConnectTimeout(size_t nSeconds)
@@ -1197,33 +1264,39 @@ namespace http
 
         void setCookie(const std::string &strCookie)
         {
-            m_ReqHeader.set(Cookie, strCookie);
+            this->setHeader(Cookie, strCookie);
         }
 
-        void SaveTempFile(){
+        void SaveTempFile()
+        {
             std::ofstream fout(TempFile, std::ios::binary);
-            if(!fout.is_open()) return;
-            fout << "Request Header:\n" << m_ReqHeader.toStringHeader() << std::endl
+            if (!fout.is_open())
+                return;
+            fout << "Request Header:\n"
+                 << m_ReqHeader.toStringHeader() << std::endl
                  << "<" << std::endl;
-            if(m_Response.getResponseBytesSize() != 0) {
+            if (m_Response.getResponseBytesSize() != 0)
+            {
                 std::string strvalue = m_Response.getResponseItem(CotentLength);
                 fout << "BodyBytes:";
-                if(!strvalue.empty())
+                if (!strvalue.empty())
                     fout << strvalue << std::endl;
                 fout << "ContentEncoding:" << m_Response.getResponseItem(ContentEncoding) << std::endl;
                 fout << "ContentRecvLength:" << m_Response.getResponseBytesSize() << std::endl;
-                fout << "Bytes:\n" ;
+                fout << "Bytes:\n";
                 m_Response.getResponseBytes(fout);
             }
             fout.close();
             m_SocketClient.disconnect();
         }
 
-        void setReferer(const std::string &strReferer){
-            m_ReqHeader.set(Referer, strReferer);
+        void setReferer(const std::string &strReferer)
+        {
+            this->setHeader(Referer, strReferer);
         }
 
-        std::string getCookie(){
+        std::string getCookie()
+        {
             return m_Response.getCookie();
         }
 

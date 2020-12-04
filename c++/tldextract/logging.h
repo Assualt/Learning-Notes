@@ -15,7 +15,7 @@
 #include <vector>
 using namespace std;
 
-namespace log {
+namespace tlog {
 struct detail {
     enum Level { DEBUG, INFO, WARNING, ERROR, ALERT, EMERGENCY };
     static std::vector<std::string> levelVec;
@@ -458,4 +458,4 @@ public:
 };
 } // namespace Log
 
-#define logger log::logImpl::LogObject.setFileStructInfo(__FILE__, __func__, __LINE__)
+#define logger tlog::logImpl::LogObject.setFileStructInfo(__FILE__, __func__, __LINE__)

@@ -1,8 +1,12 @@
 all:
-#	g++ unitHttpClient.cpp logging.cpp -o httpclient -I./gurl -L./gurl/ -lgurl -I/home/cmdev/include -L/home/cmdev/lib -lz -g -std=c++11 -DUSE_OPENSSL -lssl -lcrypto -pthread
+	g++ unitHttpClient.cpp logging.cpp -o httpclient -I./gurl -L./gurl/ -lgurl -I/home/cmdev/include -L/home/cmdev/lib -lz -g -std=c++11 -DUSE_GURL -DUSE_OPENSSL -lssl -lcrypto -pthread
+
+all1:	
 	g++ unitHttpClient.cpp logging.cpp -Wno-deprecated-declarations  -o httpclient -I./url -L./ -lurlparse -lz -g -std=c++11 -DUSE_OPENSSL -lssl -lcrypto	
 
 tld: 
+	g++ unitTldExtract.cpp logging.cpp tldextract.cpp -o tldextract -I./gurl -L./gurl/ -lgurl -lz -g -std=c++11 -DUSE_OPENSSL -DUSE_GURL -lssl -lcrypto -pthread
+tld1:
 	g++ unitTldExtract.cpp logging.cpp tldextract.cpp -o tldextract -I./gurl -L./gurl/ -lgurl -lz -g -std=c++11 -DUSE_OPENSSL -lssl -lcrypto -pthread
 
 zlib: 
