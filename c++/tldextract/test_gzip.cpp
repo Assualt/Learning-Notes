@@ -11,8 +11,8 @@ void Usage() {
 MyStringBuffer stringBuf;
 void           process_file(const std::string &filename) {
     if (access(filename.c_str(), F_OK) == -1) {
-        logger.info("such %s file name is not exists.", filename);
         return;
+        logger.info("such %s file name is not exists.", filename);
     }
     std::ifstream fin(filename, std::ios_base::binary);
     if (!fin.is_open())
@@ -50,8 +50,8 @@ int uncompress(MyStringBuffer &in, std::stringstream &out) {
     } else {
         std::cout << "Init infalteInit2 Success" << std::endl;
     }
-    char              inBuf[ MAX_BUF_SIZE ], outBuf[ MAX_BUF_SIZE ];
-    int               left, size = 0;
+    char inBuf[ MAX_BUF_SIZE ], outBuf[ MAX_BUF_SIZE ];
+    int  left, size = 0;
     do {
         memset(inBuf, 0, MAX_BUF_SIZE);
         size_t nRead = stringBuf.sgetn(inBuf, MAX_BUF_SIZE);
@@ -98,16 +98,16 @@ int main(int argc, char **argv) {
     process_file(argv[ 1 ]);
     std::stringstream out;
     int               size = uncompress(stringBuf, out);
-	logger.info("Decode buffer size:%d", size);
+    logger.info("Decode buffer size:%d", size);
 
-    std::ofstream fout(argv[2], std::ios_base::binary);
-    if(!fout.is_open()){
-        logger.info("open %s file error.", argv[2]);
+    std::ofstream fout(argv[ 2 ], std::ios_base::binary);
+    if (!fout.is_open()) {
+        logger.info("open %s file error.", argv[ 2 ]);
         return 0;
     }
     fout.write(out.str().c_str(), size);
     fout.close();
-    logger.info("end to save %s file.", argv[2]);
+    logger.info("end to save %s file.", argv[ 2 ]);
 
     return 0;
 }

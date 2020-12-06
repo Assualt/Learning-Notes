@@ -1,8 +1,9 @@
-#£¡/usr/bin/env bash
-#! -*- encoding: utf-8 -*-
+#!/usr/bin/env bash
+# ! -*- encoding: utf-8 -*-
 import xml.dom.minidom as xmlread
 
 xmlconfig = xmlread.parse('./config.xml')
+
 
 def getxmlValue(rootnode, keyname, attr=None):  # such as getXmlValue(root,"string/path")
     root = rootnode.documentElement
@@ -21,7 +22,7 @@ def getxmlValue(rootnode, keyname, attr=None):  # such as getXmlValue(root,"stri
             bFound = False
             for item in root:
                 searchIndex = i
-                if i+1 < len(params):
+                if i + 1 < len(params):
                     searchIndex += 1
                 node = item.getElementsByTagName(params[searchIndex])
                 if len(node) != 0:

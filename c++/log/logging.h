@@ -28,7 +28,7 @@ struct detail {
     static std::map<std::string, int> levelMap;
     static std::string                endl;
     static std::string                asctime;
-    static std::string                  ctime;
+    static std::string                ctime;
     static std::set<char>             timeOpt;
     static std::vector<std::string>   WeekDayEngList;
     static std::vector<std::string>   MonthEngList;
@@ -246,8 +246,7 @@ struct detail {
         return ss.str();
     }
 
-    static void FormatLogMessage(const std::string &key, char type, std::stringstream &ss, const std::string &message, const std::string &levelName,
-                          const detail::CommandLineInfo &info) {
+    static void FormatLogMessage(const std::string &key, char type, std::stringstream &ss, const std::string &message, const std::string &levelName, const detail::CommandLineInfo &info) {
         if (key == "(message)")
             ss << message;
         else if (key == "(thread)")
@@ -293,7 +292,7 @@ struct detail {
         }
         return ss.str();
     }
-}; 
+};
 class Logger : public std::ostream {
 public:
     static Logger &getInstance() {
@@ -424,8 +423,7 @@ public:
     }
 
 public:
-    void BasicConfig(const char *messageFmt, const char *timeFmt, const std::string &fileName = "", const std::string &fileMode = "a",
-                     detail::Level nLevel = detail::DEBUG) {
+    void BasicConfig(const char *messageFmt, const char *timeFmt, const std::string &fileName = "", const std::string &fileMode = "a", detail::Level nLevel = detail::DEBUG) {
         if (nullptr == messageFmt || nullptr == timeFmt)
             throw std::invalid_argument("invalid message Format or time Format");
         Logger::getInstance().initSetting(messageFmt, timeFmt, fileName, fileMode);
@@ -456,6 +454,6 @@ private:
 public:
     static logImpl LogObject;
 };
-} // namespace Log
+} // namespace tlog
 
 #define logger tlog::logImpl::LogObject.setFileStructInfo(__FILE__, __func__, __LINE__)

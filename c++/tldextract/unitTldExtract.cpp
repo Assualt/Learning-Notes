@@ -1,5 +1,5 @@
+#include "cmdline.hpp"
 #include "tldextract.h"
-
 void Usage() {
     std::cout << "./program [url string]" << std::endl;
     exit(0);
@@ -7,15 +7,24 @@ void Usage() {
 
 int main(int argc, char **argv) {
 
+    cmdline::parser cmdparse;
+    cmdparse.add<std::string>("url", 'u', "input url string", true);
     if (argc < 2) {
-        Usage();
+        std::cout << cmdparse.usage() << std::endl;
+        return 0;
     }
 
-    tld::TLDExtract extract;
-
-    auto Result = extract.extract(argv[ 1 ]);
-
-    logger.info("Extract Url:%s, Url Registed Domain:%s ", argv[ 1 ], Result.RegisterDomain());
+    bool bOk = cmdparse.parse(argc, argv);
+    if (!bOk) {
+        std::cout << cmdparse.usage() << std::endl;
+    } else {
+        std::string     urlString = cmdparse.get<std::string>("url");
+        tld::TLDExtract extract;
+        auto            Result = extract.extract(urlString);
+        logger.info("Extract Url:%s, Url Registed Domain:%s ", urlString, Result.RegisterDomain());
+        logger.info("Extract Url:%s, Url Sub Domain:%s ", urlString, Result.SubDomain());
+        logger.info("Extract url:%s, Url Domain:%s", urlString, Result.Domain());
+    }
 
     return 0;
 }

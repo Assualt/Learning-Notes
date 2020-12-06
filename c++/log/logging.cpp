@@ -3,11 +3,11 @@
 namespace tlog {
 std::vector<std::string> detail::levelVec = {"Debug", "Info", "Warning", "Error", "Alert", "Emergency"};
 
-std::map<std::string, int>  detail::levelMap = {{"Debug", 0}, {"Info", 1}, {"Warning", 2}, {"Error", 3}, {"Alert", 4}, {"Emergency", 5}};
-std::string    detail::endl     = "\n";
-std::string    detail::asctime  = "%04Y-%02m-%02d %02H:%02M:%02S.%03n";
-std::string    detail::ctime    = "%02H:%02M:%02S.%06u";
-std::set<char> detail::timeOpt  = {
+std::map<std::string, int> detail::levelMap = {{"Debug", 0}, {"Info", 1}, {"Warning", 2}, {"Error", 3}, {"Alert", 4}, {"Emergency", 5}};
+std::string                detail::endl     = "\n";
+std::string                detail::asctime  = "%04Y-%02m-%02d %02H:%02M:%02S.%03n";
+std::string                detail::ctime    = "%02H:%02M:%02S.%06u";
+std::set<char>             detail::timeOpt  = {
     'Y', /*	Year (1900- now)*/
     'm', /*	Month (0-11) 	*/
     'd', /*	Day of Month (1-31) */
@@ -29,4 +29,4 @@ std::set<char>           detail::basicMsgFmt      = {'f', 's', 'd', 'l'};
 Logger     Logger::m_Logger;
 std::mutex Logger::m_lock;
 logImpl    logImpl::LogObject;
-} // namespace Log
+} // namespace tlog

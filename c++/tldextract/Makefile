@@ -1,14 +1,29 @@
-all:
-	g++ unitHttpClient.cpp logging.cpp -o httpclient -I./gurl -L./gurl/ -lgurl -I/home/cmdev/include -L/home/cmdev/lib -lz -g -std=c++11 -DUSE_GURL -DUSE_OPENSSL -lssl -lcrypto -pthread
+CC=g++
+CFLAGS=-I../log -I../http -I../http/url/include -I../hash -I../argparse -Wno-deprecated-declarations -std=c++11 -DUSE_OPENSSL
 
-all1:	
-	g++ unitHttpClient.cpp logging.cpp -Wno-deprecated-declarations  -o httpclient -I./url -L./ -lurlparse -lz -g -std=c++11 -DUSE_OPENSSL -lssl -lcrypto	
+vpath %.cpp ../log
 
-tld: 
-	g++ unitTldExtract.cpp logging.cpp tldextract.cpp -o tldextract -I./gurl -L./gurl/ -lgurl -lz -g -std=c++11 -DUSE_OPENSSL -DUSE_GURL -lssl -lcrypto -pthread
+URLPARSE=-L ../http/url -lurlparse
+GURLLIB=-L ../http/gurl -gurl
 
-tld1:
-	g++ unitTldExtract.cpp logging.cpp tldextract.cpp -o tldextract -I./gurl -L./gurl/ -lgurl -lz -g -std=c++11 -DUSE_OPENSSL -lssl -lcrypto -pthread
 
-zlib: 
-	g++ test_gzip.cpp logging.cpp -o zlib  -lz -g -std=c++11 
+ALLOBJS=logging.o tldextract.o unitTldExtract.o
+
+.cpp.o:
+	$(CC) -c $(CFLAGS) $< 
+
+
+all: tld-url
+
+
+tld-gurl: $(ALLOBJS)
+	$(CC) $^ -o tldextract $(CFLAGS) -I./gurl -L./gurl/ -lgurl -lz -g -DUSE_GURL -lssl -lcrypto -pthread $(GURLLIB)
+
+tld-url: $(ALLOBJS)
+	$(CC) $^ -o tldextract $(CFLAGS) -lz -g  -lssl -lcrypto -pthread $(URLPARSE)
+
+zlib: logging.o test_gzip.o
+	$(CC) $^ -o zlib  -lz -g $(CFLAGS)
+
+clean:
+	rm -rf *.o zlib tldextract
