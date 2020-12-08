@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
     CommandParse.add<string>("cookie", 0, "set request header", false, "");
     CommandParse.add<string>("body", 0, "the post parameter", false, "");
     CommandParse.add<string>("output", 'o', "ouput file path", false, "");
-
+    CommandParse.add<string>("content-type", 0, "the post data content type", false, "application/x-www-form-urlencoded");
     CommandParse.add<int>("logLevel", 'l', "the logger level.(0.debug, 1.info 2.warning 3.alert", false, 1, cmdline::range<int>(0, 3));
     CommandParse.add<int>("timeout", 0, "set connection timeout(s)", false, 10, cmdline::range<int>(0, 30));
     CommandParse.set_program_name("httpclient");
@@ -66,15 +66,16 @@ int main(int argc, char **argv) {
         if (strcasecmp(reqType.c_str(), "get") == 0) {
             Result = client.Get(reqUrl, bRedireect, bVerbose);
         } else if (strcasecmp(reqType.c_str(), "post") == 0) {
-            std::string body = CommandParse.get<string>("body");
+            std::string body         = CommandParse.get<string>("body");
+            std::string contentType  = CommandParse.get<string>("content-type");
             if (body.empty()) {
                 std::cout << "post data is empty. ignored";
-
             } else {
-                Result = client.Get(reqUrl, bRedireect, bVerbose);
+                client.setHeader(ContentType, contentType);
+                client.setHeader(ContentLength, body.size());
+                Result = client.Post(reqUrl, body, bRedireect, bVerbose);
             }
         }
-
         std::cout << "\nStatus Code:" << Result.status_code() << std::endl
                   << "Text Size:" << Result.text().size() << std::endl
                   << "Relay Message:" << Result.error() << std::endl

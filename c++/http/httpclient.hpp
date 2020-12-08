@@ -36,7 +36,7 @@ using namespace std;
 #define Authorization "Authorization"
 #define AcceptLanguage "Accept-Language"
 #define UserAgent "User-Agent"
-#define CotentLength "Content-Length"
+#define ContentLength "Content-Length"
 #define TransferEncoding "Transfer-Encoding"
 #define AcceptRanges "Accept-Ranges"
 #define Location "Location"
@@ -52,6 +52,12 @@ namespace http {
 typedef enum { EncodingLength, EncodingChunk, EncodingGzip, EncodingOther } Encoding;
 
 namespace utils {
+
+template <class T> std::string toString(const T &val) {
+    std::stringstream ss;
+    ss << val;
+    return ss.str();
+}
 
 enum HttpVersion { HTTP_1_0, HTTP_1_1 };
 
@@ -145,7 +151,7 @@ private:
         port     = url.getPort();
         path     = url.getPath();
         query    = url.getQuery();
-        if(!query.empty() && query.front() == '?')
+        if (!query.empty() && query.front() == '?')
             query = query.substr(1);
         fragment = url.getFragment();
 #endif
@@ -159,11 +165,11 @@ public:
         m_strRequestParams = "";
         m_strRequestHost   = "";
     }
-    void setHeader(const std::string &key, const std::string &val) {
+    template <class T> void setHeader(const std::string &key, const T &val) {
         if (key == "Host")
-            m_strRequestHost = val;
+            m_strRequestHost = utils::toString(val);
         else
-            m_vReqestHeader.push_back(std::pair<std::string, std::string>(key, val));
+            m_vReqestHeader.push_back(std::pair<std::string, std::string>(key, utils::toString(val)));
     }
     void setRequestType(const std::string &reqType) {
         m_strRequestType = reqType;
@@ -192,7 +198,7 @@ public:
             ss << item.first << ": " << item.second << CTRL;
         ss << "Host: " << m_strRequestHost << CTRL;
         if (!m_strRequestParams.empty())
-            ss << m_strRequestParams << CTRL;
+            ss << CTRL << m_strRequestParams;
         ss << CTRL;
         return ss.str();
     }
@@ -320,7 +326,7 @@ public:
             os << "<\r\n";
             if (obj.getResponseItem(ContentType).find("text/") != std::string::npos)
                 os << obj.m_strResponseText << CTRL;
-            else if(obj.getResponseItem(ContentType).find("application/json") != std::string::npos)
+            else if (obj.getResponseItem(ContentType).find("application/json") != std::string::npos)
                 os << obj.m_strResponseText << CTRL;
             else
                 os << "[Binary] " << obj.m_nBodyBytes << "Bytes" << CTRL;
@@ -544,7 +550,7 @@ private:
                     strKey = utils::trim(strKey);
                     strVal = utils::trim(strVal);
                     // logger.debug("Find Response Body Header: %s->%s", strKey, strVal);
-                    if (strKey == CotentLength) {
+                    if (strKey == ContentLength) {
                         BodySizeInResponse = atoi(strVal.c_str());
                         EncodingType       = EncodingLength;
                     } else if (strKey == TransferEncoding && strVal == "chunked") {
@@ -923,8 +929,10 @@ public:
         m_ReqHeader.setRequestPath(RequestPath);
         // 请求数据部分
         std::string HttpRequestString = m_ReqHeader.toStringHeader();
-        if (verbose)
-            std::cout << "* Request Header\n" << m_ReqHeader << ">\n";
+        if (verbose) {
+            std::cout << "* Request Header\n";
+            std::cout << HttpRequestString;
+        }
         ssize_t nWrite = m_SocketClient.write(HttpRequestString.c_str(), HttpRequestString.size());
         if (nWrite != HttpRequestString.size())
             return HttpResult(500, "", "Write data to server error");
@@ -939,7 +947,7 @@ public:
         } else if (!m_Response.getResponseItem(ContentEncoding).empty()) {
             m_Response.tryDecodeBody();
         }
-        
+
         if (atoi(m_Response.getResponseItem("code").c_str()) / 100 == 3 && bRedirect) {
             std::string strRedirectUrl = GetRedirectLocation(m_Response.getResponseItem(Location), m_ReqHeader.getRequestPath());
             logger.info("begin to redirect url:%s", strRedirectUrl);
@@ -1036,8 +1044,7 @@ public:
         else if (version == utils::HTTP_1_1)
             this->m_ReqHeader.setHttpVersion(HTTP1_1);
     }
-
-    void setHeader(const std::string &key, const std::string &val) {
+    template <class T> void setHeader(const std::string &key, const T &val) {
         this->m_ReqHeader.setHeader(key, val);
     }
 
@@ -1055,7 +1062,7 @@ public:
             return;
         fout << "Request Header:\n" << m_ReqHeader.toStringHeader() << std::endl << "<" << std::endl;
         if (m_Response.getResponseBytesSize() != 0) {
-            std::string strvalue = m_Response.getResponseItem(CotentLength);
+            std::string strvalue = m_Response.getResponseItem(ContentLength);
             fout << "BodyBytes:";
             if (!strvalue.empty())
                 fout << strvalue << std::endl;
