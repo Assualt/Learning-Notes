@@ -19,7 +19,8 @@ using namespace std;
 #define PUNYPREFIX "//  xn--"
 #define ICANNSTART "// ===BEGIN ICANN DOMAINS==="
 #define ICANNEND "// ===END ICANN DOMAINS==="
-
+#define PRIVATESTART "// ===BEGIN PRIVATE DOMAINS==="
+#define PRIVATEEND "// ===END PRIVATE DOMAINS==="
 #define USERAGENT "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
 /**
  * Some useful tools like python tldextract .
@@ -137,7 +138,8 @@ public:
 };
 class TLDExtract {
 public:
-    TLDExtract(const std::string &cache_files = cache_default, const std::string &tld_org_file = "/tmp/.public_suffix_list.dat") {
+    TLDExtract(bool psl_private_domains = false, const std::string &cache_files = cache_default, const std::string &tld_org_file = "/tmp/.public_suffix_list.dat") {
+        m_bIncludePrivateDomains = psl_private_domains;
         initSetting(cache_default, tld_org_file);
     }
     ExtractResult extract(const std::string &url) {
@@ -210,7 +212,8 @@ private:
                 return false;
         }
         std::string line;
-        bool        icann_domain_start = false;
+        bool        icann_domain_start        = false;
+        bool        psl_private_domains_start = false;
         while (getline(fin, line)) {
             if (line.empty())
                 continue;
@@ -219,9 +222,17 @@ private:
                 continue;
             } else if (line == ICANNEND) {
                 icann_domain_start = false;
+                if (m_bIncludePrivateDomains)
+                    continue;
+                break;
+            } else if (line == PRIVATESTART) {
+                psl_private_domains_start = true;
+                continue;
+            } else if (line == PRIVATEEND) {
+                psl_private_domains_start = false;
                 break;
             }
-            if (utils::startswith(line, PUNYPREFIX) || utils::startswith(line, "//") && icann_domain_start) {
+            if (utils::startswith(line, PUNYPREFIX) || utils::startswith(line, "//") && (icann_domain_start || psl_private_domains_start)) {
                 std::string punydomain;
                 bool        ExistPunydomain = false;
                 if (utils::startswith(line, PUNYPREFIX)) {
@@ -298,6 +309,7 @@ private:
     bool                               m_bInitOK;
     std::set<std::string>              m_sdomainSet;
     std::map<std::string, std::string> m_mpunyDomainMap;
+    bool                               m_bIncludePrivateDomains;
 };
 } // namespace tld
 #endif

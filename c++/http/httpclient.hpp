@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <vector>
 
+#include <thread>
 #ifdef USE_GURL
 #include "gurl/url/gurl.h"
 #else
@@ -26,6 +27,7 @@ using namespace std;
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
+#include <openssl/x509.h>
 #endif
 
 #define CTRL "\r\n"
@@ -92,8 +94,8 @@ static size_t chunkSize(const std::string &strChunkSize) {
         return -1;
     return std::stoi(temp, nullptr, 16);
 }
-} // namespace utils
 
+} // namespace utils
 struct HttpUrl {
 public:
     std::string scheme;
@@ -164,10 +166,17 @@ public:
     HttpRequest() {
         m_strRequestParams = "";
         m_strRequestHost   = "";
+        m_strRangeBytes    = "";
     }
+    HttpRequest(const ResourceMap &headerMap)
+        : m_vReqestHeader(headerMap) {
+    }
+
     template <class T> void setHeader(const std::string &key, const T &val) {
         if (key == "Host")
             m_strRequestHost = utils::toString(val);
+        else if (key == "Range")
+            m_strRangeBytes = utils::toString(val);
         else
             m_vReqestHeader.push_back(std::pair<std::string, std::string>(key, utils::toString(val)));
     }
@@ -196,7 +205,10 @@ public:
         ss << m_strRequestType << " " << m_strRequestPath << " " << m_strRequestHttpVersion << CTRL;
         for (auto &item : m_vReqestHeader)
             ss << item.first << ": " << item.second << CTRL;
+        if (!m_strRangeBytes.empty())
+            ss << "Range: " << m_strRangeBytes << CTRL;
         ss << "Host: " << m_strRequestHost << CTRL;
+
         if (!m_strRequestParams.empty())
             ss << CTRL << m_strRequestParams;
         ss << CTRL;
@@ -207,10 +219,15 @@ public:
         os << "> " << obj.m_strRequestType << " " << obj.m_strRequestPath << " " << obj.m_strRequestHttpVersion << CTRL;
         for (auto &item : obj.m_vReqestHeader)
             os << "> " << item.first << ": " << item.second << CTRL;
+        if (!obj.m_strRangeBytes.empty())
+            os << "Range: " << obj.m_strRangeBytes << CTRL;
         os << "> Host: " << obj.m_strRequestHost << CTRL;
         if (!obj.m_strRequestParams.empty())
             os << obj.m_strRequestParams << CTRL;
         return os;
+    }
+    ResourceMap getHeader() const {
+        return m_vReqestHeader;
     }
 
 private:
@@ -218,6 +235,7 @@ private:
     std::string m_strRequestType, m_strRequestPath, m_strRequestHttpVersion;
     std::string m_strRequestParams;
     std::string m_strRequestHost;
+    std::string m_strRangeBytes;
 };
 
 class HttpResponse {
@@ -405,6 +423,8 @@ public:
 private:
 #ifdef USE_OPENSSL
     void initSSL() {
+#if OPENSSL_VERSION_NUMBER < 0x10100003L
+        OPENSSL_config(nullptr);
         // Register the error strings for libcrypto & libssl
         SSL_load_error_strings();
 
@@ -412,32 +432,40 @@ private:
         SSL_library_init();
 
         OpenSSL_add_all_algorithms();
+#else
+        OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, nullptr);
+        ERR_clear_error();
+#endif
     }
     bool SSLConnect() {
-
         m_pConnection               = new SSL_Connection();
-        m_pConnection->m_ptrContext = SSL_CTX_new(SSLv23_client_method());
+        m_pConnection->m_ptrContext = SSL_CTX_new(TLS_client_method());
         if (m_pConnection->m_ptrContext == nullptr) {
+            SSLDisConnect();
             ERR_print_errors_fp(stderr);
             return false;
         }
         // Create an SSL struct for the connection
         m_pConnection->m_ptrHandle = SSL_new(m_pConnection->m_ptrContext);
         if (m_pConnection->m_ptrHandle == nullptr) {
+            SSLDisConnect();
             ERR_print_errors_fp(stderr);
             return false;
         }
 
         // Connect the SSL struct to our connection
         if (!SSL_set_fd(m_pConnection->m_ptrHandle, m_nConnectFd)) {
+            SSLDisConnect();
             ERR_print_errors_fp(stderr);
             return false;
         }
         // Initiate SSL handshake
         if (SSL_connect(m_pConnection->m_ptrHandle) != 1) {
             ERR_print_errors_fp(stderr);
+            SSLDisConnect();
             return false;
         }
+
         return true;
     }
 
@@ -451,6 +479,7 @@ private:
                 SSL_CTX_free(m_pConnection->m_ptrContext);
 
             delete m_pConnection;
+            m_pConnection = nullptr;
         }
     }
 
@@ -464,7 +493,6 @@ private:
         }
         return 0;
     }
-
 #endif
 
     int RecvChunkData(const char *buffer, size_t &nPos, int size, HttpResponse &Response, CHUNK_STATE &ChunkState, size_t &ChunkSize, ssize_t &AllChunkBodySize, size_t &blockCount) {
@@ -559,6 +587,8 @@ private:
                     Response.setBody(strKey, strVal);
                 } else if (strLine.empty()) {
                     bFindBody = true;
+                    if (strcasecmp(m_strRequestType.c_str(), "head") == 0)
+                        break;
                 }
                 i += 2;
                 HeaderSize += strLine.size() + 2;
@@ -645,6 +675,9 @@ public:
         // ParseHeader 中 chunk模式会收集完所有数据后才返回最终结果
         // 其他模式直解析第一次获取的字节数,不做后续的解析
         Encoding EncodingType = ParseHeader(tempBuf, nRead, Response, HeaderSize, BodySize, LeftSize, BodySizeInResponse);
+        if (strcasecmp(m_strRequestType.c_str(), "head") == 0) {
+            return 0;
+        }
         recvBodySize += BodySize;
         if (EncodingType == EncodingLength) {
             nTotal = nRead;
@@ -709,13 +742,13 @@ public:
         return "Gzip";
     }
 
-    double getSpendTime(std::chrono::system_clock::time_point &tBegin) {
+    static double getSpendTime(std::chrono::system_clock::time_point &tBegin) {
         auto end      = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - tBegin);
         return double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
     }
 
-    double getCurrentSpeed(std::chrono::system_clock::time_point &tBegin, ssize_t receivedBytes, char nType = 'b') {
+    static double getCurrentSpeed(std::chrono::system_clock::time_point &tBegin, ssize_t receivedBytes, char nType = 'b') {
         auto end      = std::chrono::system_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - tBegin);
         auto costTime = double(duration.count()) * std::chrono::microseconds::period::num / std::chrono::microseconds::period::den;
@@ -737,6 +770,10 @@ public:
             return SSLSend(writeBuf, nSize);
         return ::send(m_nConnectFd, writeBuf, nSize, MSG_DONTWAIT);
 #endif
+    }
+
+    bool connect(const std::string &url) {
+        return connect(HttpUrl(url));
     }
 
     bool connect(const HttpUrl &url) {
@@ -798,8 +835,8 @@ public:
                 FD_SET(m_nConnectFd, &WriteSet);
                 int res = select(m_nConnectFd + 1, nullptr, &WriteSet, nullptr, &tm);
                 if (res < 0) {
-                    logger.error("connect address %s[%s:%d] error ..., try next url", url.fullurl, ipAddress, nPort);
                     continue;
+                    logger.error("connect address %s[%s:%d] error ..., try next url", url.fullurl, ipAddress, nPort);
                 } else if (res == 0) {
                     logger.error("connect address %s[%s:%d] timeout[%d] ... try next url", url.fullurl, ipAddress, nPort, m_nConnectTimeout);
                     continue;
@@ -857,7 +894,7 @@ public:
 #endif
     }
 
-    ssize_t recvData(int fd, void *buf, size_t size, int ops) {
+    int recvData(int fd, void *buf, size_t size, int ops) {
 #ifndef USE_OPENSSL
         return ::recv(fd, buf, size, ops);
 #else
@@ -885,6 +922,18 @@ public:
         return m_strErrorString;
     }
 
+    void setRequestType(const std::string &RequestType) {
+        m_strRequestType = RequestType;
+    }
+
+    std::string getRequestType() const {
+        return m_strRequestType;
+    }
+
+    int getConnectedFd() const {
+        return m_nConnectFd;
+    }
+
 private:
     int         m_nConnectFd;
     std::string m_strConnectUrl;
@@ -894,6 +943,7 @@ private:
     bool        m_bSSLOpened;
     bool        m_bConnected;
     std::string m_strErrorString;
+    std::string m_strRequestType;
 
 #ifdef USE_OPENSSL
     typedef struct {
@@ -902,10 +952,208 @@ private:
     } SSL_Connection;
     SSL_Connection *m_pConnection;
 #endif
-}; // namespace http
 
+}; // namespace http
 class HttpClient {
+
+protected:
+    HttpRequest                           m_ReqHeader;
+    HttpResponse                          m_Response;
+    std::chrono::system_clock::time_point m_ConnectTime;
+    SocketClient                          m_SocketClient;
+    std::string                           m_strRequestHost;
+
 public:
+    class DownloadThreadMgr {
+    public:
+        struct RangeInfo {
+            RangeInfo() = default;
+            RangeInfo(ssize_t begin, ssize_t end)
+                : nBegin(begin)
+                , nEnd(end) {
+            }
+            ssize_t     nBegin;
+            ssize_t     nEnd;
+            std::string strRequstHeader;
+            std::string strTmpFile;
+            std::string strReqUrl;
+            std::string strRange() const {
+                std::stringstream ss;
+                ss << "bytes=" << nBegin << "-" << nEnd;
+                return ss.str();
+            }
+            void setRequestHeader(const std::string &header) {
+                strRequstHeader = header;
+            }
+            void setThreadTmpFile(const std::string &tmpFile) {
+                strTmpFile = tmpFile;
+            }
+            void setReqUrl(const std::string &strUrl) {
+                strReqUrl = strUrl;
+            }
+        };
+        DownloadThreadMgr(ssize_t FileLength, int nThreadCount, const std::string &reqUrl, HttpRequest &RequestHeader, const std::string &strDownloadPath)
+            : m_nThreadCount(nThreadCount)
+            , m_strDownLoadFile(strDownloadPath)
+            , m_nReceivedBytes(0) {
+            ssize_t nBeginBytes      = 0;
+            ssize_t nSignlePartBytes = FileLength / max(nThreadCount, 1);
+            char    tempName[ L_tmpnam ];
+            RequestHeader.setRequestType("GET");
+            for (auto i = 0; i < m_nThreadCount; i++) {
+                std::string threadName = "Thread ";
+                threadName.append(to_string(i));
+                RangeInfo info(nBeginBytes, min(nBeginBytes + nSignlePartBytes, FileLength));
+                RequestHeader.setHeader("Range", info.strRange());
+                info.setRequestHeader(RequestHeader.toStringHeader());
+                if (i == 0) {
+                    tmpnam(tempName);
+                    info.setThreadTmpFile(strDownloadPath + "." + tempName);
+                } else {
+                    char *ptr = tmpnam(nullptr);
+                    info.setThreadTmpFile(strDownloadPath + "." + ptr);
+                }
+                info.setReqUrl(reqUrl);
+                info.setThreadTmpFile(strDownloadPath + "." + threadName);
+                m_vthreadsInfo.push_back(std::pair<std::string, RangeInfo>(threadName, info));
+                nBeginBytes += nSignlePartBytes + 1;
+            }
+        }
+
+        bool startThread() {
+            auto                     timeBegin = std::chrono::system_clock::now();
+            std::vector<std::thread> threadArray;
+            for (auto i = 0; i < m_nThreadCount; i++) {
+                threadArray.push_back(std::thread(
+                    [ this ](int index) {
+                        SocketClient client;
+                        std::string  strUrl = m_vthreadsInfo[ 0 ].second.strReqUrl;
+                        int TryTimes = 3;
+                        while(TryTimes--){
+                            if (!client.connect(strUrl)) {
+                                logger.warning("can't connect to %s url try next %d time...", strUrl, TryTimes);
+                                sleep(2);
+                                continue;
+                            }
+                            break;
+                        }
+                        if(!client.isConnected()){
+                            logger.info("connect %s with error.", strUrl);
+                            return;
+                        }
+
+                        std::string        threadName      = "Thread " + to_string(index);
+                        auto               ThreadtimeBegin = std::chrono::system_clock::now();
+                        const RangeInfo &  tempRangeInfo   = this->m_vthreadsInfo[ index ].second;
+                        const std::string &ThreadName      = this->m_vthreadsInfo[ index ].first;
+
+                        ssize_t nReadBytes = tempRangeInfo.nEnd - tempRangeInfo.nBegin;
+                        // std::cout << "Requst Header:\n" << tempRangeInfo.strRequstHeader << " -->" << nReadBytes << std::endl;
+                        // this->m_lock.lock();
+                        int nWrite = client.write(tempRangeInfo.strRequstHeader.c_str(), tempRangeInfo.strRequstHeader.size());
+                        // this->m_lock.unlock();
+                        if (nWrite != tempRangeInfo.strRequstHeader.size()) {
+                            logger.info("threadName:%s write %d bytes failed. sent %d bytes", ThreadName, tempRangeInfo.strRequstHeader.size(), nWrite);
+                            return;
+                        }
+                        std::string   threadFile = tempRangeInfo.strTmpFile;
+                        std::ofstream fout(threadFile.c_str(), std::ios::binary);
+                        char          temp[ MAX_SIZE ];
+                        bool          FirstData      = true;
+                        ssize_t       totalReadBytes = 0;
+                        while (nReadBytes) {
+                            memset(temp, 0, MAX_SIZE);
+                            // this->m_lock.lock();
+                            int nRead = client.recvData(client.getConnectedFd(), temp, MAX_SIZE, 0);
+                            // this->m_lock.unlock();
+                            if (nRead <= 0) {
+                                logger.info("threadName:%s recv bytes blow 0", threadName);
+                                break;
+                            }
+                            if (FirstData) {
+                                bool        bFindBody = false;
+                                std::string strLine;
+                                for (size_t i = 0; i < nRead;) {
+                                    if (i + 1 < nRead && temp[ i ] == '\r' && temp[ i + 1 ] == '\n' && !bFindBody) {
+                                        i += 2;
+                                        if (strLine.empty()) {
+                                            bFindBody = true;
+                                            continue;
+                                        }
+                                        strLine.clear();
+                                    } else if (!bFindBody) {
+                                        strLine.push_back(temp[ i ]);
+                                        i += 1;
+                                        continue;
+                                    } else if (bFindBody) {
+                                        fout << temp[ i ];
+                                        nReadBytes -= 1;
+                                        totalReadBytes += 1;
+                                        i++;
+                                    }
+                                }
+                                FirstData = false;
+                            } else {
+                                nReadBytes -= nRead;
+                                fout.write(temp, nRead);
+                                totalReadBytes += nRead;
+                            }
+                            if (nReadBytes < 0) {
+                                logger.debug("threadName:%s left bytes < 0 exit..", threadName);
+                                break;
+                            }
+                            logger.debug("threadName:%s recv bytes:%d totalReadBytes:%d Left bytes:%d speed:%s kb/s", ThreadName, nRead, totalReadBytes, nReadBytes,
+                                        client.getCurrentSpeed(ThreadtimeBegin, totalReadBytes, 'k'));
+                        }
+                        fout.close();
+                        this->m_lock.lock();
+                        this->m_nReceivedBytes += totalReadBytes;
+                        this->m_lock.unlock();
+                        return;
+                    },
+                    i));
+            }
+            for (int i = 0; i < m_nThreadCount; i++) {
+                if (threadArray[ i ].joinable()) {
+                    threadArray[ i ].join();
+                    logger.info("%d thread exit...", i);
+                }
+            }
+            logger.info("write bytes size:%d, spent time:%.2fs, speed:%s kb/s begin to adjust tmpfiles...", m_nReceivedBytes, SocketClient::getSpendTime(timeBegin),
+                        SocketClient::getCurrentSpeed(timeBegin, m_nReceivedBytes, 'k'));
+            auto  AdjustBegin = std::chrono::system_clock::now();
+            FILE *fp          = fopen(m_strDownLoadFile.c_str(), "wb");
+            if (fp == nullptr)
+                return false;
+            int n = 0;
+            for (int i = 0; i < m_nThreadCount; i++) {
+                const std::string &resultTmpFile = m_vthreadsInfo[ i ].second.strTmpFile;
+                FILE *             fd            = fopen(resultTmpFile.c_str(), "rb");
+                char               ch;
+
+                if (fd == nullptr)
+                    continue;
+                while ((ch = fgetc(fd)) != EOF) {
+                    fputc(ch, fp);
+                    n++;
+                }
+                fclose(fd);
+                unlink(resultTmpFile.c_str());
+            }
+            fclose(fp);
+            logger.info("write bytes size:%d , speed time:%.2f s", n, SocketClient::getSpendTime(AdjustBegin));
+            return false;
+        }
+
+    protected:
+        ssize_t                                        m_nFileLength;
+        int                                            m_nThreadCount;
+        std::vector<std::pair<std::string, RangeInfo>> m_vthreadsInfo;
+        ssize_t                                        m_nReceivedBytes;
+        std::string                                    m_strDownLoadFile;
+        std::mutex                                     m_lock;
+    };
+
     HttpResult Request(const std::string &reqUrl, bool bRedirect = false, bool verbose = false) {
         HttpUrl tempUrl(reqUrl);
     request:
@@ -941,7 +1189,7 @@ public:
             std::cout << "* Response Body:\n" << m_Response;
             std::cout << "------------------\n";
         }
-        if (m_Response.getResponseBytesSize() == 0) {
+        if (m_Response.getResponseBytesSize() == 0 && strcasecmp(m_SocketClient.getRequestType().c_str(), "head") != 0) {
             logger.info("get response data is empty.");
             return HttpResult(500, "", "Can't get any data from url");
         } else if (!m_Response.getResponseItem(ContentEncoding).empty()) {
@@ -983,13 +1231,21 @@ public:
 
     HttpResult Get(const std::string &reqUrl, bool bRedirect = false, bool verbose = false) {
         m_ReqHeader.setRequestType("GET");
+        m_SocketClient.setRequestType("GET");
         return Request(reqUrl, bRedirect, verbose);
     }
 
     HttpResult Post(const std::string &reqUrl, const std::string &strParams, bool bRedirect = false, bool verbose = false) {
         m_ReqHeader.setRequestType("POST");
+        m_SocketClient.setRequestType("POST");
         m_ReqHeader.setParams(strParams);
         return Request(reqUrl, bRedirect, verbose);
+    }
+
+    HttpResult Head(const std::string &reqUrl, bool verbose = false) {
+        m_ReqHeader.setRequestType("HEAD");
+        m_SocketClient.setRequestType("HEAD");
+        return Request(reqUrl, false, verbose);
     }
 
     void SaveResultToFile(const std::string &fileName) {
@@ -1083,12 +1339,22 @@ public:
         return m_Response.getCookie();
     }
 
-protected:
-    HttpRequest                           m_ReqHeader;
-    HttpResponse                          m_Response;
-    std::chrono::system_clock::time_point m_ConnectTime;
-    SocketClient                          m_SocketClient;
-    std::string                           m_strRequestHost;
+    void DownloadFile(const std::string &reqUrl, const std::string &downloadPath, int nThreadCount = 10, bool verbose = false) {
+        HttpResult  result          = Head(reqUrl, verbose);
+        std::string strDownLoadPath = downloadPath;
+        if (strDownLoadPath.empty()) {
+            strDownLoadPath = "http.download";
+        }
+        if (result.status_code() / 100 == 2) {
+            m_SocketClient.disconnect();
+            logger.info("current request url:%s is exist. and download it to file with %d threads", reqUrl, nThreadCount);
+            ssize_t           fileLength = atol(m_Response.getResponseItem(ContentLength).c_str());
+            DownloadThreadMgr mgr(fileLength, nThreadCount, reqUrl, m_ReqHeader, strDownLoadPath);
+            mgr.startThread();
+        } else {
+            logger.info("current request url:%s is not exist. errcode:%d %s and ignore to download", reqUrl, result.status_code(), result.error());
+        }
+    }
 };
 
 } // namespace http

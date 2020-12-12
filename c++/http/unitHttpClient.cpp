@@ -6,11 +6,12 @@
 #define Accept_Default "*/*"
 #define UserAgent_Default "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
 int main(int argc, char **argv) {
+    logger.BasicConfig("%(thread)s %(levelname)s %(ctime)s %(message)s", tlog::detail::asctime.c_str());
     cmdline::parser CommandParse;
     CommandParse.add("help", 'h', "This is a simple http client which support http/https");
     CommandParse.add("version", 'v', "show version of client cpp");
     CommandParse.add<string>("url", 'u', "Input the request url", true, "");
-    CommandParse.add<string>("type", 't', "requst url type", false, "GET", cmdline::oneof<string>("GET", "POST", "DELETE", "PUT"));
+    CommandParse.add<string>("type", 't', "requst url type", false, "GET", cmdline::oneof<string>("GET", "POST", "DELETE", "PUT", "HEAD", "Download"));
     CommandParse.add<bool>("enable_redirect", 0, "when response of request's url contains `location` and status code is 3xx, redirect now?", false, false, cmdline::oneof<bool>(true, false));
     CommandParse.add<bool>("verbose", 'V', "display the debug process message", false, false, cmdline::oneof<bool>(true, false));
     CommandParse.add<string>("userAgent", 0, "set request's header userAgent", false, UserAgent_Default);
@@ -25,6 +26,8 @@ int main(int argc, char **argv) {
     CommandParse.add<string>("content-type", 0, "the post data content type", false, "application/x-www-form-urlencoded");
     CommandParse.add<int>("logLevel", 'l', "the logger level.(0.debug, 1.info 2.warning 3.alert", false, 1, cmdline::range<int>(0, 3));
     CommandParse.add<int>("timeout", 0, "set connection timeout(s)", false, 10, cmdline::range<int>(0, 30));
+    CommandParse.add<string>("auth-basic", 0, "set auth basic user", false, "");
+    CommandParse.add<int>("threads", 0, "download threads count", false, 5, cmdline::range<int>(1,10));
     CommandParse.set_program_name("httpclient");
 
     bool ok = CommandParse.parse(argc, argv);
@@ -56,13 +59,21 @@ int main(int argc, char **argv) {
         client.setAcceptLanguage(CommandParse.get<string>("acceptLanguage"));
         int httpVersion = CommandParse.get<int>("http_version");
         client.setHttpVersion(static_cast<http::utils::HttpVersion>(httpVersion));
-
+        
         std::string strCookie = CommandParse.get<string>("cookie");
         if (!strCookie.empty())
             client.setCookie(strCookie);
 
+        std::string strAuthBasic = CommandParse.get<string>("auth-basic");
+        if(!strAuthBasic.empty() && strAuthBasic.find(":") != std::string::npos){
+            std::string strUser = strAuthBasic.substr(0, strAuthBasic.find(":"));
+            std::string strPass = strAuthBasic.substr(strAuthBasic.find(":")+1);
+            client.setBasicAuthUserPass(strUser, strPass);
+        }
+
         std::string      reqType = CommandParse.get<std::string>("type");
         http::HttpResult Result;
+        std::string downloadPath = CommandParse.get<string>("output");
         if (strcasecmp(reqType.c_str(), "get") == 0) {
             Result = client.Get(reqUrl, bRedireect, bVerbose);
         } else if (strcasecmp(reqType.c_str(), "post") == 0) {
@@ -75,13 +86,18 @@ int main(int argc, char **argv) {
                 client.setHeader(ContentLength, body.size());
                 Result = client.Post(reqUrl, body, bRedireect, bVerbose);
             }
+        } else if( strcasecmp(reqType.c_str(), "head") == 0){
+            Result = client.Head(reqUrl, bVerbose);
+        } else if(strcasecmp(reqType.c_str(), "Download") == 0){
+            int nThreads = CommandParse.get<int>("threads");
+            client.DownloadFile(reqUrl, downloadPath, nThreads, bVerbose);
         }
         std::cout << "\nStatus Code:" << Result.status_code() << std::endl
                   << "Text Size:" << Result.text().size() << std::endl
                   << "Relay Message:" << Result.error() << std::endl
                   << "Text :" << Result.text() << std::endl;
-        std::string downloadPath = CommandParse.get<string>("output");
-        if (!downloadPath.empty()) {
+        
+        if (!downloadPath.empty() && strcasecmp(reqType.c_str(), "Download") != 0) {
             client.SaveResultToFile(downloadPath);
             logger.info("succesful save response to %s file", downloadPath);
         }

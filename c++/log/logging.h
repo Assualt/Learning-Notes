@@ -250,8 +250,8 @@ struct detail {
         if (key == "(message)")
             ss << message;
         else if (key == "(thread)")
-            ss << std::hex << pthread_self();
-        // ss << std::this_thread::get_id();
+            // ss << std::hex << pthread_self();
+            ss << std::this_thread::get_id();
         else if (key == "(process)")
             ss << getpid();
         else if (key == "(levelname)")
@@ -339,7 +339,9 @@ public:
                 m_OutputStream << "\n";
             m_lock.unlock();
         }
+        m_lock.lock();
         std::cout << LogMessage << std::endl;
+        m_lock.unlock();
     }
 
     Logger &setFileStructInfo(const char *file, const char *funcName, int fileNo) {

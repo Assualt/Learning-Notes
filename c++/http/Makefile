@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-I../log -I../http -I../http/url/include -I../hash -I../argparse -Wno-deprecated-declarations -std=c++11 -DUSE_OPENSSL -g
+CFLAGS=-I../log -I../http -I../http/url/include -I../hash -I../argparse -Wno-deprecated-declarations -std=c++11 -DUSE_OPENSSL -g -O2
 
 vpath %.cpp ../log
 

@@ -1,5 +1,4 @@
 #include "base64.h"
-#include "logging.h"
 #include <iostream>
 #include <sstream>
 #include <string.h>
@@ -59,11 +58,8 @@ public:
         int ret       = inflateInit2(&strm, WindowsBits);
 
         if (ret != Z_OK) {
-            logger.info("Init infalteInit2 Failed");
             inflateEnd(&strm);
             return -1;
-        } else {
-            logger.info("Init infalteInit2 Success");
         }
         char inBuf[ MAX_BUF_SIZE ], outBuf[ MAX_BUF_SIZE ];
         int  left, size = 0;
