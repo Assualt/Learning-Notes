@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
         std::cout << CommandParse.error() << std::endl;
         std::cout << CommandParse.usage() << std::endl;
     } else {
-        std::string type           = CommandParse.get<std::string>("ty  pe");
+        std::string type           = CommandParse.get<std::string>("type");
         std::string strInputString = CommandParse.get<std::string>("input");
         if (strInputString.empty())
             std::cout << "input string is empty. ignored .." << std::endl;
