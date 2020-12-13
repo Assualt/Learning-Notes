@@ -246,7 +246,10 @@ public:
         , m_bDecodeBodyStatus(false) {
     }
     void setBody(const std::string &key, const std::string &val) {
-        m_vResponseBody.push_back(std::pair<std::string, std::string>(key, val));
+        if (val.empty())
+            m_vResponseBody.back().second += key;
+        else
+            m_vResponseBody.push_back(std::pair<std::string, std::string>(key, val));
     }
     std::string getResponseText() const {
         return m_strResponseText;
@@ -305,8 +308,10 @@ public:
         if (this->getResponseItem(ContentEncoding) == "gzip") {
             m_ResponseBuffer.seekReadPos(0);
             logger.info("Try Decode Bytes %d for gzip.", m_nBodyBytes);
+            if (m_nBodyBytes == 0)
+                return;
             std::stringstream strstring;
-            size_t            nBytes = HashUtils::GzipDecompress(m_ResponseBuffer, strstring);
+            int               nBytes = HashUtils::GzipDecompress(m_ResponseBuffer, strstring);
             if (nBytes) {
                 logger.info("Try Decode Bytes %d, and Decoded Bytes %d", m_nBodyBytes, nBytes);
                 m_strResponseText   = strstring.str();
@@ -342,8 +347,8 @@ public:
         }
         if (!obj.m_strResponseText.empty()) {
             os << "<\r\n";
-            if (obj.getResponseItem(ContentType).find("text/") != std::string::npos)
-                os << obj.m_strResponseText << CTRL;
+            if (strcasecmp(obj.getResponseItem(ContentEncoding).c_str(), "gzip") == 0 || strcasecmp(obj.getResponseItem(ContentEncoding).c_str(), "deflate") == 0)
+                os << "[Binary] " << obj.m_nBodyBytes << "Bytes" << CTRL;
             else if (obj.getResponseItem(ContentType).find("application/json") != std::string::npos)
                 os << obj.m_strResponseText << CTRL;
             else
@@ -401,7 +406,7 @@ enum HTTP_TYPE { TYPE_GET, TYPE_POST, TYPE_DELETE, TYPE_PUT };
 
 enum CHUNK_STATE { CHUNK_BEGIN, CHUNK_PROCESS_1, CHUNK_PROCESS_2, CHUNK_END };
 
-#define MAX_SIZE 16384
+#define MAX_SIZE 32768
 class SocketClient {
 public:
     SocketClient()
@@ -559,55 +564,83 @@ private:
         CHUNK_STATE ChunkState = CHUNK_BEGIN;
         size_t      chunkSize  = 0;
         size_t      blockCount = 0;
-
-        for (size_t i = 0; i < size;) {
-            if (i + 1 < size && buffer[ i ] == '\r' && buffer[ i + 1 ] == '\n' && !bFindBody) {
-                if (LineCnt == 0) {
-                    std::string HttpVersion, statusMessage;
-                    int         StatusCode;
-                    ParseFirstLine(strLine, HttpVersion, StatusCode, statusMessage);
-                    if (to_string(StatusCode).size() != 3) {
-                        continue;
-                    }
-                    Response.setBody("code", to_string(StatusCode));
-                    Response.setBody("message", statusMessage);
-                    logger.info("code:%s, message:%s, Line:%s", to_string(StatusCode), statusMessage, strLine);
-                    LineCnt++;
-                } else if (!strLine.empty()) {
-                    ParseHeaderLine(strLine, strKey, strVal);
-                    strKey = utils::trim(strKey);
-                    strVal = utils::trim(strVal);
-                    // logger.debug("Find Response Body Header: %s->%s", strKey, strVal);
-                    if (strKey == ContentLength) {
-                        BodySizeInResponse = atoi(strVal.c_str());
-                        EncodingType       = EncodingLength;
-                    } else if (strKey == TransferEncoding && strVal == "chunked") {
-                        EncodingType = EncodingChunk;
-                    }
-                    Response.setBody(strKey, strVal);
-                } else if (strLine.empty()) {
-                    bFindBody = true;
-                    if (strcasecmp(m_strRequestType.c_str(), "head") == 0)
-                        break;
-                }
-                i += 2;
-                HeaderSize += strLine.size() + 2;
-                strLine.clear();
-            } else if (!bFindBody) { // Header
-                strLine.push_back(buffer[ i ]);
-                i++;
-            } else if (EncodingType != EncodingChunk && bFindBody) {
-                Response.WriteBodyByte(buffer[ i ] & 0xFF);
-                recvBodySize += 1;
-                i += 1;
-            } else if (EncodingType == EncodingChunk && bFindBody) {
-                // Server Apache mode_deflate is not suitable for zlib.
-                RecvChunkData(buffer, i, size, Response, ChunkState, chunkSize, recvBodySize, blockCount);
-                break;
+        char        LeftBuffer[ MAX_SIZE ];
+        bool        parseFirst = true;
+        const char *sbuf       = nullptr;
+        while (!bFindBody) {
+            if (parseFirst) {
+                sbuf       = buffer;
+                parseFirst = false;
             } else {
-                logger.info("write mode 3");
+                int nsize = recvData(m_nConnectFd, LeftBuffer, MAX_SIZE, 0);
+                if (nsize < 0)
+                    break;
+                sbuf = LeftBuffer;
+            }
+            for (size_t i = 0; i < size;) {
+                if (i + 1 < size && sbuf[ i ] == '\r' && sbuf[ i + 1 ] == '\n' && !bFindBody) {
+                    if (LineCnt == 0) {
+                        std::string HttpVersion, statusMessage;
+                        int         StatusCode;
+                        ParseFirstLine(strLine, HttpVersion, StatusCode, statusMessage);
+                        if (to_string(StatusCode).size() != 3) {
+                            continue;
+                        }
+                        Response.setBody("code", to_string(StatusCode));
+                        Response.setBody("message", statusMessage);
+                        logger.info("code:%s, message:%s, Line:%s", to_string(StatusCode), statusMessage, strLine);
+                        LineCnt++;
+                    } else if (!strLine.empty()) {
+                        ParseHeaderLine(strLine, strKey, strVal);
+                        strKey = utils::trim(strKey);
+                        strVal = utils::trim(strVal);
+                        logger.debug("Find Response Body Header: %s->%s", strKey, strVal);
+                        if (strcasecmp(strKey.c_str(), ContentLength) == 0) {
+                            BodySizeInResponse = atoi(strVal.c_str());
+                            EncodingType       = EncodingLength;
+                        } else if (strcasecmp(strKey.c_str(), TransferEncoding) == 0 && strcasecmp(strVal.c_str(), "chunked") == 0) {
+                            EncodingType = EncodingChunk;
+                        }
+                        Response.setBody(strKey, strVal);
+                    } else if (strLine.empty()) {
+                        bFindBody = true;
+                        if (strcasecmp(m_strRequestType.c_str(), "head") == 0)
+                            break;
+                    }
+                    i += 2;
+                    HeaderSize += strLine.size() + 2;
+                    strLine.clear();
+                } else if (!bFindBody) { // Header
+                    strLine.push_back(sbuf[ i ]);
+                    i++;
+                } else if (EncodingType != EncodingChunk && bFindBody) {
+                    Response.WriteBodyByte(sbuf[ i ] & 0xFF);
+                    recvBodySize += 1;
+                    i += 1;
+                } else if (EncodingType == EncodingChunk && bFindBody) {
+                    // Server Apache mode_deflate is not suitable for zlib.
+                    RecvChunkData(sbuf, i, size, Response, ChunkState, chunkSize, recvBodySize, blockCount);
+                    break;
+                } else {
+                    logger.info("never reach here");
+                }
             }
         }
+
+        if (!strLine.empty() && !bFindBody) {
+            ParseHeaderLine(strLine, strKey, strVal);
+            strKey = utils::trim(strKey);
+            strVal = utils::trim(strVal);
+            logger.debug("Find Response Body Header: %s->%s", strKey, strVal);
+            if (strKey == ContentLength) {
+                BodySizeInResponse = atoi(strVal.c_str());
+                EncodingType       = EncodingLength;
+            } else if (strKey == TransferEncoding && strVal == "chunked") {
+                EncodingType = EncodingChunk;
+            }
+            Response.setBody(strKey, strVal);
+        }
+
         if (EncodingType == EncodingLength && BodySizeInResponse != 0 && BodySizeInResponse != -1) {
             LeftBodySize = BodySizeInResponse - recvBodySize;
             logger.info("Header Size:%d recvBodySize:%d totalSize:%d BodySizeInResponse:%d "
@@ -1027,9 +1060,9 @@ public:
                 threadArray.push_back(std::thread(
                     [ this ](int index) {
                         SocketClient client;
-                        std::string  strUrl = m_vthreadsInfo[ 0 ].second.strReqUrl;
-                        int TryTimes = 3;
-                        while(TryTimes--){
+                        std::string  strUrl   = m_vthreadsInfo[ 0 ].second.strReqUrl;
+                        int          TryTimes = 3;
+                        while (TryTimes--) {
                             if (!client.connect(strUrl)) {
                                 logger.warning("can't connect to %s url try next %d time...", strUrl, TryTimes);
                                 sleep(2);
@@ -1037,7 +1070,7 @@ public:
                             }
                             break;
                         }
-                        if(!client.isConnected()){
+                        if (!client.isConnected()) {
                             logger.info("connect %s with error.", strUrl);
                             return;
                         }
@@ -1103,7 +1136,7 @@ public:
                                 break;
                             }
                             logger.debug("threadName:%s recv bytes:%d totalReadBytes:%d Left bytes:%d speed:%s kb/s", ThreadName, nRead, totalReadBytes, nReadBytes,
-                                        client.getCurrentSpeed(ThreadtimeBegin, totalReadBytes, 'k'));
+                                         client.getCurrentSpeed(ThreadtimeBegin, totalReadBytes, 'k'));
                         }
                         fout.close();
                         this->m_lock.lock();
@@ -1189,12 +1222,6 @@ public:
             std::cout << "* Response Body:\n" << m_Response;
             std::cout << "------------------\n";
         }
-        if (m_Response.getResponseBytesSize() == 0 && strcasecmp(m_SocketClient.getRequestType().c_str(), "head") != 0) {
-            logger.info("get response data is empty.");
-            return HttpResult(500, "", "Can't get any data from url");
-        } else if (!m_Response.getResponseItem(ContentEncoding).empty()) {
-            m_Response.tryDecodeBody();
-        }
 
         if (atoi(m_Response.getResponseItem("code").c_str()) / 100 == 3 && bRedirect) {
             std::string strRedirectUrl = GetRedirectLocation(m_Response.getResponseItem(Location), m_ReqHeader.getRequestPath());
@@ -1203,6 +1230,15 @@ public:
                 tempUrl = HttpUrl(strRedirectUrl);
             }
             goto request;
+        }
+
+        if (strcasecmp(m_SocketClient.getRequestType().c_str(), "head") == 0) {
+            logger.debug("Requst Header Only.");
+        } else if (m_Response.getResponseBytesSize() == 0 && atoi(m_Response.getResponseItem("code").c_str()) / 100 != 3 ) {
+            logger.info("get response data is empty.");
+            return HttpResult(500, "", "Can't get any data from url");
+        } else if (!m_Response.getResponseItem(ContentEncoding).empty()) {
+            m_Response.tryDecodeBody();
         }
 
         return HttpResult(atoi(m_Response.getResponseItem("code").c_str()), m_Response.getResponseText(), m_Response.getResponseItem("message"));

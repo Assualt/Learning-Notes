@@ -57,6 +57,7 @@ int main(int argc, char **argv) {
         client.setUserAgent(CommandParse.get<string>("userAgent"));
         client.setAcceptEncoding(CommandParse.get<string>("acceptEncoding"));
         client.setAcceptLanguage(CommandParse.get<string>("acceptLanguage"));
+        client.setHeader("Connection", "keep-alive");
         int httpVersion = CommandParse.get<int>("http_version");
         client.setHttpVersion(static_cast<http::utils::HttpVersion>(httpVersion));
         
