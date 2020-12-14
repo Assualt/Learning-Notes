@@ -38,8 +38,9 @@
 #define Location "Location"
 #define Cookie "Cookie"
 #define Referer "Referer"
-namespace http {
 
+#include "logging.h"
+namespace http {
 namespace utils {
 
 template <class T> std::string toString(const T &val) {
@@ -142,12 +143,25 @@ private:
     std::string m_strBodyString;
 };
 
-using Func = std::function<void(HttpRequest &, HttpResponse &)>;
+template<typename T>
+struct UrlPatternFilter{
+public:
+    bool operator()(const T&x, const T&y){
+        return x.first == y.first;
+    }
+};
 
+struct RequestKey{
+    std::string strPrefix;
+    std::string strMethod;
+};
+
+using Func = std::function<void(HttpRequest &, HttpResponse &)>;
+typedef std::map<std::string, Func> RequestMapping;
 class ClientThread {
 public:
     ClientThread(int serverFd, int clientFd);
-    void    handRequest(const std::unordered_map<std::string, Func> &handerMapping);
+    void    handRequest(const RequestMapping &handerMapping);
     void    parseHeader(HttpRequest &request);
     int     recvData(int fd, void *buf, size_t n, int ops);
     int     writeData(int fd, void *buf, size_t n, int ops);
@@ -156,30 +170,48 @@ public:
 private:
     void ParseHeaderLine(const std::string &line, std::string &key, std::string &val);
     void ParseFirstLine(const std::string &line, std::string &HttpVersion, std::string &RequestPath, std::string &RequestType);
-
+    bool handleServerResource(HttpRequest &request, HttpResponse &response, const std::string &strServerRoot);
 private:
     int m_nThreadserverFd;
     int m_nThreadClientFd;
 };
 
+#define METHOD_GETSETTER(Name, type) \
+    type m_str##Name; \
+    const type get##Name(void) const { return m_str##Name; } \
+    void set##Name(const type &val ) { m_str##Name == val; }
+
 class HttpServer {
 public:
+    class HttpConfig{
+    public:
+        bool loadConfig(const std::string &strConfigFilePath);
+    public:
+        METHOD_GETSETTER(ServerRoot, std::string);
+    };
 public:
     HttpServer(const std::string &strServerName, const std::string &strServerIP = "127.0.0.1", const std::string &strServerDescription = "A simple Http Server", int nPort = 80);
-
 public:
-    bool addRequestMapping(const std::string &path, Func F);
+    bool addRequestMapping(const std::string &path, Func&& F);
     bool ExecForever();
-
+    bool loadHttpConfig(const std::string &strHttpServerConfig="httpd.conf");
+    http::Func doFilter(const std::string &requestPath){
+        RequestMapping::iterator iter;
+        if((iter=m_mHandleMapping.find(requestPath)) != m_mHandleMapping.end())
+            return iter->second;
+        return nullptr;
+    }
 private:
     std::string                           m_strServerName;
     std::string                           m_strServerIP;
     std::string                           m_strServerDescription;
     int                                   m_nPort;
-    std::unordered_map<std::string, Func> m_mHandleMapping;
+    RequestMapping                        m_mHandleMapping;
     int                                   m_nMaxListenClients;
     int                                   m_nServerFd;
     int                                   m_nEpollTimeOut;
+    tlog::logImpl                         m_LogServer;  
+    HttpConfig                            m_mConfig;
 };
 
 } // namespace http

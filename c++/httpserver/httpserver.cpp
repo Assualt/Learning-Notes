@@ -1,6 +1,5 @@
 #include "httpserver.h"
 #include "hashutils.hpp"
-#include "logging.h"
 #include <thread>
 #define BUF_SIZE 32768
 namespace http {
@@ -146,7 +145,10 @@ void ClientThread::ParseHeaderLine(const std::string &line, std::string &key, st
     val.clear();
     for (size_t i = 0; i < line.size(); i++) {
         if (line[ i ] == ':')
-            nBlankCnt = 1;
+            if(nBlankCnt == 0)
+                nBlankCnt = 1;
+            else
+                val.push_back(line[i]);
         else if (nBlankCnt == 0) {
             key.push_back(line[ i ]);
         } else if (nBlankCnt == 1) {
@@ -172,14 +174,14 @@ void ClientThread::ParseFirstLine(const std::string &line, std::string &HttpVers
         }
     }
 }
-void ClientThread::handRequest(const std::unordered_map<std::string, Func> &handerMapping) {
+void ClientThread::handRequest(const RequestMapping &handerMapping) {
     HttpRequest  request;
     HttpResponse response;
     char         tempBuf[ BUF_SIZE ];
     parseHeader(request);
     logger.info("request type:%s requst path:%s httpversion:%s", request.getRequestType(), request.getRequestPath(), request.getHttpVersion());
     if (handerMapping.find(request.getRequestPath()) != handerMapping.end()) {
-        Func c = handerMapping.at(request.getRequestPath());
+        auto c = handerMapping.at(request.getRequestPath());
         c(request, response);
         writeResponse(response);
     } else {
@@ -207,15 +209,6 @@ HttpServer::HttpServer(const std::string &strServerName, const std::string &strS
     , m_nMaxListenClients(20)
     , m_nServerFd(-1)
     , m_nEpollTimeOut(10) {
-}
-
-bool HttpServer::addRequestMapping(const std::string &path, Func F) {
-    if (m_mHandleMapping.find(path) != m_mHandleMapping.end()) {
-        logger.info("add Request path:%s is exists. ignore it", path);
-        return false;
-    }
-    m_mHandleMapping.insert(std::pair<std::string, Func>(path, F));
-    return true;
 }
 
 bool HttpServer::ExecForever() {
@@ -290,5 +283,28 @@ bool HttpServer::ExecForever() {
 
     return false;
 }
+
+bool HttpServer::addRequestMapping(const std::string &path, Func&& F){
+    if (m_mHandleMapping.find(path) != m_mHandleMapping.end()) {
+        logger.info("add Request path:%s is exists. ignore it", path);
+        return false;
+    }
+    m_mHandleMapping.insert(std::pair<std::string, Func>(path, F));
+    return true;
+}
+
+bool HttpServer::loadHttpConfig(const std::string &strHttpServerConfig){
+    bool ret = m_mConfig.loadConfig(strHttpServerConfig);
+    return ret;
+}
+
+bool HttpServer::HttpConfig::loadConfig(const std::string &strConfigFilePath){
+    if(access(strConfigFilePath.c_str(), F_OK) == -1){
+        logger.warning("load default config %s failed.", strConfigFilePath);
+        return false;
+    }
+    return true;
+}
+
 
 } // namespace http
