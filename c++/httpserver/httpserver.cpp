@@ -174,19 +174,21 @@ void ClientThread::ParseFirstLine(const std::string &line, std::string &HttpVers
         }
     }
 }
-void ClientThread::handRequest(const RequestMapping &handerMapping) {
+void ClientThread::handRequest(const RequestMapper &handerMapping) {
     HttpRequest  request;
     HttpResponse response;
     char         tempBuf[ BUF_SIZE ];
     parseHeader(request);
     logger.info("request type:%s requst path:%s httpversion:%s", request.getRequestType(), request.getRequestPath(), request.getHttpVersion());
-    if (handerMapping.find(request.getRequestPath()) != handerMapping.end()) {
-        auto c = handerMapping.at(request.getRequestPath());
-        c(request, response);
-        writeResponse(response);
-    } else {
-        logger.info("request path:%s 404 not found", request.getRequestPath());
-    }
+    // if (handerMapping.find(request.getRequestPath()) != handerMapping.end()) {
+    //     auto c = handerMapping.at(request.getRequestPath());
+    //     c(request, response);
+    //     writeResponse(response);
+    // } else {
+    //     logger.info("request path:%s 404 not found", request.getRequestPath());
+    // }
+    if(handerMapping.)
+
 }
 ssize_t ClientThread::writeResponse(HttpResponse &response) {
     std::string responseHeader = response.toResponseHeader();
@@ -262,7 +264,7 @@ bool HttpServer::ExecForever() {
                 logger.info("recv client:%d from address %s ", client_fd, inet_ntoa(client_addr.sin_addr));
                 if (client_fd != -1) {
                     ClientThread clientThread(m_nServerFd, client_fd);
-                    std::thread  tempThread(&ClientThread::handRequest, clientThread, m_mHandleMapping);
+                    std::thread  tempThread(&ClientThread::handRequest, clientThread, m_mapper);
                     tempThread.join();
                 } else {
                     logger.info("client fd is -1");

@@ -82,6 +82,22 @@ static size_t chunkSize(const std::string &strChunkSize) {
         return -1;
     return std::stoi(temp, nullptr, 16);
 }
+static std::vector<std::string> split(const std::string &src, char divider) {
+    std::vector<std::string> result;
+    std::string              temp;
+    for (auto &ch : src) {
+        if (ch == divider) {
+            if(!utils::trim(temp).empty())
+                result.push_back(utils::trim(temp));
+            temp.clear();
+        } else {
+            temp.push_back(ch);
+        }
+    }
+    if (!temp.empty())
+        result.push_back(utils::trim(temp));
+    return result;
+}
 } // namespace utils
 typedef enum { EncodingLength, EncodingChunk, EncodingGzip, EncodingOther } Encoding;
 
@@ -150,18 +166,66 @@ public:
         return x.first == y.first;
     }
 };
-
-struct RequestKey{
-    std::string strPrefix;
-    std::string strMethod;
+using Func = std::function<void(HttpRequest &, HttpResponse &)>;
+struct Key{
+public:    
+    Key(const std::string &pattern, const std::string &method="GET", bool needval=false)
+        :pattern(pattern), method(method),needval(needval){
+        if(needval){
+            auto itemVector = utils::split(pattern, '/');
+            int i = 0;
+            for(auto &item: itemVector){
+                if(item.front() == '{' && item.back() == '}'){
+                    keyPoint.push_back(i);
+                    keySet.push_back(item.substr(1, item.size() - 2));
+                }
+                i++;
+            }
+        }
+    }
+    bool MatchFilter(const std::string &reqPath, std::map<std::string, std::string>&valMap){
+        if(!needval) return reqPath == pattern;
+        else{
+            auto itemList = utils::split(reqPath, '/');    
+            for(auto i = 0, j = 0; i < keyPoint.size(); i++){
+                int pos = keyPoint[i];
+                if(pos >= itemList.size())
+                    break;
+                valMap.insert(std::pair<std::string, std::string>(keySet[j++],itemList[pos]));
+            }
+            return true;
+        }
+    }
+public:
+    std::string pattern;
+    std::string method;
+    bool needval;
+    std::vector<std::string> keySet;
+    std::vector<int> keyPoint;
 };
 
-using Func = std::function<void(HttpRequest &, HttpResponse &)>;
+class RequestMapper{
+public:
+    void insert(const Key &key, http::Func &&F){
+        m_RequestMapper.push_back(std::pair<Key, http::Func>(key, F));
+    }
+    http::Func find(const std::string &RequestPath, std::map<std::string, std::string> &resultMap){
+        for(auto& iter: m_RequestMapper){
+            if(iter.first.MatchFilter(RequestPath, resultMap)){
+                return iter.second;
+            }
+        }
+        return nullptr;
+    }
+protected:
+    std::vector<std::pair<Key, http::Func>> m_RequestMapper;
+};
+
 typedef std::map<std::string, Func> RequestMapping;
 class ClientThread {
 public:
     ClientThread(int serverFd, int clientFd);
-    void    handRequest(const RequestMapping &handerMapping);
+    void    handRequest(const RequestMapper &handerMapping);
     void    parseHeader(HttpRequest &request);
     int     recvData(int fd, void *buf, size_t n, int ops);
     int     writeData(int fd, void *buf, size_t n, int ops);
@@ -194,6 +258,7 @@ public:
 public:
     bool addRequestMapping(const std::string &path, Func&& F);
     bool ExecForever();
+    RequestMapper& getMapper() { return m_mapper; }
     bool loadHttpConfig(const std::string &strHttpServerConfig="httpd.conf");
     http::Func doFilter(const std::string &requestPath){
         RequestMapping::iterator iter;
@@ -212,6 +277,7 @@ private:
     int                                   m_nEpollTimeOut;
     tlog::logImpl                         m_LogServer;  
     HttpConfig                            m_mConfig;
+    RequestMapper                         m_mapper;
 };
 
 } // namespace http
