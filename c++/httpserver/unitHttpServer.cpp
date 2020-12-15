@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
             // handle image
             long nSize = 0;
             std::string result;
-            if(utils::CheckImageSuffix(request.getRequestPath())){
+            if(utils::FileIsBinary(request.getRequestPath())){
                 nSize = response.loadBinaryFile(server.getServerRoot() + "/" + request.getRequestPath());
             }else{
                 nSize = response.loadFileString(server.getServerRoot() + "/" + request.getRequestPath());
@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
         }));
         server.ExecForever();
     }
-    std::cout << utils::CheckImageSuffix("/bubblesort.gif?123") << std::endl;
+    std::cout << utils::FileIsBinary("/bubblesort.gif?123") << std::endl;
     // http::HttpResponse response;
     // std::cout << response.loadBinaryFile("./html//bubblesort.gif") << std::endl;
     // testItem();

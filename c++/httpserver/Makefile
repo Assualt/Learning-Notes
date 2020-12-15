@@ -4,7 +4,7 @@ CFLAGS=-I../log -I../argparse -I../hash -Wno-deprecated-declarations -std=c++11 
 vpath %.cpp ../log ../hash
 
 
-ALLOBJS=logging.o  httpserver.o unitHttpServer.o
+ALLOBJS=logging.o  httpserver.o unitHttpServer.o httputils.o httprequest.o httpresponse.o
 
 .cpp.o:
 	$(CC) -c $(CFLAGS) $< 
@@ -13,7 +13,7 @@ ALLOBJS=logging.o  httpserver.o unitHttpServer.o
 all: unitHttpServer
 
 unitHttpServer: $(ALLOBJS)
-	$(CC) $^ -o httpserver $(CFLAGS) -lz -g -std=c++11 -pthread
+	$(CC) $^ -o httpserver $(CFLAGS) -lz -g -std=c++11 -pthread -lmagic
 
 clean:
 	rm -rf *.o httpserver

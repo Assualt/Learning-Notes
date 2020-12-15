@@ -1,6 +1,6 @@
 #pragma once
 #include <iostream>
-
+#include <sstream>
 #define PARAM_SETER_GETER(strParamName, valType)          \
 public:                                                   \
     inline const valType &get##strParamName(void) const { \
@@ -84,4 +84,4 @@ public:
     }
 };
 
-}  // namespace http
+} // namespace http

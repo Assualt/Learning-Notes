@@ -173,9 +173,9 @@ void ClientThread::handRequest(RequestMapper *handerMapping, HttpConfig *config,
     HttpResponse response;
     parseHeader(request);
     std::map<std::string, std::string> recvHeaderMap;
-    logger.info("status: %d", utils::CheckImageSuffix(request.getRequestPath()));
+    logger.info("status: %d", utils::FileIsBinary(request.getRequestPath()));
     int nWrite;
-    if(!utils::CheckImageSuffix(request.getRequestPath())){
+    if(!utils::FileIsBinary(request.getRequestPath())){
         http::Func iter = handerMapping->find(request.getRequestPath(), recvHeaderMap);
         iter(request, response);
         nWrite=writeResponse(response);
