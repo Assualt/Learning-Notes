@@ -1,11 +1,13 @@
+#pragma once
 #include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <magic.h>
+#include <sstream>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <vector>
-#include <sstream>
 using namespace std;
 class utils {
 public:
@@ -26,4 +28,9 @@ public:
     static std::string toResponseBasicDateString();
     static std::string requstTimeFmt();
     static bool        FileIsBinary(const std::string &filePath);
+    static bool        FileExists(const std::string &filePath);
+    static std::string FileMagicType(const std::string &filePath);
+    static std::string toSizeString(off_t nSize);
+    static std::string FileDirentTime(struct stat *st);
+    static bool        ISDir(const std::string &filepath);
 };

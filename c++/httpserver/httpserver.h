@@ -24,10 +24,10 @@
 #include <unordered_map>
 #include <vector>
 
-#include "httplog.h"
 #include "httprequest.h"
 #include "httpresponse.h"
 #include "logging.h"
+#include <queue>
 
 namespace http {
 typedef enum { EncodingLength, EncodingChunk, EncodingGzip, EncodingOther } Encoding;
@@ -59,7 +59,7 @@ typedef std::map<std::string, Func> RequestMapping;
 class ClientThread {
 public:
     ClientThread(int serverFd, int clientFd);
-    void    handRequest(RequestMapper *handerMapping, HttpConfig *config, const char *strRemoteIP);
+    void    handRequest(RequestMapper *handerMapping, HttpConfig *config, const char *strRemoteIP, const char *strServerRoot);
     void    parseHeader(HttpRequest &request);
     int     recvData(int fd, void *buf, size_t n, int ops);
     int     writeData(int fd, void *buf, size_t n, int ops);
@@ -89,7 +89,15 @@ public:
     bool loadHttpConfig(const std::string &strHttpServerConfig = "httpd.conf");
 
     std::string getServerRoot() {
-        return "./html";
+        return m_strServerRoot;
+    }
+
+    void setServerRoot(const std::string &strServerRoot) {
+        m_strServerRoot = strServerRoot;
+    }
+
+    HttpConfig &getHttpConfig() {
+        return m_mConfig;
     }
 
 public:
@@ -99,13 +107,15 @@ private:
     std::string m_strServerName;
     std::string m_strServerIP;
     std::string m_strServerDescription;
+    std::string m_strServerRoot;
     int         m_nPort;
     int         m_nMaxListenClients;
     int         m_nServerFd;
     int         m_nEpollTimeOut;
 
-    HttpConfig    m_mConfig;
-    RequestMapper m_mapper;
+    HttpConfig              m_mConfig;
+    RequestMapper           m_mapper;
+    std::queue<std::thread> m_ThreadsPool;
 };
 
 } // namespace http

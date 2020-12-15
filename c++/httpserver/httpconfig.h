@@ -34,6 +34,8 @@ protected:                                                \
 #define NOTFOUNDHTML "<html><head><title>404 Not Found</title></head><body>404 not found</body></html>"
 #define NOTFOUND "/404"
 
+#include "httputils.h"
+
 namespace http {
 class HttpConfig {
 public:
@@ -49,8 +51,16 @@ public:
         m_strServerRoot = strServerRoot;
     }
 
+    void loadDirentTmplateHtml(const std::string &tmplatePath) {
+        m_strDirentTmplateHtml = utils::loadFileString(tmplatePath);
+    }
+    std::string &getDirentTmplateHtml() {
+        return m_strDirentTmplateHtml;
+    }
+
 private:
     std::string m_strServerRoot;
+    std::string m_strDirentTmplateHtml;
 };
 
 class MyStringBuffer : public std::stringbuf {
