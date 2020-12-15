@@ -1,69 +1,28 @@
-#include "hashutils.hpp"
 #include "httpserver.h"
 #include <cmdline.hpp>
 #include <fstream>
 #include <regex>
 using namespace http;
-void testItem(){
-    RequestMapper test;
-    test.insert({"/index/{user}/{name}", "GET", true}, std::move(
-        [](http::HttpRequest &request, http::HttpResponse &response){
-            std::cout << "Request /index" << std::endl;
-        }
-    ));
-    
-    test.insert({"/favorite", "GET"}, std::move(
-        [](http::HttpRequest &request, http::HttpResponse &response){
-            std::cout << "Request /favorite" << std::endl;
-        }
-    ));
 
-    test.insert({"/login", "GET"}, std::move(
-        [](http::HttpRequest &request, http::HttpResponse &response){
-            std::cout << "Request /login" << std::endl;
-        }
-    ));
-    http::HttpRequest request; 
-    http::HttpResponse response;
-    std::map<std::string, std::string> valMap;
-    auto iter = test.find("/index/1234/5678", valMap);
-    if(iter != nullptr){
-        iter(request, response);
-        for(auto item: valMap){
-            std::cout << "Get " << item.first << " val:" << item.second << std::endl;
-        }
-    }else{
-        std::cout << "not Found" << std::endl;
-    }
-
-}
-
-void IndexPatter(http::HttpRequest &request, http::HttpResponse &response) {
-    std::ifstream fin("./html/index.html");
-    std::string   resultString;
-    if (fin.is_open()) {
-        fin.seekg(0, std::ios::end);
-        off_t length = fin.tellg();
-        fin.seekg(0, std::ios::beg);
-        char *temp = new char[ length + 1 ];
-        fin.read(temp, length);
-        resultString.append(temp, length);
-        delete[] temp;
-        fin.close();
-    }
+bool IndexPatter(http::HttpRequest &request, http::HttpResponse &response) {
+    std::string resultString = utils::loadFileString("./html/index.html");
     response.setStatusMessage(200, "HTTP/1.1", "OK");
     response.setHeader(ContentLength, resultString.size() + 4);
     response.setHeader(ContentType, "text/html");
     response.setBodyString(resultString);
+    return true;
 }
 
 int main(int argc, char **argv) {
+
+    logger.BasicConfig("%(thread)s %(levelname)s %(ctime)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S,%s", "", "a");
 
     cmdline::parser CommandParse;
 
     CommandParse.add<std::string>("server_name", 0, "The http server name", false, "HttpServer");
     CommandParse.add<std::string>("server_ip", 0, "The http server ip.", false, "127.0.0.1");
-    CommandParse.add<std::string>("server_description", 0, "The http server's description.", false, "A simple Http Server");
+    CommandParse.add<std::string>(
+            "server_description", 0, "The http server's description.", false, "A simple Http Server");
     CommandParse.add<int>("server_port", 0, "The http server's port", false, 8080, cmdline::range<int>(1, 65535));
 
     bool ok = CommandParse.parse(argc, argv);
@@ -72,19 +31,48 @@ int main(int argc, char **argv) {
         std::cout << CommandParse.error() << std::endl;
         std::cout << CommandParse.usage() << std::endl;
     } else {
-        std::string strServerName        = CommandParse.get<std::string>("server_name");
-        std::string strServerIP          = CommandParse.get<std::string>("server_ip");
+        std::string strServerName = CommandParse.get<std::string>("server_name");
+        std::string strServerIP = CommandParse.get<std::string>("server_ip");
         std::string strServerDescription = CommandParse.get<std::string>("server_description");
-        int         nPort                = CommandParse.get<int>("server_port");
+        int nPort = CommandParse.get<int>("server_port");
 
         http::HttpServer server(strServerName, strServerIP, strServerDescription, nPort);
-        server.addRequestMapping("/", std::move(static_cast<http::Func>(IndexPatter)));
+        server.loadHttpConfig();
         auto &mapper = server.getMapper();
-        mapper.insert({"/index/{user}/{name}", "GET", true}, std::move(IndexPatter));
+        mapper.addRequestMapping({"/index"}, std::move(IndexPatter));
+        mapper.addRequestMapping({"/404"}, std::move([&server](http::HttpRequest &request, http::HttpResponse &response){
+            logger.info("do 404 function");
+            size_t nWrite = response.loadFileString(server.getServerRoot() +"/40x.html");
+            response.setStatusMessage(404, "HTTP/1.1", "not found");
+            response.setHeader(ContentLength, nWrite);
+            response.setHeader(ContentType, "text/html");
+            return true;
+        }));
+        mapper.addRequestMapping({"/#/"}, std::move([&server](http::HttpRequest &request, http::HttpResponse &response){
+            // handle image
+            long nSize = 0;
+            std::string result;
+            if(utils::CheckImageSuffix(request.getRequestPath())){
+                nSize = response.loadBinaryFile(server.getServerRoot() + "/" + request.getRequestPath());
+            }else{
+                nSize = response.loadFileString(server.getServerRoot() + "/" + request.getRequestPath());
+            }
+            logger.info("successful read bytes:%d", nSize);
+            if(nSize <= 0){
+                response.setStatusMessage(404, "HTTP/1.1", "not found");
+                response.setHeader(ContentLength, 0);
+            }else{
+                response.setStatusMessage(200, "HTTP/1.1", "OK");
+                response.setHeader(ContentLength, nSize);
+            }
+            response.setHeader(ContentType, "bytes");
+            return true;
+        }));
         server.ExecForever();
     }
-
- 
-    testItem();
+    std::cout << utils::CheckImageSuffix("/bubblesort.gif?123") << std::endl;
+    // http::HttpResponse response;
+    // std::cout << response.loadBinaryFile("./html//bubblesort.gif") << std::endl;
+    // testItem();
     return 0;
 }

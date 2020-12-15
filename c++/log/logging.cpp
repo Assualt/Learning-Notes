@@ -23,7 +23,7 @@ std::set<char>             detail::timeOpt  = {
 };
 std::vector<std::string> detail::WeekDayEngList   = {"Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"};
 std::vector<std::string> detail::MonthEngList     = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"};
-std::set<std::string>    detail::MessageOperation = {"message", "thread", "threadName", "process", "funcName"};
+std::set<std::string>    detail::MessageOperation = {"message", "thread", "threadName", "process", "funcName", "thread"};
 std::set<char>           detail::basicMsgFmt      = {'f', 's', 'd', 'l'};
 
 Logger     Logger::m_Logger;
