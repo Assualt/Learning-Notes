@@ -1,8 +1,8 @@
 #include "httpserver.h"
 #include <cmdline.hpp>
+#include <dirent.h>
 #include <fstream>
 #include <regex>
-#include <dirent.h>
 #include <sys/stat.h>
 using namespace http;
 
@@ -17,7 +17,7 @@ bool IndexPatter(http::HttpRequest &request, http::HttpResponse &response) {
 
 int main(int argc, char **argv) {
     logger.BasicConfig("%(thread)s %(levelname)s %(ctime)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S,%s", "", "a");
-
+    logger.setLevel(tlog::detail::INFO);
     cmdline::parser CommandParse;
 
     CommandParse.add<std::string>("server_name", 0, "The http server name", false, "HttpServer");
@@ -33,11 +33,11 @@ int main(int argc, char **argv) {
         std::cout << CommandParse.error() << std::endl;
         std::cout << CommandParse.usage() << std::endl;
     } else {
-        std::string strServerName = CommandParse.get<std::string>("server_name");
-        std::string strServerIP = CommandParse.get<std::string>("server_ip");
+        std::string strServerName        = CommandParse.get<std::string>("server_name");
+        std::string strServerIP          = CommandParse.get<std::string>("server_ip");
         std::string strServerDescription = CommandParse.get<std::string>("server_description");
-        std::string strServerRoot = CommandParse.get<std::string>("server_root");
-        int nPort = CommandParse.get<int>("server_port");
+        std::string strServerRoot        = CommandParse.get<std::string>("server_root");
+        int         nPort                = CommandParse.get<int>("server_port");
 
         http::HttpServer server(strServerName, strServerIP, strServerDescription, nPort);
         server.setServerRoot(strServerRoot);
@@ -47,17 +47,17 @@ int main(int argc, char **argv) {
         auto &mapper = server.getMapper();
         mapper.addRequestMapping({"/index"}, std::move(IndexPatter));
         server.getHttpConfig().loadDirentTmplateHtml("./html/dirHtml.tmpl");
-        mapper.addRequestMapping({"/404"}, std::move([&server](http::HttpRequest &request, http::HttpResponse &response) {
+        mapper.addRequestMapping({"/404"}, std::move([ &server ](http::HttpRequest &request, http::HttpResponse &response) {
                                      logger.info("do 404 function");
-                                     size_t nWrite = response.loadFileString(server.getServerRoot() + "/40x.html");
+                                     size_t nWrite = response.loadFileString("html/40x.html");
                                      response.setStatusMessage(404, "HTTP/1.1", "not found");
                                      response.setHeader(ContentLength, nWrite);
                                      response.setHeader(ContentType, "text/html");
                                      return true;
                                  }));
-        mapper.addRequestMapping({"/#/"}, std::move([&server](http::HttpRequest &request, http::HttpResponse &response) {
+        mapper.addRequestMapping({"/#/"}, std::move([ &server ](http::HttpRequest &request, http::HttpResponse &response) {
                                      // handle image
-                                     long nSize = 0;
+                                     long        nSize = 0;
                                      std::string result;
                                      std::string strRequestPath = server.getServerRoot() + "/" + request.getRequestPath();
                                      if (utils::FileIsBinary(strRequestPath)) {
@@ -65,7 +65,7 @@ int main(int argc, char **argv) {
                                      } else {
                                          nSize = response.loadFileString(strRequestPath);
                                      }
-                                     logger.info("successful read bytes:%d", nSize);
+                                     logger.debug("successful read bytes:%d", nSize);
                                      if (nSize <= 0) {
                                          response.setStatusMessage(404, "HTTP/1.1", "not found");
                                          response.setHeader(ContentLength, 0);
@@ -77,17 +77,24 @@ int main(int argc, char **argv) {
                                      response.setHeader("Connection", "close");
                                      return true;
                                  }));
-        mapper.addRequestMapping({"/#//"}, std::move([&server](http::HttpRequest &request, http::HttpResponse &response) {
+        mapper.addRequestMapping({"/#//"}, std::move([ &server ](http::HttpRequest &request, http::HttpResponse &response) {
                                      auto tmplateHtml = server.getHttpConfig().getDirentTmplateHtml();
-                                     auto currentDir = server.getServerRoot() + "/" + request.getRequestPath();
-                                     logger.info("begin to list current dir:%s", currentDir);
+                                     auto currentDir  = server.getServerRoot();
+                                     if (currentDir.back() != '/')
+                                         currentDir += "/";
+                                     if (request.getRequestPath().front() == '/')
+                                         currentDir += request.getRequestPath().substr(1);
+                                     else
+                                         currentDir += request.getRequestPath().substr(0);
                                      tmplateHtml.append("<script>start(\"");
                                      tmplateHtml.append(currentDir);
                                      tmplateHtml.append("\");</script><script>onHasParentDirectory();</script>");
-                                     DIR *dir = opendir(currentDir.c_str());
+                                     DIR *          dir = opendir(currentDir.c_str());
                                      struct dirent *dr;
                                      while ((dr = readdir(dir)) != nullptr) {
-                                         std::string statFilePath = currentDir + "/";
+                                         std::string statFilePath = currentDir;
+                                         if (statFilePath.back() != '/')
+                                             statFilePath.append("/");
                                          statFilePath.append(dr->d_name);
                                          struct stat st;
                                          if (stat(statFilePath.c_str(), &st) != -1) {
@@ -106,7 +113,10 @@ int main(int argc, char **argv) {
                                              tmpString.append(to_string(st.st_size));
                                              // string_size
                                              tmpString.append(",\"");
-                                             tmpString.append(utils::toSizeString(st.st_size));
+                                             if(!S_ISDIR(st.st_mode & S_IFMT))
+                                                tmpString.append(utils::toSizeString(st.st_size));
+                                            else
+                                                tmpString.append("4096 B");
                                              tmpString.append("\",");
                                              tmpString.append(to_string(st.st_mtime));
                                              tmpString.append(",\"");

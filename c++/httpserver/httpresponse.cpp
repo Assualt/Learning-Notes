@@ -1,6 +1,6 @@
 #include "httpresponse.h"
-#include <string.h>
 #include "logging.h"
+#include <string.h>
 #include <sys/socket.h>
 namespace http {
 
@@ -57,7 +57,7 @@ int HttpResponse::loadBinaryFile(const std::string &strFilePath) {
         logger.info("open %s binary file failed.", strFilePath);
         return 0;
     }
-    logger.info("begin to load binaryFile %s", strFilePath);
+    logger.debug("begin to load binaryFile %s", strFilePath);
     while (1) {
         ch = fgetc(fp);
         if (feof(fp))

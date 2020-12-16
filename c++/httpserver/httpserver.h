@@ -42,13 +42,13 @@ public:
         bool MatchFilter(const std::string &reqPath);
 
     public:
-        std::string pattern;
-        std::string method;
-        bool needval;
+        std::string              pattern;
+        std::string              method;
+        bool                     needval;
         std::vector<std::string> keySet;
-        std::vector<int> keyPoint;
+        std::vector<int>         keyPoint;
     };
-    void addRequestMapping(const Key &key, http::Func &&F);
+    void       addRequestMapping(const Key &key, http::Func &&F);
     http::Func find(const std::string &RequestPath, std::map<std::string, std::string> &resultMap);
     http::Func find(const std::string &RequestPath);
 
@@ -60,10 +60,10 @@ typedef std::map<std::string, Func> RequestMapping;
 class ClientThread {
 public:
     // ClientThread(int serverFd, int clientFd);
-    static void handRequest(int client_fd, RequestMapper *handerMapping, HttpConfig *config, const char *strRemoteIP, const char *strServerRoot);
-    static void parseHeader(int client_fd, HttpRequest &request);
-    static int recvData(int fd, void *buf, size_t n, int ops);
-    static int writeData(int fd, void *buf, size_t n, int ops);
+    static void    handleRequest(RequestMapper *handlerMapping, HttpConfig *config, const ConnectionInfo *info);
+    static bool    parseHeader(const ConnectionInfo *info, HttpRequest &request);
+    static int     recvData(int fd, void *buf, size_t n, int ops);
+    static int     writeData(int fd, void *buf, size_t n, int ops);
     static ssize_t writeResponse(int client_fd, HttpResponse &response);
 
 private:
@@ -82,8 +82,8 @@ public:
     HttpServer(const std::string &strServerName, const std::string &strServerIP = "127.0.0.1", const std::string &strServerDescription = "A simple Http Server", int nPort = 80);
 
 public:
-    bool addRequestMapping(const std::string &path, Func &&F);
-    bool ExecForever();
+    bool           addRequestMapping(const std::string &path, Func &&F);
+    bool           ExecForever();
     RequestMapper &getMapper() {
         return m_mapper;
     }
@@ -104,6 +104,7 @@ public:
         ThreadsPool.startPool(nCount);
     }
     int setFDnonBlock(int fd);
+
 public:
     static tlog::logImpl ServerLog;
 
@@ -112,14 +113,14 @@ private:
     std::string m_strServerIP;
     std::string m_strServerDescription;
     std::string m_strServerRoot;
-    int m_nPort;
-    int m_nMaxListenClients;
-    int m_nServerFd;
-    int m_nEpollTimeOut;
+    int         m_nPort;
+    int         m_nMaxListenClients;
+    int         m_nServerFd;
+    int         m_nEpollTimeOut;
 
-    HttpConfig m_mConfig;
-    RequestMapper m_mapper;
+    HttpConfig      m_mConfig;
+    RequestMapper   m_mapper;
     std::threadpool ThreadsPool;
 };
 
-}  // namespace http
+} // namespace http

@@ -1,6 +1,7 @@
 #include "httputils.h"
 #include <string.h>
 #include <unistd.h>
+#include <iomanip>
 
 std::string utils::_ltrim(const std::string &src, char ch) {
     std::string           temp = src;
@@ -118,23 +119,26 @@ bool utils::FileExists(const std::string &filePath) {
 }
 
 std::string utils::toSizeString(off_t nSize) {
-    std::string suffix = "B";
+    std::string suffix = " B";
     double      c      = nSize;
     if (c > 1000) {
-        suffix = "KB";
+        suffix = " KB";
         c /= 1000.0;
     }
 
     if (c > 1000) {
-        suffix = "MB";
+        suffix = " MB";
         c /= 1000.0;
     }
 
     if (c > 1000) {
-        suffix = "GB";
+        suffix = " GB";
         c /= 1000.0;
     }
-    return to_string(c) + suffix;
+    std::stringstream ss;
+    ss << setprecision(5) << c;
+    ss << suffix;
+    return ss.str();
 }
 
 std::string utils::FileDirentTime(struct stat *st) {

@@ -94,4 +94,13 @@ public:
     }
 };
 
+class ConnectionInfo {
+public:
+    std::string m_strConnectIP;
+    std::string m_strServerRoot;
+    int         m_nPort;
+    int         m_nClientFd;
+    int         m_nFDFlag;
+};
+
 } // namespace http
