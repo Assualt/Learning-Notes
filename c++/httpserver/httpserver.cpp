@@ -1,6 +1,7 @@
 #include "httpserver.h"
 #include "httputils.h"
 #include <thread>
+#include <fcntl.h>
 #define BUF_SIZE 32768
 namespace http {
 tlog::logImpl HttpServer::ServerLog;
@@ -78,12 +79,8 @@ http::Func RequestMapper::find(const std::string &RequestPath) {
     };
 }
 
-ClientThread::ClientThread(int serverFd, int clientFd)
-    : m_nThreadserverFd(serverFd)
-    , m_nThreadClientFd(clientFd) {
-}
 
-void ClientThread::parseHeader(HttpRequest &request) {
+void ClientThread::parseHeader(int client_fd, HttpRequest &request) {
     char           temp[ BUF_SIZE ];
     bool           bFindBody = false;
     std::string    strLine, strKey, strVal;
@@ -94,7 +91,23 @@ void ClientThread::parseHeader(HttpRequest &request) {
     std::string    HttpVersion, RequestType, RequestPath;
     MyStringBuffer mybuf;
     while (!bFindBody) {
-        int nRead = recvData(m_nThreadClientFd, temp, BUF_SIZE, 0);
+        int nRead = recvData(client_fd, temp, BUF_SIZE, 0);
+        if(nRead < 0){
+            //由于是非阻塞的模式,所以当errno为EAGAIN时,表示当前缓冲区已无数据可//读在这里就当作是该次事件已处理过。
+            if(errno == EAGAIN)
+                break;
+            else{
+                close(client_fd);
+                logger.warning("recv data is error.");
+                break;
+            }
+        }else if(nRead == 0){
+            bFindBody = true;
+            break;
+        }
+        printf("recvData:%s", temp);
+        // client fd is non block
+
         if (nRead <= 0)
             return;
         for (size_t i = 0; i < nRead;) {
@@ -175,44 +188,55 @@ void ClientThread::ParseFirstLine(const std::string &line, std::string &HttpVers
         }
     }
 }
-void ClientThread::handRequest(RequestMapper *handerMapping, HttpConfig *config, const char *strRemoteIP, const char *strServerRoot) {
+void ClientThread::handRequest(int client_fd, RequestMapper *handerMapping, HttpConfig *config, const char *strRemoteIP, const char *strServerRoot) {
     HttpRequest  request;
     HttpResponse response;
-    parseHeader(request);
-    std::map<std::string, std::string> recvHeaderMap;
-    logger.info("status: %d", utils::FileIsBinary(request.getRequestPath()));
-    int nWrite;
 
-    std::string basicRequest = strServerRoot;
-    basicRequest += "/" + request.getRequestPath();
-    if (utils::FileExists(basicRequest)) {
-        // resource
-        logger.info("requst path:%s is exists", basicRequest);
-        if (!utils::ISDir(basicRequest)) {
-            http::Func iter = handerMapping->find("/#/");
+    while(1){
+        parseHeader(client_fd, request);
+        std::map<std::string, std::string> recvHeaderMap;
+        logger.info("status: %d", utils::FileIsBinary(request.getRequestPath()));
+        int nWrite;
+
+        std::string basicRequest = strServerRoot;
+        basicRequest += "/" + request.getRequestPath();
+        if (utils::FileExists(basicRequest)) {
+            // resource
+            logger.info("requst path:%s is exists", basicRequest);
+            if (!utils::ISDir(basicRequest)) {
+                http::Func iter = handerMapping->find("/#/");
+                iter(request, response);
+                if (utils::FileIsBinary(basicRequest))
+                    nWrite = response.WriteBytes(client_fd);
+                else
+                    nWrite = writeResponse(client_fd, response);
+            }else{
+                http::Func iter = handerMapping->find("/#//");
+                iter(request, response);
+                nWrite = writeResponse(client_fd, response);
+            }
+        } else {
+            logger.info("requet path:%s is not exists", request.getRequestPath());
+            http::Func iter = handerMapping->find(request.getRequestPath(), recvHeaderMap);
             iter(request, response);
-            if (utils::FileIsBinary(basicRequest))
-                nWrite = response.WriteBytes(m_nThreadClientFd);
-            else
-                nWrite = writeResponse(response);
-        }else{
-            http::Func iter = handerMapping->find("/#//");
-            iter(request, response);
-            nWrite = writeResponse(response);
+            nWrite = writeResponse(client_fd,response);
         }
-    } else {
-        logger.info("requet path:%s is not exists", request.getRequestPath());
-        http::Func iter = handerMapping->find(request.getRequestPath(), recvHeaderMap);
-        iter(request, response);
-        nWrite = writeResponse(response);
+        logger.info("%s -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\"", strRemoteIP, utils::requstTimeFmt(), request.getRequestType(), request.getRequestPath(), request.getHttpVersion(),
+                    response.getStatusCode(), nWrite, request.get(UserAgent));
+        logger.info("response has been sent.");
+
+        if(request.get("Connection") == "close"){
+            logger.info("current request only once. close current transsmission from fd %d..", client_fd);
+            break;
+        }else{
+            logger.info("current request is keep-alive. still to recv data now.");
+        }
     }
-    logger.info("%s -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\"", strRemoteIP, utils::requstTimeFmt(), request.getRequestType(), request.getRequestPath(), request.getHttpVersion(),
-                response.getStatusCode(), nWrite, request.get(UserAgent));
-    logger.info("response has been sent.");
+    close(client_fd);
 }
-ssize_t ClientThread::writeResponse(HttpResponse &response) {
+ssize_t ClientThread::writeResponse(int client_fd, HttpResponse &response) {
     std::string responseHeader = response.toResponseHeader();
-    return writeData(m_nThreadClientFd, (void *)responseHeader.c_str(), responseHeader.size(), 0);
+    return writeData(client_fd, (void *)responseHeader.c_str(), responseHeader.size(), 0);
 }
 
 int ClientThread::recvData(int fd, void *buf, size_t n, int ops) {
@@ -264,36 +288,42 @@ bool HttpServer::ExecForever() {
     event.data.fd                          = m_nServerFd; //服务器绑定的fd
     struct epoll_event *event_client_array = new epoll_event[ m_nMaxListenClients ];
     // 3.注册事件,将当前的epoll_fd注册到内核中去用于事件的监听
-    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, m_nServerFd, &event);
+    int current_fds = 1;
+    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, current_fds, &event);
     // 4. 进入事件等待
     while (true) {
         //设置最大的监听的数量,以及EPOLL 的超时时间
         int ready_count = epoll_wait(epoll_fd, event_client_array, m_nMaxListenClients, m_nEpollTimeOut);
         // 5.从就绪的event里面进行accept,用于创建链接到客户端
         for (int i = 0; i < ready_count; i++) {
-            socklen_t          addr_len;
             struct sockaddr_in client_addr;
+            socklen_t          addr_len = sizeof(client_addr);
             int                client_fd;
             if (event_client_array[ i ].data.fd == m_nServerFd) { //确定为连接服务器的请求
                 int client_fd = accept(m_nServerFd, (struct sockaddr *)&client_addr, &addr_len);
                 // 6.把接收到client的fd 添加到epoll的监听事件中去
                 event.events  = EPOLLIN;
                 event.data.fd = client_fd;
-                epoll_ctl(epoll_fd, EPOLL_CTL_ADD, m_nServerFd, &event);
-                logger.info("recv client:%d from address %s ", client_fd, inet_ntoa(client_addr.sin_addr));
-                if (client_fd != -1) {
-                    ClientThread clientThread(m_nServerFd, client_fd);
-                    std::thread  tempThread(&ClientThread::handRequest, clientThread, &m_mapper, &m_mConfig, inet_ntoa(client_addr.sin_addr), m_strServerRoot.c_str());
-                    tempThread.join();
-                } else {
-                    logger.info("client fd is -1");
+                if((ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, m_nServerFd, &event)) == -1){
+                    logger.info("failed to epoll_add client fd:%d , errmsg:%s", client_fd, strerror(errno));
+                    continue;
                 }
-            } else if (event_client_array[ i ].events & EPOLLIN) {
+                logger.info("recv client:%d from address %s success.", client_fd, inet_ntoa(client_addr.sin_addr));
+                current_fds++; 
+            } else{
                 // 7.进行数据的交流
-                //可创建一个线程与此fd进行数据的处理操作
-                //线程处理完毕之后就直接可以直接从监听的的fd中移除掉
-                epoll_ctl(epoll_fd, EPOLL_CTL_DEL, m_nServerFd, &event);
-                close(client_fd);
+                // 可创建一个线程与此fd进行数据的处理操作
+                // 线程处理完毕之后就直接可以直接从监听的的fd中移除掉
+                // 为当前线程为非阻塞模式
+                int oldFlag = setFDnonBlock(client_fd);
+                logger.info("begin to assign one thread to handle the request from fd:%s, left free thread count is %d", client_fd, ThreadsPool.idlCount());
+                if(ThreadsPool.idlCount() < 0){
+                    logger.info("can't assign one thread to handle such request from [%s:%d]", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
+                    fcntl(client_fd, F_SETFL, oldFlag);
+                    // epoll_ctl(epoll_fd, EPOLL_CTL_DEL,)
+                }else{
+                     ThreadsPool.commit(ClientThread::handRequest, client_fd, &m_mapper, &m_mConfig, inet_ntoa(client_addr.sin_addr), m_strServerRoot.c_str());
+                }
             }
         }
     }
@@ -307,6 +337,11 @@ bool HttpServer::ExecForever() {
 bool HttpServer::loadHttpConfig(const std::string &strHttpServerConfig) {
     bool ret = m_mConfig.loadConfig(strHttpServerConfig);
     return ret;
+}
+int HttpServer::setFDnonBlock(int fd) {
+    int flag = fcntl(fd, F_GETFL, 0);
+    fcntl(fd, F_SETFL, flag | O_NONBLOCK); // 保留原始状态 flag
+    return flag;
 }
 
 } // namespace http
