@@ -21,16 +21,17 @@ public:
     std::string          toStringHeader();
     friend std::ostream &operator<<(std::ostream &os, HttpRequest &obj);
 
-    std::string get(const std::string &key);
-    std::string getRequestType() const;
-    void        setRequestType(const std::string &strRequestType);
-    std::string getHttpVersion() const;
-    void        setHttpVersion(const std::string &strHttpVersion);
-    std::string getPostParams() const;
-    void        setPostParams(const std::string &strPostParams);
-    std::string getRequestPath() const;
-    void        setRequestPath(const std::string &strRequestPath);
-
+    std::string          get(const std::string &key);
+    std::string          getRequestType() const;
+    void                 setRequestType(const std::string &strRequestType);
+    std::string          getHttpVersion() const;
+    void                 setHttpVersion(const std::string &strHttpVersion);
+    std::string          getPostParams() const;
+    void                 setPostParams(const std::string &strPostParams);
+    std::string          getRequestPath() const;
+    void                 setRequestPath(const std::string &strRequestPath);
+    std::string          getRequestFilePath() const;
+    void                 setRequestFilePath(const std::string &strRequestFilePath);
     friend std::ostream &operator<<(std::ostream &os, HttpRequest &obj) {
         os << "> " << obj.m_strRequestType << " " << obj.m_strRequestPath << " " << obj.m_strHttpVersion << CTRL;
         for (auto &item : obj.m_vReqestHeader)
@@ -48,6 +49,7 @@ private:
     std::string m_strHttpVersion;
     std::string m_strPostParams;
     std::string m_strRequestPath;
+    std::string m_strRequestFilePath;
 
     ResourceMap m_vReqestHeader;
     std::string m_strRequestHost;

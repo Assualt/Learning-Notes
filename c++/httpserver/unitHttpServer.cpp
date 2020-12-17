@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
     CommandParse.add<int>("server_port", 0, "The http server's port", false, 8080, cmdline::range<int>(1, 65535));
     CommandParse.add<std::string>("server_root", 0, "The http server's root path", true);
     CommandParse.add<int>("threads_count", 'n', "The http server's threads count", false, 3, cmdline::range<int>(1, 10));
-
+    CommandParse.add<std::string>("config_path", 0, "The http server's config path.", false, "httpd.conf");
     bool ok = CommandParse.parse(argc, argv);
 
     if (!ok) {
@@ -38,17 +38,19 @@ int main(int argc, char **argv) {
         std::string strServerDescription = CommandParse.get<std::string>("server_description");
         std::string strServerRoot        = CommandParse.get<std::string>("server_root");
         int         nPort                = CommandParse.get<int>("server_port");
+        std::string strConfigPath        = CommandParse.get<std::string>("config_path");
 
         http::HttpServer server(strServerName, strServerIP, strServerDescription, nPort);
         server.setServerRoot(strServerRoot);
 
         logger.info("setting server root:%s", server.getServerRoot());
-        server.loadHttpConfig();
+        server.loadHttpConfig(strConfigPath);
+        server.getHttpConfig().loadMimeType("html/mime.types");
         auto &mapper = server.getMapper();
         mapper.addRequestMapping({"/index"}, std::move(IndexPatter));
         server.getHttpConfig().loadDirentTmplateHtml("./html/dirHtml.tmpl");
         mapper.addRequestMapping({"/404"}, std::move([ &server ](http::HttpRequest &request, http::HttpResponse &response) {
-                                     logger.info("do 404 function");
+                                     //  logger.info("do 404 function");
                                      size_t nWrite = response.loadFileString("html/40x.html");
                                      response.setStatusMessage(404, "HTTP/1.1", "not found");
                                      response.setHeader(ContentLength, nWrite);
@@ -56,16 +58,16 @@ int main(int argc, char **argv) {
                                      return true;
                                  }));
         mapper.addRequestMapping({"/#/"}, std::move([ &server ](http::HttpRequest &request, http::HttpResponse &response) {
-                                     // handle image
+                                     // handle File
                                      long        nSize = 0;
                                      std::string result;
-                                     std::string strRequestPath = server.getServerRoot() + "/" + request.getRequestPath();
+                                     std::string strRequestPath = request.getRequestFilePath();
                                      if (utils::FileIsBinary(strRequestPath)) {
                                          nSize = response.loadBinaryFile(strRequestPath);
                                      } else {
                                          nSize = response.loadFileString(strRequestPath);
                                      }
-                                     logger.debug("successful read bytes:%d", nSize);
+                                     logger.debug("load %s file bytes:%d", strRequestPath, nSize);
                                      if (nSize <= 0) {
                                          response.setStatusMessage(404, "HTTP/1.1", "not found");
                                          response.setHeader(ContentLength, 0);
@@ -73,7 +75,11 @@ int main(int argc, char **argv) {
                                          response.setStatusMessage(200, "HTTP/1.1", "OK");
                                          response.setHeader(ContentLength, nSize);
                                      }
-                                     response.setHeader(ContentType, utils::FileMagicType(strRequestPath));
+                                     response.setHeader(ContentType, server.getHttpConfig().getMimeType(strRequestPath));
+                                     struct stat st;
+                                     if(stat(strRequestPath.c_str(), &st) != -1)
+                                        response.setHeader("Last-Modified", utils::toResponseBasicDateString(st.st_mtime));
+                                     logger.info("file:%s magicType:%s", strRequestPath, server.getHttpConfig().getMimeType(strRequestPath));
                                      response.setHeader("Connection", "close");
                                      return true;
                                  }));
@@ -113,10 +119,10 @@ int main(int argc, char **argv) {
                                              tmpString.append(to_string(st.st_size));
                                              // string_size
                                              tmpString.append(",\"");
-                                             if(!S_ISDIR(st.st_mode & S_IFMT))
-                                                tmpString.append(utils::toSizeString(st.st_size));
-                                            else
-                                                tmpString.append("4096 B");
+                                             if (!S_ISDIR(st.st_mode & S_IFMT))
+                                                 tmpString.append(utils::toSizeString(st.st_size));
+                                             else
+                                                 tmpString.append("4096 B");
                                              tmpString.append("\",");
                                              tmpString.append(to_string(st.st_mtime));
                                              tmpString.append(",\"");

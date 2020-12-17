@@ -14,6 +14,8 @@ std::string HttpResponse::toResponseHeader() {
     ss << m_strHttpVersion << " " << m_nStatusCode << " " << m_strMessage << CTRL;
     for (auto &item : m_vResponseHeader)
         ss << item.first << ": " << item.second << CTRL;
+    ss << "Date: " << utils::toResponseBasicDateString() << CTRL;
+    ss << SERVER << ": " << SERVERVal << CTRL;
     if (!m_strBodyString.empty())
         ss << CTRL << m_strBodyString << CTRL;
     ss << CTRL;

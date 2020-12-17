@@ -16,7 +16,6 @@ std::string HttpRequest::toStringHeader() {
     return ss.str();
 }
 
-
 std::string HttpRequest::get(const std::string &key) {
     for (auto item : m_vReqestHeader) {
         if (strcasecmp(item.first.c_str(), key.c_str()) == 0)
@@ -47,7 +46,16 @@ std::string HttpRequest::getRequestPath() const {
     return m_strRequestPath;
 }
 void HttpRequest::setRequestPath(const std::string &strRequestPath) {
-    m_strRequestPath = strRequestPath;
+    m_strRequestPath     = strRequestPath;
+    m_strRequestFilePath = strRequestPath;
+    if (strRequestPath.find("?") != std::string::npos)
+        m_strRequestFilePath = m_strRequestFilePath.substr(0, m_strRequestFilePath.find("?"));
+}
+std::string HttpRequest::getRequestFilePath() const {
+    return m_strRequestFilePath;
+}
+void HttpRequest::setRequestFilePath(const std::string &strRequestFilePath) {
+    m_strRequestFilePath = strRequestFilePath;
 }
 
 } // namespace http

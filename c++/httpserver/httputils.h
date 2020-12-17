@@ -25,7 +25,7 @@ public:
     static std::vector<std::string> split(const std::string &src, char divider);
 
     static std::string loadFileString(const std::string &filePath);
-    static std::string toResponseBasicDateString();
+    static std::string toResponseBasicDateString(time_t t = time(nullptr));
     static std::string requstTimeFmt();
     static bool        FileIsBinary(const std::string &filePath);
     static bool        FileExists(const std::string &filePath);

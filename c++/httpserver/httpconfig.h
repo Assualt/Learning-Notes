@@ -34,13 +34,68 @@ protected:                                                \
 #define NOTFOUNDHTML "<html><head><title>404 Not Found</title></head><body>404 not found</body></html>"
 #define NOTFOUND "/404"
 
+#define SERVER "Server"
+#define SERVERVal "HttpServer/0.1 Linux/GNU gcc/c++"
+
 #include "httputils.h"
+#include "logging.h"
+#include <set>
 
 namespace http {
 class HttpConfig {
 public:
+    HttpConfig()
+        : m_SuffixSet{"index.html", "index.shtml", "index.htm"} {
+    }
+
     bool loadConfig(const std::string &strConfigFilePath) {
+        std::ifstream fin(strConfigFilePath.c_str());
+        if (!fin.is_open()) {
+            logger.error("load httconfig(%s) failed due to nonexistance.", strConfigFilePath);
+            return false;
+        }
+        std::string strLine;
+        while (getline(fin, strLine)) {
+        }
+        fin.close();
         return true;
+    }
+
+    bool loadMimeType(const std::string &mimeType = "mime.types") {
+        std::ifstream fin(mimeType);
+        if (!fin.is_open()) {
+            logger.info("error load mime type from file %s", mimeType);
+            return false;
+        }
+        std::string strLine;
+        int         success = 0;
+        while (getline(fin, strLine)) {
+            if (strLine.find(";") != std::string::npos) {
+                strLine = strLine.substr(0, strLine.find(";"));
+            }
+            if (strLine.empty())
+                continue;
+            auto tempList = utils::split(strLine, ' ');
+            if (tempList.size() < 2)
+                continue;
+            for (size_t i = 1; i < tempList.size(); ++i) {
+                m_ExtMimeType[ tempList[ i ] ] = tempList[ 0 ];
+                success++;
+            }
+        }
+        fin.close();
+        logger.info("success insert %d mime<->ext mapping", success);
+        return true;
+    }
+
+    const std::string getMimeType(const std::string &strFileName) {
+        std::string ext;
+        if (strFileName.rfind(".") != std::string::npos) {
+            ext = strFileName.substr(strFileName.rfind(".") + 1);
+            if (m_ExtMimeType.count(ext))
+                return m_ExtMimeType.at(ext);
+        }
+        return utils::FileMagicType(strFileName);
     }
 
 public:
@@ -58,9 +113,15 @@ public:
         return m_strDirentTmplateHtml;
     }
 
+    const std::set<std::string> getSuffixSet() {
+        return m_SuffixSet;
+    }
+
 private:
-    std::string m_strServerRoot;
-    std::string m_strDirentTmplateHtml;
+    std::string                        m_strServerRoot;
+    std::string                        m_strDirentTmplateHtml;
+    std::set<std::string>              m_SuffixSet;
+    std::map<std::string, std::string> m_ExtMimeType;
 };
 
 class MyStringBuffer : public std::stringbuf {

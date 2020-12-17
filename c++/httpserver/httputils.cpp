@@ -1,8 +1,7 @@
 #include "httputils.h"
+#include <iomanip>
 #include <string.h>
 #include <unistd.h>
-#include <iomanip>
-
 std::string utils::_ltrim(const std::string &src, char ch) {
     std::string           temp = src;
     std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [ &ch ](char c) { return ch != c; });
@@ -67,8 +66,7 @@ std::string utils::loadFileString(const std::string &filePath) {
     return ss.str();
 }
 
-std::string utils::toResponseBasicDateString() {
-    time_t     t    = time(nullptr);
+std::string utils::toResponseBasicDateString(time_t t) {
     struct tm *info = localtime(&t);
     char       temp[ 1024 ];
     size_t     nSize = strftime(temp, 1024, "%a, %d %b %Y %H:%M:%S %Z", info);
@@ -86,18 +84,13 @@ std::string utils::requstTimeFmt() {
 }
 
 std::string utils::FileMagicType(const std::string &filePath) {
-    char temp[ 1024 ];
     if (access(filePath.c_str(), F_OK) == -1)
         return "";
-    std::ifstream fin(filePath.c_str(), std::ios::binary);
-    if (!fin.is_open())
-        return "";
-    fin.read(temp, 1024);
-    fin.close();
     magic_t magic = magic_open(MAGIC_MIME_TYPE);
     if (magic == nullptr)
         return "";
-    const char *pfileType = magic_buffer(magic, temp, strlen(temp));
+    magic_load(magic, nullptr);
+    const char *pfileType = magic_file(magic, filePath.c_str());
     std::string fileType;
     if (pfileType != nullptr)
         fileType = pfileType;
