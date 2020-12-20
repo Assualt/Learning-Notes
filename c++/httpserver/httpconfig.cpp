@@ -1,9 +1,36 @@
 #include "httpconfig.h"
 namespace http {
 HttpConfig::HttpConfig()
-    : m_SuffixSet{"index.html", "index.shtml", "index.htm"} {
+    : m_SuffixSet{"index.html", "index.shtml", "index.htm"}
+    , m_bRequiredAuth(false) {
+}
+bool HttpConfig::needAuth() {
+    return m_bRequiredAuth;
 }
 
+bool HttpConfig::checkAuth(const std::string &AuthString) {
+    auto vecs = utils::split(AuthString, ' ');
+    if(vecs.size() == 2){
+        if (strcasecmp(vecs[ 0 ].c_str(), "basic") == 0) {
+            std::string decodeString;
+            int         nDecode = HashUtils::DecodeBase64(vecs[ 1 ], decodeString);
+            if (nDecode == -1) {
+                logger.info("decode user auth:%s failed", vecs[ 1 ]);
+                return false;
+            }
+            auto userpass = utils::split(decodeString, ':');
+            if (!m_AuthPassMap.count(userpass[ 0 ])) {
+                logger.info("such user %s is not accept", userpass[ 0 ]);
+                return false;
+            } else if (m_AuthPassMap[ userpass[ 0 ] ] != userpass[ 1 ]) {
+                logger.info("such user %s password is error, input pass:%s, require pass:%s", userpass[ 0 ], m_AuthPassMap[ userpass[ 0 ] ], userpass[ 1 ]);
+                return false;
+            }
+            return true;
+        }
+    }
+    return false;
+}
 bool HttpConfig::loadConfig(const std::string &strConfigFilePath) {
     std::ifstream fin(strConfigFilePath.c_str());
     if (!fin.is_open()) {
@@ -11,10 +38,49 @@ bool HttpConfig::loadConfig(const std::string &strConfigFilePath) {
         return false;
     }
     std::string strLine;
+    std::string strSection;
+    size_t      nPos;
+    bool        sectionStart = false;
+    std::string strSectionName;
     while (getline(fin, strLine)) {
+        strLine = utils::trim(strLine);
+        if (strLine.empty())
+            continue;
+        else if (strLine[ 0 ] == '#')
+            continue;
+        else if ((nPos = strLine.find("{")) != std::string::npos && !sectionStart) {
+            strSectionName = utils::trim(strLine.substr(0, nPos));
+            sectionStart   = true;
+        } else if ((nPos = strLine.find("}")) != std::string::npos && sectionStart) {
+            sectionStart = false;
+            std::cout << "Name:" << strSectionName << " {" << strSection << "}" << std::endl;
+            parseSection(strSectionName, strSection);
+            strSectionName.clear();
+            strSection.clear();
+            sectionStart = false;
+        } else if (sectionStart) {
+            strSection += strLine;
+        }
     }
     fin.close();
     return true;
+}
+
+void HttpConfig::parseSection(const std::string strSectionName, const std::string &strSection) {
+    std::map<std::string, std::string> sectionMap;
+    auto                               vectors = utils::split(strSection, ';');
+    for (auto vec : vectors) {
+        auto kval = utils::split(vec, ' ');
+        kval[ 0 ] = utils::trim(kval[ 0 ]);
+        kval[ 1 ] = utils::trim(kval[ 1 ]);
+        if (kval.size() == 2 && !kval[ 0 ].empty() && !kval[ 1 ].empty())
+            sectionMap[ kval[ 0 ] ] = kval[ 1 ];
+        else
+            logger.warning("invalid line: %s", vec);
+        if (strSectionName == "http" && kval[ 0 ] == "basic_auth")
+            loadAuthFile(kval[ 1 ]);
+    }
+    m_SectionMap[ strSectionName ] = sectionMap;
 }
 
 bool HttpConfig::loadMimeType(const std::string &mimeType) {
@@ -70,5 +136,27 @@ std::string &HttpConfig::getDirentTmplateHtml() {
 
 const std::set<std::string> HttpConfig::getSuffixSet() {
     return m_SuffixSet;
+}
+
+void HttpConfig::loadAuthFile(const std::string &strAuthFile) {
+    std::ifstream fin(strAuthFile.c_str());
+    if (!fin.is_open()) {
+        logger.warning("open %s auth file failed.", strAuthFile);
+        m_bRequiredAuth = false;
+        return;
+    }
+    std::string line;
+    while (getline(fin, line)) {
+        line = utils::trim(line);
+        if (strncasecmp(line.c_str(), "#", 1) == 0)
+            continue;
+        auto vec = utils::split(line, ':');
+        if (vec.size() != 2)
+            continue;
+        m_AuthPassMap.insert(std::pair<std::string, std::string>(vec[ 0 ], vec[ 1 ]));
+    }
+    fin.close();
+    logger.debug("success insert %d user into auth map", m_AuthPassMap.size());
+    m_bRequiredAuth = true;
 }
 } // namespace http

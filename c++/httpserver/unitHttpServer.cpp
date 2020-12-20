@@ -6,12 +6,115 @@
 #include <sys/stat.h>
 using namespace http;
 
-bool IndexPatter(http::HttpRequest &request, http::HttpResponse &response) {
+bool IndexPatter(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
     std::string resultString = utils::loadFileString("./html/index.html");
     response.setStatusMessage(200, request.getRequestType(), "OK");
     response.setHeader(ContentLength, resultString.size() + 4);
     response.setHeader(ContentType, "text/html");
     response.setBodyString(resultString);
+    return true;
+}
+
+bool NotFoundIndexPatter(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
+    //  logger.info("do 404 function");
+    size_t nWrite = response.loadFileString("html/40x.html");
+    response.setStatusMessage(404, request.getHttpVersion(), "not found");
+    response.setHeader(ContentLength, nWrite);
+    response.setHeader(ContentType, "text/html");
+    return true;
+}
+
+bool DefaultIndexPattern(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
+    // handle File
+    long        nSize = 0;
+    std::string result;
+    std::string strRequestPath = request.getRequestFilePath();
+    if (utils::FileIsBinary(strRequestPath)) {
+        nSize = response.loadBinaryFile(strRequestPath);
+    } else {
+        nSize = response.loadFileString(strRequestPath);
+    }
+    logger.debug("load %s file bytes:%d", strRequestPath, nSize);
+    if (nSize <= 0) {
+        response.setStatusMessage(404, request.getHttpVersion(), "not found");
+        response.setHeader(ContentLength, 0);
+    } else {
+        response.setStatusMessage(200, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
+    }
+    response.setHeader(ContentType, config.getMimeType(strRequestPath));
+    struct stat st;
+    if (stat(strRequestPath.c_str(), &st) != -1)
+        response.setHeader("Last-Modified", utils::toResponseBasicDateString(st.st_mtime));
+    response.setHeader("Connection", "close");
+    return true;
+}
+
+bool ListDirIndexPatter(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
+    auto tmplateHtml = config.getDirentTmplateHtml();
+    auto currentDir  = config.getServerRoot();
+    if (currentDir.back() != '/')
+        currentDir += "/";
+    if (request.getRequestPath().front() == '/')
+        currentDir += request.getRequestPath().substr(1);
+    else
+        currentDir += request.getRequestPath().substr(0);
+    tmplateHtml.append("<script>start(\"");
+    tmplateHtml.append(currentDir);
+    tmplateHtml.append("\");</script><script>onHasParentDirectory();</script>");
+    DIR *          dir = opendir(currentDir.c_str());
+    struct dirent *dr;
+    while ((dr = readdir(dir)) != nullptr) {
+        std::string statFilePath = currentDir;
+        if (statFilePath.back() != '/')
+            statFilePath.append("/");
+        statFilePath.append(dr->d_name);
+        struct stat st;
+        if (stat(statFilePath.c_str(), &st) != -1) {
+            std::string tmpString;
+            tmpString.append("<script>");
+            tmpString.append("addRow(\"");
+            tmpString.append(dr->d_name);
+            tmpString.append("\",\"");
+            tmpString.append(dr->d_name);
+            tmpString.append("\",");
+            if (S_ISDIR(st.st_mode & S_IFMT))
+                tmpString.append("1,");
+            else
+                tmpString.append("0,");
+            // size
+            tmpString.append(to_string(st.st_size));
+            // string_size
+            tmpString.append(",\"");
+            if (!S_ISDIR(st.st_mode & S_IFMT))
+                tmpString.append(utils::toSizeString(st.st_size));
+            else
+                tmpString.append("4096 B");
+            tmpString.append("\",");
+            tmpString.append(to_string(st.st_mtime));
+            tmpString.append(",\"");
+            tmpString.append(utils::FileDirentTime(&st));
+            tmpString.append("\"");
+            tmpString.append(");</script>\r\n");
+            tmplateHtml.append(tmpString);
+        }
+    }
+    closedir(dir);
+
+    response.setStatusMessage(200, "HTTP/1.1", "OK");
+    response.setBodyString(tmplateHtml);
+    response.setHeader(ContentType, "text/html");
+    response.setHeader(ContentLength, tmplateHtml.size() + 4);
+    response.setHeader("Date", utils::toResponseBasicDateString());
+    response.setHeader("Connection", "close");
+    return true;
+}
+
+bool AuthRequiredIndexPattern(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
+    response.setStatusMessage(401, request.getHttpVersion(), "Unauthorized");
+    response.setHeader(ContentType, "text/html");
+    response.setHeader(ContentLength, strlen(AUTHREQUIRED));
+    response.setHeader("WWW-Authenticate", "Basic realm=\"User Authentication\"");
+    response.setBodyString(AUTHREQUIRED);
     return true;
 }
 
@@ -52,97 +155,10 @@ int main(int argc, char **argv) {
         auto &mapper = server.getMapper();
         mapper.addRequestMapping({"/index"}, std::move(IndexPatter));
         server.getHttpConfig().loadDirentTmplateHtml("./html/dirHtml.tmpl");
-        mapper.addRequestMapping({"/404"}, std::move([ &server ](http::HttpRequest &request, http::HttpResponse &response) {
-                                     //  logger.info("do 404 function");
-                                     size_t nWrite = response.loadFileString("html/40x.html");
-                                     response.setStatusMessage(404, request.getHttpVersion(), "not found");
-                                     response.setHeader(ContentLength, nWrite);
-                                     response.setHeader(ContentType, "text/html");
-                                     return true;
-                                 }));
-        mapper.addRequestMapping({"/#/"}, std::move([ &server ](http::HttpRequest &request, http::HttpResponse &response) {
-                                     // handle File
-                                     long        nSize = 0;
-                                     std::string result;
-                                     std::string strRequestPath = request.getRequestFilePath();
-                                     if (utils::FileIsBinary(strRequestPath)) {
-                                         nSize = response.loadBinaryFile(strRequestPath);
-                                     } else {
-                                         nSize = response.loadFileString(strRequestPath);
-                                     }
-                                     logger.debug("load %s file bytes:%d", strRequestPath, nSize);
-                                     if (nSize <= 0) {
-                                         response.setStatusMessage(404, request.getHttpVersion(), "not found");
-                                         response.setHeader(ContentLength, 0);
-                                     } else {
-                                         response.setStatusMessage(200, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
-                                     }
-                                     response.setHeader(ContentType, server.getHttpConfig().getMimeType(strRequestPath));
-                                     struct stat st;
-                                     if (stat(strRequestPath.c_str(), &st) != -1)
-                                         response.setHeader("Last-Modified", utils::toResponseBasicDateString(st.st_mtime));
-                                     response.setHeader("Connection", "close");
-                                     return true;
-                                 }));
-        mapper.addRequestMapping({"/#//"}, std::move([ &server ](http::HttpRequest &request, http::HttpResponse &response) {
-                                     auto tmplateHtml = server.getHttpConfig().getDirentTmplateHtml();
-                                     auto currentDir  = server.getServerRoot();
-                                     if (currentDir.back() != '/')
-                                         currentDir += "/";
-                                     if (request.getRequestPath().front() == '/')
-                                         currentDir += request.getRequestPath().substr(1);
-                                     else
-                                         currentDir += request.getRequestPath().substr(0);
-                                     tmplateHtml.append("<script>start(\"");
-                                     tmplateHtml.append(currentDir);
-                                     tmplateHtml.append("\");</script><script>onHasParentDirectory();</script>");
-                                     DIR *          dir = opendir(currentDir.c_str());
-                                     struct dirent *dr;
-                                     while ((dr = readdir(dir)) != nullptr) {
-                                         std::string statFilePath = currentDir;
-                                         if (statFilePath.back() != '/')
-                                             statFilePath.append("/");
-                                         statFilePath.append(dr->d_name);
-                                         struct stat st;
-                                         if (stat(statFilePath.c_str(), &st) != -1) {
-                                             std::string tmpString;
-                                             tmpString.append("<script>");
-                                             tmpString.append("addRow(\"");
-                                             tmpString.append(dr->d_name);
-                                             tmpString.append("\",\"");
-                                             tmpString.append(dr->d_name);
-                                             tmpString.append("\",");
-                                             if (S_ISDIR(st.st_mode & S_IFMT))
-                                                 tmpString.append("1,");
-                                             else
-                                                 tmpString.append("0,");
-                                             // size
-                                             tmpString.append(to_string(st.st_size));
-                                             // string_size
-                                             tmpString.append(",\"");
-                                             if (!S_ISDIR(st.st_mode & S_IFMT))
-                                                 tmpString.append(utils::toSizeString(st.st_size));
-                                             else
-                                                 tmpString.append("4096 B");
-                                             tmpString.append("\",");
-                                             tmpString.append(to_string(st.st_mtime));
-                                             tmpString.append(",\"");
-                                             tmpString.append(utils::FileDirentTime(&st));
-                                             tmpString.append("\"");
-                                             tmpString.append(");</script>\r\n");
-                                             tmplateHtml.append(tmpString);
-                                         }
-                                     }
-                                     closedir(dir);
-
-                                     response.setStatusMessage(200, "HTTP/1.1", "OK");
-                                     response.setBodyString(tmplateHtml);
-                                     response.setHeader(ContentType, "text/html");
-                                     response.setHeader(ContentLength, tmplateHtml.size() + 4);
-                                     response.setHeader("Date", utils::toResponseBasicDateString());
-                                     response.setHeader("Connection", "close");
-                                     return true;
-                                 }));
+        mapper.addRequestMapping({"/404"}, std::move(NotFoundIndexPatter));
+        mapper.addRequestMapping({"/#/"}, std::move(DefaultIndexPattern));
+        mapper.addRequestMapping({"/#//"}, std::move(ListDirIndexPatter));
+        mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
         server.StartThreads(CommandParse.get<int>("threads_count"));
         server.ExecForever();
     }

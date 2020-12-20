@@ -32,7 +32,7 @@
 
 namespace http {
 typedef enum { EncodingLength, EncodingChunk, EncodingGzip, EncodingOther } Encoding;
-using Func = std::function<bool(HttpRequest &, HttpResponse &)>;
+using Func = std::function<bool(HttpRequest &, HttpResponse &, HttpConfig &)>;
 class RequestMapper {
 public:
     struct Key {
@@ -70,10 +70,6 @@ private:
     static void ParseHeaderLine(const std::string &line, std::string &key, std::string &val);
     static void ParseFirstLine(const std::string &line, std::string &HttpVersion, std::string &RequestPath, std::string &RequestType);
     static bool handleServerResource(HttpRequest &request, HttpResponse &response, const std::string &strServerRoot);
-
-private:
-    int m_nThreadserverFd;
-    int m_nThreadClientFd;
 };
 
 class HttpServer {
@@ -89,14 +85,6 @@ public:
     }
     bool loadHttpConfig(const std::string &strHttpServerConfig = "httpd.conf");
 
-    std::string getServerRoot() {
-        return m_strServerRoot;
-    }
-
-    void setServerRoot(const std::string &strServerRoot) {
-        m_strServerRoot = strServerRoot;
-    }
-
     HttpConfig &getHttpConfig() {
         return m_mConfig;
     }
@@ -105,6 +93,14 @@ public:
     }
     int setFDnonBlock(int fd);
 
+    std::string getServerRoot() {
+        return m_mConfig.getServerRoot();
+    }
+
+    void setServerRoot(const std::string &strServerRoot) {
+        m_mConfig.setServerRoot(strServerRoot);
+    }
+
 public:
     static tlog::logImpl ServerLog;
 
@@ -112,7 +108,6 @@ private:
     std::string m_strServerName;
     std::string m_strServerIP;
     std::string m_strServerDescription;
-    std::string m_strServerRoot;
     int         m_nPort;
     int         m_nMaxListenClients;
     int         m_nServerFd;

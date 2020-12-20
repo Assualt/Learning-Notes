@@ -72,7 +72,7 @@ http::Func RequestMapper::find(const std::string &RequestPath) {
             return iter.second;
         }
     }
-    return [ = ](HttpRequest &request, HttpResponse &response) {
+    return [ = ](HttpRequest &request, HttpResponse &response, HttpConfig &config) {
         response.setStatusMessage(404, "HTTP/1.1", "404 not found");
         response.setBodyString(NOTFOUNDHTML);
         return true;
@@ -193,6 +193,21 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
         close(info->m_nClientFd);
         return;
     }
+
+    // check the access right of html
+    if (config->needAuth()) {
+        if (!config->checkAuth(request.get(Authorization))) {
+            http::Func iter = handlerMapping->find("/401");
+            iter(request, response, *config);
+            size_t nWrite =  response.WriteBytes(info->m_nClientFd);
+            logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
+                        request.getRequestPath(), request.getHttpVersion(), response.getStatusCode(), nWrite, request.get(UserAgent), request.get("Connection"));
+
+            close(info->m_nClientFd);
+            return;
+        }
+    }
+
     std::map<std::string, std::string> recvHeaderMap;
     int                                nWrite;
     std::string                        basicRequest = info->m_strServerRoot;
@@ -210,7 +225,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
         if (!utils::ISDir(basicRequest)) {
             http::Func iter = handlerMapping->find("/#/");
             request.setRequestFilePath(basicRequest);
-            iter(request, response);
+            iter(request, response, *config);
             nWrite = response.WriteBytes(info->m_nClientFd);
         } else {
             if (basicRequest.back() != '/')
@@ -220,14 +235,14 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
                 if ((redirectFile = utils::FileExists(basicRequest + suffix)) == true) {
                     request.setRequestFilePath(basicRequest + suffix);
                     http::Func iter = handlerMapping->find("/#/");
-                    iter(request, response);
+                    iter(request, response, *config);
                     nWrite = response.WriteBytes(info->m_nClientFd);
                     break;
                 }
             }
             if (!redirectFile) {
                 http::Func iter = handlerMapping->find("/#//");
-                iter(request, response);
+                iter(request, response, *config);
                 nWrite = response.WriteBytes(info->m_nClientFd);
             }
             // printf("%s\n", response.toResponseHeader());
@@ -235,7 +250,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
     } else {
         logger.info("request path:%s is not exists", basicRequest);
         http::Func iter = handlerMapping->find(request.getRequestPath(), recvHeaderMap);
-        iter(request, response);
+        iter(request, response, *config);
         nWrite = response.WriteBytes(info->m_nClientFd);
     }
     logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
@@ -351,7 +366,7 @@ bool HttpServer::ExecForever() {
                 current_fds++;
                 ConnectionInfo info; //{inet_ntoa(client_addr.sin_addr), m_strServerRoot, ntohs(client_addr.sin_port), current_fd, client_oldFlag};
                 info.m_strConnectIP  = inet_ntoa(client_addr.sin_addr);
-                info.m_strServerRoot = m_strServerRoot;
+                info.m_strServerRoot = m_mConfig.getServerRoot();
                 info.m_nPort         = ntohs(client_addr.sin_port);
                 info.m_nClientFd     = client_fd;
                 info.m_nFDFlag       = client_oldFlag;
