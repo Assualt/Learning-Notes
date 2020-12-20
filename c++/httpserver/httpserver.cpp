@@ -211,10 +211,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
             http::Func iter = handlerMapping->find("/#/");
             request.setRequestFilePath(basicRequest);
             iter(request, response);
-            if (utils::FileIsBinary(basicRequest))
-                nWrite = response.WriteBytes(info->m_nClientFd);
-            else
-                nWrite = writeResponse(info->m_nClientFd, response);
+            nWrite = response.WriteBytes(info->m_nClientFd);
         } else {
             if (basicRequest.back() != '/')
                 basicRequest.append("/");
@@ -224,17 +221,14 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
                     request.setRequestFilePath(basicRequest + suffix);
                     http::Func iter = handlerMapping->find("/#/");
                     iter(request, response);
-                    if (utils::FileIsBinary(basicRequest))
-                        nWrite = response.WriteBytes(info->m_nClientFd);
-                    else
-                        nWrite = writeResponse(info->m_nClientFd, response);
+                    nWrite = response.WriteBytes(info->m_nClientFd);
                     break;
                 }
             }
             if (!redirectFile) {
                 http::Func iter = handlerMapping->find("/#//");
                 iter(request, response);
-                nWrite = writeResponse(info->m_nClientFd, response);
+                nWrite = response.WriteBytes(info->m_nClientFd);
             }
             // printf("%s\n", response.toResponseHeader());
         }
@@ -242,7 +236,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
         logger.info("request path:%s is not exists", basicRequest);
         http::Func iter = handlerMapping->find(request.getRequestPath(), recvHeaderMap);
         iter(request, response);
-        nWrite = writeResponse(info->m_nClientFd, response);
+        nWrite = response.WriteBytes(info->m_nClientFd);
     }
     logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
                 request.getRequestPath(), request.getHttpVersion(), response.getStatusCode(), nWrite, request.get(UserAgent), request.get("Connection"));
@@ -252,6 +246,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
 
 ssize_t ClientThread::writeResponse(int client_fd, HttpResponse &response) {
     std::string responseHeader = response.toResponseHeader();
+    logger.info("write data size:%d", responseHeader.size());
     return writeData(client_fd, (void *)responseHeader.c_str(), responseHeader.size(), 0);
 }
 

@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
     CommandParse.add<int>("logLevel", 'l', "the logger level.(0.debug, 1.info 2.warning 3.alert", false, 1, cmdline::range<int>(0, 3));
     CommandParse.add<int>("timeout", 0, "set connection timeout(s)", false, 10, cmdline::range<int>(0, 30));
     CommandParse.add<string>("auth-basic", 0, "set auth basic user", false, "");
-    CommandParse.add<int>("threads", 0, "download threads count", false, 5, cmdline::range<int>(1,10));
+    CommandParse.add<int>("threads", 0, "download threads count", false, 5, cmdline::range<int>(1, 10));
     CommandParse.set_program_name("httpclient");
 
     bool ok = CommandParse.parse(argc, argv);
@@ -60,26 +60,26 @@ int main(int argc, char **argv) {
         client.setHeader("Connection", "keep-alive");
         int httpVersion = CommandParse.get<int>("http_version");
         client.setHttpVersion(static_cast<http::utils::HttpVersion>(httpVersion));
-        
+
         std::string strCookie = CommandParse.get<string>("cookie");
         if (!strCookie.empty())
             client.setCookie(strCookie);
 
         std::string strAuthBasic = CommandParse.get<string>("auth-basic");
-        if(!strAuthBasic.empty() && strAuthBasic.find(":") != std::string::npos){
+        if (!strAuthBasic.empty() && strAuthBasic.find(":") != std::string::npos) {
             std::string strUser = strAuthBasic.substr(0, strAuthBasic.find(":"));
-            std::string strPass = strAuthBasic.substr(strAuthBasic.find(":")+1);
+            std::string strPass = strAuthBasic.substr(strAuthBasic.find(":") + 1);
             client.setBasicAuthUserPass(strUser, strPass);
         }
 
         std::string      reqType = CommandParse.get<std::string>("type");
         http::HttpResult Result;
-        std::string downloadPath = CommandParse.get<string>("output");
+        std::string      downloadPath = CommandParse.get<string>("output");
         if (strcasecmp(reqType.c_str(), "get") == 0) {
             Result = client.Get(reqUrl, bRedireect, bVerbose);
         } else if (strcasecmp(reqType.c_str(), "post") == 0) {
-            std::string body         = CommandParse.get<string>("body");
-            std::string contentType  = CommandParse.get<string>("content-type");
+            std::string body        = CommandParse.get<string>("body");
+            std::string contentType = CommandParse.get<string>("content-type");
             if (body.empty()) {
                 std::cout << "post data is empty. ignored";
             } else {
@@ -87,20 +87,19 @@ int main(int argc, char **argv) {
                 client.setHeader(ContentLength, body.size());
                 Result = client.Post(reqUrl, body, bRedireect, bVerbose);
             }
-        } else if( strcasecmp(reqType.c_str(), "head") == 0){
+        } else if (strcasecmp(reqType.c_str(), "head") == 0) {
             Result = client.Head(reqUrl, bVerbose);
-        } else if(strcasecmp(reqType.c_str(), "Download") == 0){
+        } else if (strcasecmp(reqType.c_str(), "Download") == 0) {
             int nThreads = CommandParse.get<int>("threads");
             client.DownloadFile(reqUrl, downloadPath, nThreads, bVerbose);
         }
-        std::cout << "\nStatus Code:" << Result.status_code() << std::endl
-                  << "Text Size:" << Result.text().size() << std::endl
-                  << "Relay Message:" << Result.error() << std::endl
-                  << "Text :" << Result.text() << std::endl;
-        
+        std::cout << "\nStatus Code:" << Result.status_code() << std::endl << "Text Size:" << Result.text().size() << std::endl << "Relay Message:" << Result.error() << std::endl;
         if (!downloadPath.empty() && strcasecmp(reqType.c_str(), "Download") != 0) {
             client.SaveResultToFile(downloadPath);
+            logger.info("Data is not shown..");
             logger.info("succesful save response to %s file", downloadPath);
+        }else{
+            std::cout << "Text :" << Result.text() << std::endl;
         }
     }
     return 0;

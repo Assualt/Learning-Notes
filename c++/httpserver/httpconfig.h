@@ -37,6 +37,7 @@ protected:                                                \
 #define SERVER "Server"
 #define SERVERVal "HttpServer/0.1 Linux/GNU gcc/c++"
 
+#include "hashutils.hpp"
 #include "httputils.h"
 #include "logging.h"
 #include <set>
@@ -44,115 +45,24 @@ protected:                                                \
 namespace http {
 class HttpConfig {
 public:
-    HttpConfig()
-        : m_SuffixSet{"index.html", "index.shtml", "index.htm"} {
-    }
-
-    bool loadConfig(const std::string &strConfigFilePath) {
-        std::ifstream fin(strConfigFilePath.c_str());
-        if (!fin.is_open()) {
-            logger.error("load httconfig(%s) failed due to nonexistance.", strConfigFilePath);
-            return false;
-        }
-        std::string strLine;
-        while (getline(fin, strLine)) {
-        }
-        fin.close();
-        return true;
-    }
-
-    bool loadMimeType(const std::string &mimeType = "mime.types") {
-        std::ifstream fin(mimeType);
-        if (!fin.is_open()) {
-            logger.info("error load mime type from file %s", mimeType);
-            return false;
-        }
-        std::string strLine;
-        int         success = 0;
-        while (getline(fin, strLine)) {
-            if (strLine.find(";") != std::string::npos) {
-                strLine = strLine.substr(0, strLine.find(";"));
-            }
-            if (strLine.empty())
-                continue;
-            auto tempList = utils::split(strLine, ' ');
-            if (tempList.size() < 2)
-                continue;
-            for (size_t i = 1; i < tempList.size(); ++i) {
-                m_ExtMimeType[ tempList[ i ] ] = tempList[ 0 ];
-                success++;
-            }
-        }
-        fin.close();
-        logger.info("success insert %d mime<->ext mapping", success);
-        return true;
-    }
-
-    const std::string getMimeType(const std::string &strFileName) {
-        std::string ext;
-        if (strFileName.rfind(".") != std::string::npos) {
-            ext = strFileName.substr(strFileName.rfind(".") + 1);
-            if (m_ExtMimeType.count(ext))
-                return m_ExtMimeType.at(ext);
-        }
-        return utils::FileMagicType(strFileName);
-    }
+    HttpConfig();
+    bool              loadConfig(const std::string &strConfigFilePath);
+    bool              loadMimeType(const std::string &mimeType = "mime.types");
+    const std::string getMimeType(const std::string &strFileName);
 
 public:
-    std::string getServerRoot() const {
-        return m_strServerRoot;
-    }
-    void setServerRoot(const std::string &strServerRoot) {
-        m_strServerRoot = strServerRoot;
-    }
+    std::string getServerRoot() const;
+    void        setServerRoot(const std::string &strServerRoot);
 
-    void loadDirentTmplateHtml(const std::string &tmplatePath) {
-        m_strDirentTmplateHtml = utils::loadFileString(tmplatePath);
-    }
-    std::string &getDirentTmplateHtml() {
-        return m_strDirentTmplateHtml;
-    }
-
-    const std::set<std::string> getSuffixSet() {
-        return m_SuffixSet;
-    }
+    void                        loadDirentTmplateHtml(const std::string &tmplatePath);
+    std::string &               getDirentTmplateHtml();
+    const std::set<std::string> getSuffixSet();
 
 private:
     std::string                        m_strServerRoot;
     std::string                        m_strDirentTmplateHtml;
     std::set<std::string>              m_SuffixSet;
     std::map<std::string, std::string> m_ExtMimeType;
-};
-
-class MyStringBuffer : public std::stringbuf {
-public:
-    void seekReadPos(ssize_t nPos) {
-        std::stringbuf::seekpos(nPos, std::ios_base::in);
-    }
-    std::string toString() {
-        std::string temp;
-        seekReadPos(0);
-        do {
-            temp.push_back(this->sgetc());
-        } while (this->snextc() != EOF);
-        seekReadPos(0);
-        return temp;
-    }
-    void seekWritePos(ssize_t nPos) {
-        std::stringbuf::seekpos(nPos, std::ios_base::out);
-    }
-    void clear() {
-        std::stringbuf::setbuf((char *)"", std::streamsize(0));
-    }
-
-    size_t size() {
-        seekReadPos(0);
-        size_t ret = 0;
-        do {
-            ret += 1;
-        } while (this->snextc() != EOF);
-        return ret;
-    }
 };
 
 class ConnectionInfo {

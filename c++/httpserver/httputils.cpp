@@ -148,3 +148,8 @@ bool utils::ISDir(const std::string &filepath) {
     }
     return false;
 }
+std::string utils::toHexString(ssize_t nSize) {
+    std::stringstream ss;
+    ss << std::hex << nSize;
+    return ss.str();
+}

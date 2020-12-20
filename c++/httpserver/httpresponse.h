@@ -5,6 +5,7 @@
 #include <sstream>
 #include <time.h>
 #include <vector>
+#define CHUNK_SIGNLE_SIZE 1024
 namespace http {
 class HttpResponse {
 public:
@@ -12,7 +13,7 @@ public:
     template <class T> void                                  setHeader(const std::string &key, const T &val) {
         m_vResponseHeader.push_back(std::pair<std::string, std::string>(key, utils::toString(val)));
     }
-    void        setStatusMessage(int statusCode, const std::string &HttpVersion, const std::string &message);
+    void        setStatusMessage(int statusCode, const std::string &HttpVersion, const std::string &message, const std::string &strAcceptEncoding = "");
     std::string toResponseHeader();
 
 public:
@@ -23,12 +24,16 @@ public:
     std::string getBasicDate() const;
     void        setBasicDate(int strBasicDate);
 
-    void            WriteBytes(const char *buf, size_t n);
+    void            WriteBodyBytes(const char *buf, size_t n);
     MyStringBuffer &getBuffer();
 
     int    loadBinaryFile(const std::string &strFilePath);
     int    loadFileString(const std::string &strFilePath);
     size_t WriteBytes(int fd);
+
+protected:
+    void    EncodeBodyString(MyStringBuffer &out, int CompressType);
+    ssize_t ChunkString(MyStringBuffer &buffer, int nChunkSize, MyStringBuffer &ss);
 
 private:
     // getter and setter
@@ -39,7 +44,8 @@ private:
     std::string m_strHttpVersion;
     std::string m_strMessage;
 
-    MyStringBuffer mybuf;
+    MyStringBuffer        mybuf;
+    std::set<std::string> m_AcceptEncodingSet;
 };
 
 } // namespace http

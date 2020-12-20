@@ -1,3 +1,4 @@
+#pragma once
 #include "base64.h"
 #include <iostream>
 #include <sstream>
@@ -25,6 +26,15 @@ public:
     void clear() {
         std::stringbuf::setbuf((char *)"", std::streamsize(0));
     }
+
+    size_t size() {
+        seekReadPos(0);
+        size_t ret = 1;
+        while (this->snextc() != EOF) {
+            ret += 1;
+        }
+        return ret;
+    }
 };
 
 class HashUtils {
@@ -48,15 +58,22 @@ public:
         dest = out.str();
         return dest.size();
     }
-    static int DecompressWithZlib(MyStringBuffer &in, std::stringstream &out, int WindowsBits) {
+    static uLongf DecompressWithZlib(MyStringBuffer &in, std::stringstream &out, int nLevel) {
         z_stream strm;
         strm.zalloc   = Z_NULL;
         strm.zfree    = Z_NULL;
         strm.opaque   = Z_NULL;
         strm.avail_in = 0;
         strm.next_in  = Z_NULL;
-        int ret       = inflateInit2(&strm, WindowsBits);
-
+        // level 
+        int ret;
+        if(nLevel == 1){// gzip
+            ret = inflateInit2(&strm, MAX_WBITS + 16);
+        }else if(nLevel == 2){ // deflate
+            ret = inflateInit2(&strm, -MAX_WBITS);
+        }else if(nLevel == 3){ // raw
+            ret = inflateInit(&strm);
+        }
         if (ret != Z_OK) {
             inflateEnd(&strm);
             return -1;
@@ -102,11 +119,67 @@ public:
         return size;
     }
 
-    static int GzipDecompress(MyStringBuffer &in, std::stringstream &out) {
-        return DecompressWithZlib(in, out, 47);
+    static uLongf CompressWithZlib(void *buffer, ssize_t size, MyStringBuffer &out, int nLevel) {
+        if (buffer == nullptr || size == 0)
+            return 0;
+        z_stream strm;
+        char     outBuf[ MAX_BUF_SIZE ];
+        memset(outBuf, 0, MAX_BUF_SIZE);
+        strm.zalloc   = Z_NULL;
+        strm.zfree    = Z_NULL;
+        strm.opaque   = Z_NULL;
+        strm.avail_in = size;
+        int ret, left, nTotalSize = 0;
+        if (nLevel == 3) { // zlib
+            ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
+        } else if (nLevel == 2) { // raw
+            ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
+            // ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_COMPRESSION);
+        } else if (nLevel == 1) { // gzip
+            ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY);
+        } else {
+            return 0;
+        }
+        if (ret != Z_OK)
+            return 0;
+        strm.next_in = (Bytef *)buffer;
+        do {
+            strm.avail_out = MAX_BUF_SIZE;
+            strm.next_out  = (Bytef *)outBuf;
+            ret            = deflate(&strm, Z_FINISH);
+            if (ret == Z_STREAM_ERROR) {
+                (void)deflateEnd(&strm);
+                return 0;
+            }
+            left = MAX_BUF_SIZE - strm.avail_out;
+            out.sputn(outBuf, left);
+            nTotalSize += left;
+        } while (strm.avail_out == 0);
+        (void)deflateEnd(&strm);
+        return nTotalSize;
     }
 
-    static int DeflateDecompress(MyStringBuffer &in, std::stringstream &out) {
-        return DecompressWithZlib(in, out, -MAX_WBITS);
+    static uLongf GzipCompress(void *buffer, ssize_t size, MyStringBuffer &out) { // gzip
+        return CompressWithZlib(buffer, size, out, 1);
+    }
+
+    static uLongf DeflateCompress(void *buffer, ssize_t size, MyStringBuffer &out) { // raw -> deflate
+        return CompressWithZlib(buffer, size, out, 2);
+    }
+
+    static uLongf ZlibCompress(void *buffer, ssize_t size, MyStringBuffer &out) { // zlib
+        return CompressWithZlib(buffer, size, out, 3);
+    }
+
+    static uLongf GzipDecompress(MyStringBuffer &in, std::stringstream &out) {
+        return DecompressWithZlib(in, out,1);
+    }
+
+    static uLongf DeflateDecompress(MyStringBuffer &in, std::stringstream &out) {
+        return DecompressWithZlib(in, out, 2);
+    }
+
+    static uLongf ZlibDeCompress(MyStringBuffer &in, std::stringstream &out) { // zlib
+        return DecompressWithZlib(in, out, 3);
     }
 };

@@ -8,7 +8,7 @@ using namespace http;
 
 bool IndexPatter(http::HttpRequest &request, http::HttpResponse &response) {
     std::string resultString = utils::loadFileString("./html/index.html");
-    response.setStatusMessage(200, "HTTP/1.1", "OK");
+    response.setStatusMessage(200, request.getRequestType(), "OK");
     response.setHeader(ContentLength, resultString.size() + 4);
     response.setHeader(ContentType, "text/html");
     response.setBodyString(resultString);
@@ -17,7 +17,7 @@ bool IndexPatter(http::HttpRequest &request, http::HttpResponse &response) {
 
 int main(int argc, char **argv) {
     logger.BasicConfig("%(thread)s %(levelname)s %(ctime)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S,%s", "", "a");
-    logger.setLevel(tlog::detail::INFO);
+
     cmdline::parser CommandParse;
 
     CommandParse.add<std::string>("server_name", 0, "The http server name", false, "HttpServer");
@@ -27,6 +27,7 @@ int main(int argc, char **argv) {
     CommandParse.add<std::string>("server_root", 0, "The http server's root path", true);
     CommandParse.add<int>("threads_count", 'n', "The http server's threads count", false, 3, cmdline::range<int>(1, 10));
     CommandParse.add<std::string>("config_path", 0, "The http server's config path.", false, "httpd.conf");
+    CommandParse.add<int>("logLevel", 0, "The http server's logs level.", false, 1, cmdline::range<int>(0, 3));
     bool ok = CommandParse.parse(argc, argv);
 
     if (!ok) {
@@ -40,9 +41,11 @@ int main(int argc, char **argv) {
         int         nPort                = CommandParse.get<int>("server_port");
         std::string strConfigPath        = CommandParse.get<std::string>("config_path");
 
+        auto nLevel = CommandParse.get<int>("logLevel");
+        logger.setLevel(static_cast<tlog::detail::Level>(nLevel));
+
         http::HttpServer server(strServerName, strServerIP, strServerDescription, nPort);
         server.setServerRoot(strServerRoot);
-
         logger.info("setting server root:%s", server.getServerRoot());
         server.loadHttpConfig(strConfigPath);
         server.getHttpConfig().loadMimeType("html/mime.types");
@@ -52,7 +55,7 @@ int main(int argc, char **argv) {
         mapper.addRequestMapping({"/404"}, std::move([ &server ](http::HttpRequest &request, http::HttpResponse &response) {
                                      //  logger.info("do 404 function");
                                      size_t nWrite = response.loadFileString("html/40x.html");
-                                     response.setStatusMessage(404, "HTTP/1.1", "not found");
+                                     response.setStatusMessage(404, request.getHttpVersion(), "not found");
                                      response.setHeader(ContentLength, nWrite);
                                      response.setHeader(ContentType, "text/html");
                                      return true;
@@ -69,17 +72,15 @@ int main(int argc, char **argv) {
                                      }
                                      logger.debug("load %s file bytes:%d", strRequestPath, nSize);
                                      if (nSize <= 0) {
-                                         response.setStatusMessage(404, "HTTP/1.1", "not found");
+                                         response.setStatusMessage(404, request.getHttpVersion(), "not found");
                                          response.setHeader(ContentLength, 0);
                                      } else {
-                                         response.setStatusMessage(200, "HTTP/1.1", "OK");
-                                         response.setHeader(ContentLength, nSize);
+                                         response.setStatusMessage(200, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
                                      }
                                      response.setHeader(ContentType, server.getHttpConfig().getMimeType(strRequestPath));
                                      struct stat st;
-                                     if(stat(strRequestPath.c_str(), &st) != -1)
-                                        response.setHeader("Last-Modified", utils::toResponseBasicDateString(st.st_mtime));
-                                     logger.info("file:%s magicType:%s", strRequestPath, server.getHttpConfig().getMimeType(strRequestPath));
+                                     if (stat(strRequestPath.c_str(), &st) != -1)
+                                         response.setHeader("Last-Modified", utils::toResponseBasicDateString(st.st_mtime));
                                      response.setHeader("Connection", "close");
                                      return true;
                                  }));
@@ -145,10 +146,5 @@ int main(int argc, char **argv) {
         server.StartThreads(CommandParse.get<int>("threads_count"));
         server.ExecForever();
     }
-    std::cout << utils::FileIsBinary("/bubblesort.gif?123") << std::endl;
-    std::cout << utils::ISDir("./html") << std::endl;
-    // http::HttpResponse response;
-    // std::cout << response.loadBinaryFile("./html//bubblesort.gif") << std::endl;
-    // testItem();
     return 0;
 }

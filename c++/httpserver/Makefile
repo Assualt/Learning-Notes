@@ -4,7 +4,7 @@ CFLAGS=-I../log -I../argparse -I../hash -Wno-deprecated-declarations -std=c++11 
 vpath %.cpp ../log ../hash
 
 
-ALLOBJS=logging.o  httpserver.o unitHttpServer.o httputils.o httprequest.o httpresponse.o 
+ALLOBJS=logging.o  httpserver.o unitHttpServer.o httputils.o httprequest.o httpresponse.o httpconfig.o
 
 .cpp.o:
 	$(CC) -c $(CFLAGS) $< 
