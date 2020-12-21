@@ -27,7 +27,8 @@ std::string HttpResponse::getBodyString() const {
     return m_strBodyString;
 }
 void HttpResponse::setBodyString(const std::string &strBodyString) {
-    m_strBodyString = strBodyString;
+    m_strBodyString   = strBodyString;
+    m_nBodyStringSize = strBodyString.size();
 }
 int HttpResponse::getStatusCode() const {
     return m_nStatusCode;
@@ -53,7 +54,7 @@ MyStringBuffer &HttpResponse::getBuffer() {
 int HttpResponse::loadBinaryFile(const std::string &strFilePath) {
     if (access(strFilePath.c_str(), F_OK) == -1)
         return -1;
-    char  ch;
+    int   ch;
     int   nSize = 0;
     FILE *fp    = nullptr;
     if ((fp = fopen(strFilePath.c_str(), "rb")) == nullptr) {
@@ -61,12 +62,10 @@ int HttpResponse::loadBinaryFile(const std::string &strFilePath) {
         return 0;
     }
     logger.debug("begin to load binaryFile %s", strFilePath);
-    while (1) {
-        ch = fgetc(fp);
-        if (feof(fp))
-            break;
-        mybuf.sputc(ch);
+    while ((ch = fgetc(fp)) != EOF) {
+        mybuf.sputc((char)ch);
         nSize++;
+        m_nBodybytesSize++;
     }
     fclose(fp);
     return nSize;
@@ -74,6 +73,7 @@ int HttpResponse::loadBinaryFile(const std::string &strFilePath) {
 
 int HttpResponse::loadFileString(const std::string &strFilePath) {
     m_strBodyString = utils::loadFileString(strFilePath);
+    m_nBodyStringSize = m_strBodyString.size();
     return m_strBodyString.size();
 }
 
@@ -82,11 +82,12 @@ void HttpResponse::EncodeBodyString(MyStringBuffer &out, int CompressType) {
     // 1 gzip
     // 2 deflate
     // 3 br
-    int   nBodySize   = m_strBodyString.size() + mybuf.size();
+    int   nBodySize   = m_nBodybytesSize + m_nBodyStringSize;
     char *bodyTempBuf = new char[ nBodySize ];
+    mybuf.seekReadPos(0);
     memset(bodyTempBuf, 0, nBodySize);
-    strncpy(bodyTempBuf, m_strBodyString.c_str(), m_strBodyString.size());
-    mybuf.sgetn(bodyTempBuf + m_strBodyString.size(), mybuf.size());
+    strncpy(bodyTempBuf, m_strBodyString.c_str(), m_nBodyStringSize);
+    mybuf.sgetn(bodyTempBuf + m_nBodyStringSize, m_nBodybytesSize);
     uLongf CompressedSize;
     if (CompressType == 1) { // gzip
         CompressedSize = HashUtils::GzipCompress(bodyTempBuf, nBodySize, out);
@@ -130,7 +131,7 @@ size_t HttpResponse::WriteBytes(int fd) {
     // 1 gzip
     // 2 deflate
     // 3 br
-    if (strcasecmp(m_strHttpVersion.c_str(), "HTTP/1.0") == 0) // use Content-Length
+    if (strcasecmp(m_strHttpVersion.c_str(), "HTTP/1.0") == 0 || m_bSetContentLength) // use Content-Length
         CompressType = 0;
     else if (strcasecmp(m_strHttpVersion.c_str(), "HTTP/1.1") == 0) {
         if (m_AcceptEncodingSet.count("gzip"))
@@ -140,19 +141,22 @@ size_t HttpResponse::WriteBytes(int fd) {
         else if (m_AcceptEncodingSet.count("br"))
             CompressType = 3;
     }
-    std::string strHeader   = toResponseHeader();
-    size_t      nHeaderSize = strHeader.size();
-    int         nBufferSize = mybuf.size();
-    int         bodySize    = nBufferSize + m_strBodyString.size();
-    int         nTotalSend  = nHeaderSize + nBufferSize + m_strBodyString.size();
+
     if (CompressType == 0) {
-        std::stringstream ss;
-        ss << strHeader << m_strBodyString;
-        char *temp = new char[ nBufferSize ];
-        memset(temp, 0, nBufferSize);
-        size_t nRead = mybuf.sgetn(temp, nBufferSize);
-        ss.write(temp, nRead);
-        size_t nWrite = ::send(fd, ss.str().c_str(), ss.str().size(), 0);
+        if (!m_bSetContentLength) {
+            setHeader(ContentLength, m_nBodybytesSize + m_nBodyStringSize);
+        }
+        setHeader(AcceptRanges, "bytes");
+        std::string strHeader   = toResponseHeader();
+        size_t      nHeaderSize = strHeader.size();
+
+        char *temp = new char[ nHeaderSize + m_nBodybytesSize + m_nBodyStringSize ];
+        memset(temp, 0, nHeaderSize + m_nBodybytesSize + m_nBodyStringSize);
+        strncpy(temp, strHeader.c_str(), nHeaderSize);
+        strncpy(temp + nHeaderSize, m_strBodyString.c_str(), m_nBodyStringSize);
+        mybuf.seekReadPos(0);
+        size_t nRead  = mybuf.sgetn(temp + nHeaderSize + m_nBodyStringSize, m_nBodybytesSize);
+        size_t nWrite = ::send(fd, temp, nRead + nHeaderSize + m_nBodyStringSize, 0);
         delete[] temp;
         return nWrite;
     } else if (CompressType == 1 || CompressType == 2) { // gzip

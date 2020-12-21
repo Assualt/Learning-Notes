@@ -17,9 +17,9 @@ bool IndexPatter(http::HttpRequest &request, http::HttpResponse &response, HttpC
 
 bool NotFoundIndexPatter(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
     //  logger.info("do 404 function");
-    size_t nWrite = response.loadFileString("html/40x.html");
+    size_t nRead = response.loadFileString("html/40x.html");
     response.setStatusMessage(404, request.getHttpVersion(), "not found");
-    response.setHeader(ContentLength, nWrite);
+    response.setHeader(ContentLength, nRead);
     response.setHeader(ContentType, "text/html");
     return true;
 }
@@ -103,7 +103,7 @@ bool ListDirIndexPatter(http::HttpRequest &request, http::HttpResponse &response
     response.setStatusMessage(200, "HTTP/1.1", "OK");
     response.setBodyString(tmplateHtml);
     response.setHeader(ContentType, "text/html");
-    response.setHeader(ContentLength, tmplateHtml.size() + 4);
+    response.setHeader(ContentLength, tmplateHtml.size());
     response.setHeader("Date", utils::toResponseBasicDateString());
     response.setHeader("Connection", "close");
     return true;
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
     CommandParse.add<std::string>("server_ip", 0, "The http server ip.", false, "127.0.0.1");
     CommandParse.add<std::string>("server_description", 0, "The http server's description.", false, "A simple Http Server");
     CommandParse.add<int>("server_port", 0, "The http server's port", false, 8080, cmdline::range<int>(1, 65535));
-    CommandParse.add<std::string>("server_root", 0, "The http server's root path", true);
+    CommandParse.add<std::string>("server_root", 0, "The http server's root path", false);
     CommandParse.add<int>("threads_count", 'n', "The http server's threads count", false, 3, cmdline::range<int>(1, 10));
     CommandParse.add<std::string>("config_path", 0, "The http server's config path.", false, "httpd.conf");
     CommandParse.add<int>("logLevel", 0, "The http server's logs level.", false, 1, cmdline::range<int>(0, 3));
@@ -151,16 +151,18 @@ int main(int argc, char **argv) {
         server.setServerRoot(strServerRoot);
         logger.info("setting server root:%s", server.getServerRoot());
         server.loadHttpConfig(strConfigPath);
-        server.getHttpConfig().loadMimeType("html/mime.types");
+        // server.getHttpConfig().loadMimeType("html/mime.types");
+        // server.getHttpConfig().loadDirentTmplateHtml("./html/dirHtml.tmpl");
         auto &mapper = server.getMapper();
         mapper.addRequestMapping({"/index"}, std::move(IndexPatter));
-        server.getHttpConfig().loadDirentTmplateHtml("./html/dirHtml.tmpl");
         mapper.addRequestMapping({"/404"}, std::move(NotFoundIndexPatter));
         mapper.addRequestMapping({"/#/"}, std::move(DefaultIndexPattern));
         mapper.addRequestMapping({"/#//"}, std::move(ListDirIndexPatter));
         mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
         server.StartThreads(CommandParse.get<int>("threads_count"));
         server.ExecForever();
+
+        std::cout << utils::encodeURI("侯") << std::endl;
     }
     return 0;
 }

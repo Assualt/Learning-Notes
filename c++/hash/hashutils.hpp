@@ -29,7 +29,7 @@ public:
 
     size_t size() {
         seekReadPos(0);
-        size_t ret = 1;
+        size_t ret = 0;
         while (this->snextc() != EOF) {
             ret += 1;
         }

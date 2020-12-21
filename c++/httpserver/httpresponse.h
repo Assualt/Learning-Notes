@@ -9,8 +9,15 @@
 namespace http {
 class HttpResponse {
 public:
+    HttpResponse()
+        : m_bSetContentLength(false)
+        , m_nBodyStringSize(0)
+        , m_nBodybytesSize(0) {
+    }
     typedef std::vector<std::pair<std::string, std::string>> ResourceMap;
     template <class T> void                                  setHeader(const std::string &key, const T &val) {
+        if (strcasecmp(key.c_str(), ContentLength) == 0)
+            m_bSetContentLength = true;
         m_vResponseHeader.push_back(std::pair<std::string, std::string>(key, utils::toString(val)));
     }
     void        setStatusMessage(int statusCode, const std::string &HttpVersion, const std::string &message, const std::string &strAcceptEncoding = "");
@@ -46,6 +53,9 @@ private:
 
     MyStringBuffer        mybuf;
     std::set<std::string> m_AcceptEncodingSet;
+    bool                  m_bSetContentLength;
+    size_t                m_nBodyStringSize;
+    size_t                m_nBodybytesSize;
 };
 
 } // namespace http

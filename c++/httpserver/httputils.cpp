@@ -153,3 +153,10 @@ std::string utils::toHexString(ssize_t nSize) {
     ss << std::hex << nSize;
     return ss.str();
 }
+
+std::string utils::encodeURI(const std::string &url) {
+    for (auto i = 0; i < url.size(); i++) {
+        std::cout << (int)url.at(i) << std::endl;
+    }
+    return "";
+}

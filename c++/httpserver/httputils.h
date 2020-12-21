@@ -34,4 +34,6 @@ public:
     static std::string FileDirentTime(struct stat *st);
     static bool        ISDir(const std::string &filepath);
     static std::string toHexString(ssize_t nSize);
+
+    static std::string encodeURI(const std::string &url);
 };

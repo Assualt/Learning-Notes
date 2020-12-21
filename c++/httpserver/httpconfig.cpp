@@ -10,7 +10,7 @@ bool HttpConfig::needAuth() {
 
 bool HttpConfig::checkAuth(const std::string &AuthString) {
     auto vecs = utils::split(AuthString, ' ');
-    if(vecs.size() == 2){
+    if (vecs.size() == 2) {
         if (strcasecmp(vecs[ 0 ].c_str(), "basic") == 0) {
             std::string decodeString;
             int         nDecode = HashUtils::DecodeBase64(vecs[ 1 ], decodeString);
@@ -71,14 +71,20 @@ void HttpConfig::parseSection(const std::string strSectionName, const std::strin
     auto                               vectors = utils::split(strSection, ';');
     for (auto vec : vectors) {
         auto kval = utils::split(vec, ' ');
+        if(kval.size() != 2)
         kval[ 0 ] = utils::trim(kval[ 0 ]);
         kval[ 1 ] = utils::trim(kval[ 1 ]);
         if (kval.size() == 2 && !kval[ 0 ].empty() && !kval[ 1 ].empty())
             sectionMap[ kval[ 0 ] ] = kval[ 1 ];
         else
             logger.warning("invalid line: %s", vec);
-        if (strSectionName == "http" && kval[ 0 ] == "basic_auth")
-            loadAuthFile(kval[ 1 ]);
+        if (strSectionName == "http")
+            if (kval[ 0 ] == "basic_auth")
+                loadAuthFile(kval[ 1 ]);
+            else if (kval[ 0 ] == "mime_type")
+                loadMimeType(kval[ 1 ]);
+            else if (kval[ 0 ] == "dirent_tmpl")
+                loadDirentTmplateHtml(kval[ 1 ]);
     }
     m_SectionMap[ strSectionName ] = sectionMap;
 }
