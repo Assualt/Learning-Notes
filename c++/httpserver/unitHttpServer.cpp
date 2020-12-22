@@ -161,8 +161,6 @@ int main(int argc, char **argv) {
         mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
         server.StartThreads(CommandParse.get<int>("threads_count"));
         server.ExecForever();
-
-        std::cout << utils::encodeURI("侯") << std::endl;
     }
     return 0;
 }

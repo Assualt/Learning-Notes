@@ -37,8 +37,8 @@ protected:                                                \
 #define SERVER "Server"
 #define SERVERVal "HttpServer/0.1 Linux/GNU gcc/c++"
 
-#define AUTHREQUIRED "<html><head><title>401 Authorization Required</title></head><body bgcolor=\"white\"><center><h1>401 Authorization Required</h1></center><hr><center>httpserver</center></body></html>"
-
+#define AUTHREQUIRED \
+    "<html><head><title>401 Authorization Required</title></head><body bgcolor=\"white\"><center><h1>401 Authorization Required</h1></center><hr><center>httpserver</center></body></html>"
 
 #include "hashutils.hpp"
 #include "httputils.h"
@@ -49,9 +49,9 @@ namespace http {
 class HttpConfig {
 public:
     HttpConfig();
-    bool              loadConfig(const std::string &strConfigFilePath);
-    bool              loadMimeType(const std::string &mimeType = "mime.types");
-    const std::string getMimeType(const std::string &strFileName);
+    bool        loadConfig(const std::string &strConfigFilePath);
+    bool        loadMimeType(const std::string &mimeType = "mime.types");
+    std::string getMimeType(const std::string &strFileName);
 
 public:
     std::string getServerRoot() const;

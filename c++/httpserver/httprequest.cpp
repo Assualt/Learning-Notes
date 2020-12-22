@@ -55,7 +55,8 @@ std::string HttpRequest::getRequestFilePath() const {
     return m_strRequestFilePath;
 }
 void HttpRequest::setRequestFilePath(const std::string &strRequestFilePath) {
-    m_strRequestFilePath = strRequestFilePath;
+
+    m_strRequestFilePath = UrlUtils::UrlDecode(strRequestFilePath);
 }
 
 } // namespace http

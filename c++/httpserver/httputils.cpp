@@ -154,9 +154,53 @@ std::string utils::toHexString(ssize_t nSize) {
     return ss.str();
 }
 
-std::string utils::encodeURI(const std::string &url) {
-    for (auto i = 0; i < url.size(); i++) {
-        std::cout << (int)url.at(i) << std::endl;
+unsigned char UrlUtils::ToHex(unsigned char x) {
+    return x > 9 ? x + 55 : x + 48;
+}
+
+unsigned char UrlUtils::FromHex(unsigned char x) {
+    unsigned char y = 0;
+    if (x >= 'A' && x <= 'Z')
+        y = x - 'A' + 10;
+    else if (x >= 'a' && x <= 'z')
+        y = x - 'a' + 10;
+    else if (x >= '0' && x <= '9')
+        y = x - '0';
+    return y;
+}
+
+std::string UrlUtils::UrlEncode(const std::string &str) {
+    std::string strTemp = "";
+    size_t      length  = str.length();
+    for (size_t i = 0; i < length; i++) {
+        if (isalnum((unsigned char)str[ i ]) || (str[ i ] == '-') || (str[ i ] == '_') || (str[ i ] == '.') || (str[ i ] == '~'))
+            strTemp.push_back(str[ i ]);
+        else if (str[ i ] == ' ') {
+            strTemp.append("%20");
+        } else {
+            strTemp.push_back('%');
+            strTemp.push_back(ToHex((unsigned char)str[ i ] >> 4));
+            strTemp.push_back(ToHex((unsigned char)str[ i ] % 16));
+        }
     }
-    return "";
+    return strTemp;
+}
+
+std::string UrlUtils::UrlDecode(const std::string &str) {
+    std::string strTemp;
+    size_t      length = str.length();
+    for (size_t i = 0; i < length; i++) {
+        if (str[ i ] == '%' && i + 2 < length) {
+            if (str[ i + 1 ] == '2' && str[ i + 2 ] == '0') {
+                strTemp.push_back(' ');
+                i += 2;
+            } else {
+                unsigned char high = FromHex((unsigned char)str[ ++i ]);
+                unsigned char low  = FromHex((unsigned char)str[ ++i ]);
+                strTemp.push_back(high * 16 + low);
+            }
+        } else
+            strTemp.push_back(str[ i ]);
+    }
+    return strTemp;
 }

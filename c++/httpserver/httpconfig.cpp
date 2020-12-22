@@ -53,7 +53,7 @@ bool HttpConfig::loadConfig(const std::string &strConfigFilePath) {
             sectionStart   = true;
         } else if ((nPos = strLine.find("}")) != std::string::npos && sectionStart) {
             sectionStart = false;
-            std::cout << "Name:" << strSectionName << " {" << strSection << "}" << std::endl;
+            // std::cout << "Name:" << strSectionName << " {" << strSection << "}" << std::endl;
             parseSection(strSectionName, strSection);
             strSectionName.clear();
             strSection.clear();
@@ -71,12 +71,15 @@ void HttpConfig::parseSection(const std::string strSectionName, const std::strin
     auto                               vectors = utils::split(strSection, ';');
     for (auto vec : vectors) {
         auto kval = utils::split(vec, ' ');
-        if(kval.size() != 2)
-        kval[ 0 ] = utils::trim(kval[ 0 ]);
+        if (kval.size() != 2)
+            kval[ 0 ] = utils::trim(kval[ 0 ]);
         kval[ 1 ] = utils::trim(kval[ 1 ]);
-        if (kval.size() == 2 && !kval[ 0 ].empty() && !kval[ 1 ].empty())
+        if (kval.size() == 2 && !kval[ 0 ].empty() && !kval[ 1 ].empty()) {
             sectionMap[ kval[ 0 ] ] = kval[ 1 ];
-        else
+            logger.debug("key:%s--->val:%s", kval[ 0 ], kval[ 1 ]);
+        } else if (kval.size() >= 2) {
+            logger.info("line: %s", vec);
+        } else
             logger.warning("invalid line: %s", vec);
         if (strSectionName == "http")
             if (kval[ 0 ] == "basic_auth")
@@ -116,7 +119,7 @@ bool HttpConfig::loadMimeType(const std::string &mimeType) {
     return true;
 }
 
-const std::string HttpConfig::getMimeType(const std::string &strFileName) {
+std::string HttpConfig::getMimeType(const std::string &strFileName) {
     std::string ext;
     if (strFileName.rfind(".") != std::string::npos) {
         ext = strFileName.substr(strFileName.rfind(".") + 1);
