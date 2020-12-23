@@ -24,6 +24,14 @@ bool NotFoundIndexPatter(http::HttpRequest &request, http::HttpResponse &respons
     return true;
 }
 
+bool BadRequestIndexPattern(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
+    response.setStatusMessage(400, request.getHttpVersion(), "Bad Request");
+    response.setHeader(ContentLength, strlen(BADREQUEST));
+    response.setHeader(ContentType, "text/html");
+    response.setBodyString(BADREQUEST);
+    return true;
+}
+
 bool DefaultIndexPattern(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
     // handle File
     long        nSize = 0;
@@ -129,7 +137,7 @@ int main(int argc, char **argv) {
     CommandParse.add<int>("server_port", 0, "The http server's port", false, 8080, cmdline::range<int>(1, 65535));
     CommandParse.add<std::string>("server_root", 0, "The http server's root path", false);
     CommandParse.add<int>("threads_count", 'n', "The http server's threads count", false, 3, cmdline::range<int>(1, 10));
-    CommandParse.add<std::string>("config_path", 0, "The http server's config path.", false, "httpd.conf");
+    CommandParse.add<std::string>("config_path", 0, "The http server's config path.", true);
     CommandParse.add<int>("logLevel", 0, "The http server's logs level.", false, 1, cmdline::range<int>(0, 3));
     bool ok = CommandParse.parse(argc, argv);
 
@@ -159,6 +167,7 @@ int main(int argc, char **argv) {
         mapper.addRequestMapping({"/#/"}, std::move(DefaultIndexPattern));
         mapper.addRequestMapping({"/#//"}, std::move(ListDirIndexPatter));
         mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
+        mapper.addRequestMapping({"/400"}, std::move(BadRequestIndexPattern));
         server.StartThreads(CommandParse.get<int>("threads_count"));
         server.ExecForever();
     }

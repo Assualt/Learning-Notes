@@ -5,7 +5,6 @@
 #include <thread>
 #define BUF_SIZE 32768
 namespace http {
-tlog::logImpl HttpServer::ServerLog;
 RequestMapper::Key::Key(const std::string &pattern, const std::string &method, bool needval)
     : pattern(pattern)
     , method(method)
@@ -75,11 +74,12 @@ http::Func RequestMapper::find(const std::string &RequestPath) {
     return [ = ](HttpRequest &request, HttpResponse &response, HttpConfig &config) {
         response.setStatusMessage(404, "HTTP/1.1", "404 not found");
         response.setBodyString(NOTFOUNDHTML);
+        response.setHeader(ContentType, "text/html");
         return true;
     };
 }
 
-bool ClientThread::parseHeader(const ConnectionInfo *info, HttpRequest &request) {
+bool ClientThread::parseHeader(const ConnectionInfo *info, HttpRequest &request, HttpConfig *config) {
     char           temp[ BUF_SIZE ];
     bool           bFindBody = false;
     std::string    strLine, strKey, strVal;
@@ -111,6 +111,14 @@ bool ClientThread::parseHeader(const ConnectionInfo *info, HttpRequest &request)
                     request.setRequestType(RequestType);
                     request.setRequestPath(RequestPath);
                     request.setHttpVersion(HttpVersion);
+                    if (!config->checkHttpVersion(HttpVersion)) {
+                        logger.warning("unsupported httpversion %s...", HttpVersion);
+                        return false;
+                    }
+                    if (!config->checkMethod(RequestType)) {
+                        logger.warning("unsupported requestMethod %s...", RequestType);
+                        return false;
+                    }
                     // logger.info("httpversion:%s requesttype:%s requestpath:%s", HttpVersion, RequestType, RequestPath);
                     LineCnt++;
                 } else if (!strLine.empty()) {
@@ -188,8 +196,13 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
     HttpRequest  request;
     HttpResponse response;
 
-    if (!parseHeader(info, request)) {
+    if (!parseHeader(info, request, config)) {
         logger.info("disconnect from client:%d ...", info->m_nClientFd);
+        http::Func iter = handlerMapping->find("/401");
+        iter(request, response, *config);
+        size_t nWrite = response.WriteBytes(info->m_nClientFd);
+        logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
+                    request.getRequestPath(), request.getHttpVersion(), response.getStatusCode(), nWrite, request.get(UserAgent), request.get("Connection"));
         close(info->m_nClientFd);
         return;
     }
@@ -199,7 +212,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
         if (!config->checkAuth(request.get(Authorization))) {
             http::Func iter = handlerMapping->find("/401");
             iter(request, response, *config);
-            size_t nWrite =  response.WriteBytes(info->m_nClientFd);
+            size_t nWrite = response.WriteBytes(info->m_nClientFd);
             logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
                         request.getRequestPath(), request.getHttpVersion(), response.getStatusCode(), nWrite, request.get(UserAgent), request.get("Connection"));
 
@@ -255,7 +268,6 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
     }
     logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
                 request.getRequestPath(), request.getHttpVersion(), response.getStatusCode(), nWrite, request.get(UserAgent), request.get("Connection"));
-
     close(info->m_nClientFd);
 }
 

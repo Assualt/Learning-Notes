@@ -2,10 +2,19 @@
 namespace http {
 HttpConfig::HttpConfig()
     : m_SuffixSet{"index.html", "index.shtml", "index.htm"}
-    , m_bRequiredAuth(false) {
+    , m_bRequiredAuth(false)
+    , m_SupportMethodSet{"GET", "POST", "PUT", "DELETE", "HEAD"}
+    , m_SupportHttpVersionSet{"Http/1.1", "Http/1.0"} {
 }
 bool HttpConfig::needAuth() {
     return m_bRequiredAuth;
+}
+
+bool HttpConfig::checkMethod(const std::string &RequestMethod) {
+    return m_SupportMethodSet.count(RequestMethod);
+}
+bool HttpConfig::checkHttpVersion(const std::string &HttpVersion) {
+    return m_SupportHttpVersionSet.count(HttpVersion);
 }
 
 bool HttpConfig::checkAuth(const std::string &AuthString) {
@@ -59,7 +68,7 @@ bool HttpConfig::loadConfig(const std::string &strConfigFilePath) {
             strSection.clear();
             sectionStart = false;
         } else if (sectionStart) {
-            strSection += strLine;
+            strSection += utils::trim(strLine, '\'');
         }
     }
     fin.close();
@@ -78,6 +87,13 @@ void HttpConfig::parseSection(const std::string strSectionName, const std::strin
             sectionMap[ kval[ 0 ] ] = kval[ 1 ];
             logger.debug("key:%s--->val:%s", kval[ 0 ], kval[ 1 ]);
         } else if (kval.size() >= 2) {
+            if (kval[ 0 ] == "log_format") {
+                m_strLoggerFmt.clear();
+                for (auto i = 2; i < kval.size(); ++i) {
+                    m_strLoggerFmt.append(utils::trim(kval[ i ], '\''));
+                    m_strLoggerFmt.append(" ");
+                }
+            }
             logger.info("line: %s", vec);
         } else
             logger.warning("invalid line: %s", vec);
@@ -143,7 +159,7 @@ std::string &HttpConfig::getDirentTmplateHtml() {
     return m_strDirentTmplateHtml;
 }
 
-const std::set<std::string> HttpConfig::getSuffixSet() {
+std::set<std::string, StringCaseCmp> HttpConfig::getSuffixSet() {
     return m_SuffixSet;
 }
 

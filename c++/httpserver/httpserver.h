@@ -61,7 +61,7 @@ class ClientThread {
 public:
     // ClientThread(int serverFd, int clientFd);
     static void    handleRequest(RequestMapper *handlerMapping, HttpConfig *config, const ConnectionInfo *info);
-    static bool    parseHeader(const ConnectionInfo *info, HttpRequest &request);
+    static bool    parseHeader(const ConnectionInfo *info, HttpRequest &request, HttpConfig *config);
     static int     recvData(int fd, void *buf, size_t n, int ops);
     static int     writeData(int fd, void *buf, size_t n, int ops);
     static ssize_t writeResponse(int client_fd, HttpResponse &response);
@@ -73,7 +73,6 @@ private:
 };
 
 class HttpServer {
-public:
 public:
     HttpServer(const std::string &strServerName, const std::string &strServerIP = "127.0.0.1", const std::string &strServerDescription = "A simple Http Server", int nPort = 80);
 
@@ -100,9 +99,6 @@ public:
     void setServerRoot(const std::string &strServerRoot) {
         m_mConfig.setServerRoot(strServerRoot);
     }
-
-public:
-    static tlog::logImpl ServerLog;
 
 private:
     std::string m_strServerName;

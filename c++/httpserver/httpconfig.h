@@ -37,8 +37,13 @@ protected:                                                \
 #define SERVER "Server"
 #define SERVERVal "HttpServer/0.1 Linux/GNU gcc/c++"
 
-#define AUTHREQUIRED \
-    "<html><head><title>401 Authorization Required</title></head><body bgcolor=\"white\"><center><h1>401 Authorization Required</h1></center><hr><center>httpserver</center></body></html>"
+#define AUTHREQUIRED                                                                                                                         \
+    "<html>\r\n<head>\r\n<title>401 Authorization Required</title>\r\n</head>\r\n<body bgcolor=\"white\">\r\n<center><h1>401 Authorization " \
+    "Required</h1></center>\r\n<hr>\r\n<center>httpserver</center>\r\n</body>\r\n</html>\r\n"
+
+#define BADREQUEST                                                                                                      \
+    "<html>\r\n<head>\r\n<title>401 Bad Request</title>\r\n</head>\r\n<body bgcolor=\"white\">\r\n<center><h1>401 Bad " \
+    "Request</h1></center>\r\n<hr>\r\n<center>httpserver</center>\r\n</body>\r\n</html>"
 
 #include "hashutils.hpp"
 #include "httputils.h"
@@ -46,6 +51,14 @@ protected:                                                \
 #include <set>
 
 namespace http {
+
+struct StringCaseCmp : std::binary_function<std::string, std::string, bool> {
+public:
+    bool operator()(const string &lhs, const string &rhs) const {
+        return strcasecmp(lhs.c_str(), rhs.c_str());
+    }
+};
+
 class HttpConfig {
 public:
     HttpConfig();
@@ -57,11 +70,16 @@ public:
     std::string getServerRoot() const;
     void        setServerRoot(const std::string &strServerRoot);
 
-    void                        loadDirentTmplateHtml(const std::string &tmplatePath);
-    std::string &               getDirentTmplateHtml();
-    const std::set<std::string> getSuffixSet();
-    bool                        needAuth();
-    bool                        checkAuth(const std::string &AuthString);
+    void                                 loadDirentTmplateHtml(const std::string &tmplatePath);
+    std::string &                        getDirentTmplateHtml();
+    std::set<std::string, StringCaseCmp> getSuffixSet();
+    bool                                 needAuth();
+    bool                                 checkAuth(const std::string &AuthString);
+    bool                                 checkMethod(const std::string &RequestMethod);
+    bool                                 checkHttpVersion(const std::string &HttpVersion);
+    std::string                          getLoggerFormat() {
+        return m_strLoggerFmt;
+    }
 
 protected:
     void loadAuthFile(const std::string &strAuthFile);
@@ -70,11 +88,14 @@ protected:
 private:
     std::string                                               m_strServerRoot;
     std::string                                               m_strDirentTmplateHtml;
-    std::set<std::string>                                     m_SuffixSet;
+    std::set<std::string, StringCaseCmp>                      m_SuffixSet;
     std::map<std::string, std::string>                        m_ExtMimeType;
     bool                                                      m_bRequiredAuth;
     std::map<std::string, std::string>                        m_AuthPassMap;
     std::map<std::string, std::map<std::string, std::string>> m_SectionMap;
+    std::set<std::string, StringCaseCmp>                      m_SupportMethodSet;
+    std::set<std::string, StringCaseCmp>                      m_SupportHttpVersionSet;
+    std::string                                               m_strLoggerFmt;
 };
 
 class ConnectionInfo {
