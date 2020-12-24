@@ -17,10 +17,7 @@ public:
         else
             m_vReqestHeader.push_back(std::pair<std::string, std::string>(key, tmpVal));
     }
-
     std::string          toStringHeader();
-    friend std::ostream &operator<<(std::ostream &os, HttpRequest &obj);
-
     std::string          get(const std::string &key);
     std::string          getRequestType() const;
     void                 setRequestType(const std::string &strRequestType);

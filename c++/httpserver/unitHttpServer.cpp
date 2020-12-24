@@ -130,15 +130,15 @@ int main(int argc, char **argv) {
     logger.BasicConfig("%(thread)s %(levelname)s %(ctime)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S,%s", "", "a");
 
     cmdline::parser CommandParse;
-
-    CommandParse.add<std::string>("server_name", 0, "The http server name", false, "HttpServer");
-    CommandParse.add<std::string>("server_ip", 0, "The http server ip.", false, "127.0.0.1");
-    CommandParse.add<std::string>("server_description", 0, "The http server's description.", false, "A simple Http Server");
-    CommandParse.add<int>("server_port", 0, "The http server's port", false, 8080, cmdline::range<int>(1, 65535));
-    CommandParse.add<std::string>("server_root", 0, "The http server's root path", false);
+    CommandParse.add("version",'v', "show this HttpServer Version and exit");
+    CommandParse.add<std::string>("server_name", 's', "The http server name", false, "HttpServer 1.10");
+    CommandParse.add<std::string>("server_ip", 'i', "The http server ip.", false, "127.0.0.1");
+    CommandParse.add<std::string>("server_description", 'd', "The http server's description.", false, "A simple Http Server");
+    CommandParse.add<int>("server_port", 'p', "The http server's port", false, 8080, cmdline::range<int>(1, 65535));
+    CommandParse.add<std::string>("server_root", 'r', "The http server's root path", false);
     CommandParse.add<int>("threads_count", 'n', "The http server's threads count", false, 3, cmdline::range<int>(1, 10));
-    CommandParse.add<std::string>("config_path", 0, "The http server's config path.", true);
-    CommandParse.add<int>("logLevel", 0, "The http server's logs level.", false, 1, cmdline::range<int>(0, 3));
+    CommandParse.add<std::string>("config_path", 'c', "The http server's config path.", true);
+    CommandParse.add<int>("logLevel", 'l', "The http server's logs level.", false, 1, cmdline::range<int>(0, 3));
     bool ok = CommandParse.parse(argc, argv);
 
     if (!ok) {
