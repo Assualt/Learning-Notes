@@ -168,8 +168,9 @@ int main(int argc, char **argv) {
         mapper.addRequestMapping({"/#//"}, std::move(ListDirIndexPatter));
         mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
         mapper.addRequestMapping({"/400"}, std::move(BadRequestIndexPattern));
-        server.StartThreads(CommandParse.get<int>("threads_count"));
-        server.ExecForever();
+        // server.StartThreads(CommandParse.get<int>("threads_count"));
+        // server.ExecForever();
+        
     }
     return 0;
 }

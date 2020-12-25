@@ -1,5 +1,6 @@
 #include "cmdline.hpp"
 #include "logging.h"
+#include "mailenv.h"
 #include "mailserver.h"
 int main(int argc, char const *argv[]) {
 

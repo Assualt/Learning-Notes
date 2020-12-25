@@ -34,7 +34,7 @@ int writeFile(const std::string &destFile, MyStringBuffer &buffer) {
 int main(int argc, char **argv) {
     cmdline::parser CommandParse;
 
-    CommandParse.add<std::string>("type", 't', "The encoding type", false, "base64", cmdline::oneof<std::string>("base64", "gzip", "deflate", "zlib"));
+    CommandParse.add<std::string>("type", 't', "The encoding type", false, "base64", cmdline::oneof<std::string>("base64", "db64", "gzip", "deflate", "zlib"));
     CommandParse.add<std::string>("input", 0, "the input string to encode.", true);
     CommandParse.add<std::string>("output", 'o', "the output file.", false, "result.txt");
 
@@ -91,6 +91,11 @@ int main(int argc, char **argv) {
                 auto DecodeSize = HashUtils::ZlibDeCompress(buffer, out);
                 std::cout << "DeCompress: " << writeSize << " bytes. after Decompressed :" << DecodeSize << std::endl;
                 std::cout << "Decode String:\n" << out.str() << std::endl;
+            } else if (type == "db64"){
+                int ret = HashUtils::DecodeBase64(strInputString, resultString);
+                std::cout << "begin to encode base64 source:" << strInputString << std::endl;
+                std::cout << "after to encode base64 size:" << ret << std::endl;
+                std::cout << "after to encode base64 dest:" << resultString << std::endl;
             }
         }
     }

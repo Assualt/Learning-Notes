@@ -1,4 +1,4 @@
-
+#pragma once
 #include <iostream>
 #include <vector>
 #define BUFFERSIZE 4096

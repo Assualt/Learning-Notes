@@ -7,8 +7,8 @@
 #include "mailenv.h"
 #include "threadpool.h"
 #include <iostream>
+#include "mailcontext.h"
 
-#define MAX_BUF_SIZE 1024
 using namespace std;
 namespace mail {
 enum MAIL_STATE { HELO, EHLO, AUTH, AUTHPASS, AUTHEND, MAILFROM, RCPTTO, DATA, DATAFINISH, DISCONNECT };
@@ -20,10 +20,23 @@ public:
     int         m_nFDFlag;
 };
 
+struct StringCaseCmp : std::binary_function<std::string, std::string, bool> {
+public:
+    bool operator()(const string &lhs, const string &rhs) const {
+        return strcasecmp(lhs.c_str(), rhs.c_str());
+    }
+};
+
+using TIgnoreCaseSet = std::set<std::string>;
+
 class MailProcess {
 public:
-    MAIL_STATE process(MAIL_STATE state, const std::string &BufString, std::string &ReplyString);
-
+    MailProcess(MailContext &pContext);
+    MAIL_STATE                          process(MAIL_STATE state, const std::string &BufString, std::string &ReplyString);
+    std::pair<std::string, std::string> getCommandVal(const std::string &strCmd);
+    std::pair<std::string, std::string> getMailRcpt(const std::string &strCmd);
+    static bool                         SupportCommand(const std::string &strMethod);
+    static bool                         isValidMailBox(const std::string &strMailBox);
 protected:
     MAIL_STATE onHELO(const std::string &BufString, std::string &ReplyString);
     MAIL_STATE onEHLO(const std::string &BufString, std::string &ReplyString);
@@ -36,9 +49,11 @@ protected:
     MAIL_STATE onDataFinish(const std::string &BufString, std::string &Replystring);
 
 protected:
-    std::string m_strAuthUser;
-    std::string m_strAuthPass;
-    bool        m_bAuthPassed = false;
+    std::string           m_strAuthUser;
+    std::string           m_strAuthPass;
+    bool                  m_bAuthPassed = false;
+    static TIgnoreCaseSet m_SupportMethods;
+    MailContext           m_MailContext;
 };
 
 class MailServer {
