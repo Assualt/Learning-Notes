@@ -4,14 +4,14 @@
 #define MAIL_SERVER_H_2020_12_24
 
 #include "mailconfig.h"
+#include "mailcontext.h"
 #include "mailenv.h"
 #include "threadpool.h"
 #include <iostream>
-#include "mailcontext.h"
 
 using namespace std;
 namespace mail {
-enum MAIL_STATE { HELO, EHLO, AUTH, AUTHPASS, AUTHEND, MAILFROM, RCPTTO, DATA, DATAFINISH, DISCONNECT };
+enum MAIL_STATE { HELO, EHLO, AUTH, AUTHPASS, AUTHEND, MAILFROM, RCPTTO, DATA, DATAFINISH, DISCONNECT, REST };
 class ConnectionInfo {
 public:
     std::string m_strConnectIP;
@@ -34,19 +34,22 @@ public:
     MailProcess(MailContext &pContext);
     MAIL_STATE                          process(MAIL_STATE state, const std::string &BufString, std::string &ReplyString);
     std::pair<std::string, std::string> getCommandVal(const std::string &strCmd);
-    std::pair<std::string, std::string> getMailRcpt(const std::string &strCmd);
+    std::pair<std::string, std::string> SplitMailAddress(const std::string &strCmd);
     static bool                         SupportCommand(const std::string &strMethod);
     static bool                         isValidMailBox(const std::string &strMailBox);
+
 protected:
     MAIL_STATE onHELO(const std::string &BufString, std::string &ReplyString);
     MAIL_STATE onEHLO(const std::string &BufString, std::string &ReplyString);
     MAIL_STATE onAuth(const std::string &BufString, std::string &ReplyString);
     MAIL_STATE onAuthPass(const std::string &BufString, std::string &ReplyString);
     MAIL_STATE onAuthEND(const std::string &BufString, std::string &ReplyString);
+    MAIL_STATE onAuthPLAIN(const std::string &BufString, std::string &ReplyString);
     MAIL_STATE onMailFrom(const std::string &BufString, std::string &ReplyString);
     MAIL_STATE onRcptTo(const std::string &BufString, std::string &ReplyString);
     MAIL_STATE onData(const std::string &BufString, std::string &ReplyString);
-    MAIL_STATE onDataFinish(const std::string &BufString, std::string &Replystring);
+    MAIL_STATE onDataFinish(const std::string &BufString, std::string &ReplyString);
+    MAIL_STATE onRest(const std::string &BufString, std::string &ReplyString);
 
 protected:
     std::string           m_strAuthUser;

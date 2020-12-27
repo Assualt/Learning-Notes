@@ -9,7 +9,7 @@ int main(int argc, char const *argv[]) {
     cmdline::parser CommandParse;
     CommandParse.add("version", 'v', "show this Simple Mailer Version and exit");
     CommandParse.add<int>("threads_count", 'n', "The Mail's threads count", false, 3, cmdline::range<int>(1, 10));
-    CommandParse.add<std::string>("config_path", 'c', "The Mail's config path", true);
+    CommandParse.add<std::string>("config_path", 'c', "The Mail's config path", false);
     bool ok = CommandParse.parse(argc, argv);
 
     if (!ok) {

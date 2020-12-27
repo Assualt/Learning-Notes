@@ -29,6 +29,8 @@ void MailServer::initEx(const std::string &strConfigPath) {
 }
 
 void MailServer::startServer(size_t nThreadCount) {
+    WaitEvent(nThreadCount);
+    return;
     int pid = fork();
     int status;
     if (pid == -1) {
@@ -137,7 +139,7 @@ void MailServer::HandleRequest(ConnectionInfo *info) {
                 break;
             }
         } else if (nRead == 0) {
-            logger.info("nRead is empty");
+
             continue;
         } else {
             logger.info("recv body buffer from client fd:%d, %s state:%d", info->m_nClientFd, std::string(buf, nRead - 2), state);
@@ -152,10 +154,14 @@ void MailServer::HandleRequest(ConnectionInfo *info) {
                 ss << tempBuf;
                 if (ss.str().find("\r\n.\r\n") == ss.str().size() - 5) { // recv finished.
                     logger.info("recv finished.");
-                    state         = handleProcess.process(state, ss.str(), strReplyString);
+                    state         = handleProcess.process(state, ss.str().substr(0, ss.str().size() - 5), strReplyString);
                     size_t nWrite = ::send(info->m_nClientFd, strReplyString.c_str(), strReplyString.size(), 0);
                     logger.info("write buffer size:%d ReplayString:%s", nWrite, strReplyString.substr(0, strReplyString.size() - 2));
                 }
+            } else if (state == DISCONNECT) {
+                logger.info("421 close transimission channel");
+                ::send(info->m_nClientFd, "221 bye\r\n", 9, 0);
+                break;
             } else {
                 if (strcasecmp(buf, "data\r\n") == 0) {
                     state = DATA;
@@ -164,10 +170,6 @@ void MailServer::HandleRequest(ConnectionInfo *info) {
                 state         = handleProcess.process(state, std::string(buf, nRead), strReplyString);
                 size_t nWrite = ::send(info->m_nClientFd, strReplyString.c_str(), strReplyString.size(), 0);
                 logger.info("write buffer size:%d ReplayString:%s", nWrite, strReplyString.substr(0, strReplyString.size() - 2));
-            }
-            if (state == DISCONNECT) {
-                logger.info("421 close transimission channel");
-                break;
             }
         }
     }
@@ -205,7 +207,7 @@ std::pair<std::string, std::string> MailProcess::getCommandVal(const std::string
     return std::pair<std::string, std::string>("", "");
 }
 
-std::pair<std::string, std::string> MailProcess::getMailRcpt(const std::string &strCmd) {
+std::pair<std::string, std::string> MailProcess::SplitMailAddress(const std::string &strCmd) {
     bool        bFindAt = false;
     std::string strKey, strVal;
     for (size_t i = 0; i < strCmd.size(); ++i) {
@@ -238,6 +240,8 @@ MAIL_STATE MailProcess::process(MAIL_STATE state, const std::string &BufString, 
             return onData(BufString, ReplyString);
         case DATAFINISH:
             return onDataFinish(BufString, ReplyString);
+        case REST:
+            return onRest(BufString, ReplyString);
     }
     return DISCONNECT;
 }
@@ -261,31 +265,32 @@ MAIL_STATE MailProcess::onEHLO(const std::string &BufString, std::string &ReplyS
     m_MailContext.m_strEhloDomain = BufString.substr(5, BufString.find("\r\n") - 5);
     ReplyString.assign("250-mail\r\n");
     ReplyString.append("250-PIPELINING\r\n");
-    ReplyString.append("250-Auth LOGIN PLAIN\r\n");
-    ReplyString.append("250-AUTH=LOGIN PLAIN\r\n");
+    ReplyString.append("250-AUTH LOGIN\r\n");
+    ReplyString.append("250-AUTH=LOGIN\r\n");
     ReplyString.append("250-STARTTLS\r\n");
     ReplyString.append("250-SMTPUTF8\r\n");
     ReplyString.append("250 8BITMIME\r\n");
     return AUTH;
 }
 MAIL_STATE MailProcess::onAuth(const std::string &BufString, std::string &ReplyString) {
-    auto command = getCommandVal(BufString);
-    if (!SupportCommand(command.first)) {
-        ReplyString.assign(SERVER_Response_UnSupportCommand);
-        return DISCONNECT;
-    } else if (strcasecmp(command.first.c_str(), "mail from") == 0) {
+    if (strncasecmp(BufString.c_str(), "mail from", 9) == 0) {
         return onMailFrom(BufString, ReplyString);
-    } else if (strcasecmp(command.first.c_str(), "auth login") != 0) {
-        ReplyString.assign(SERVER_Response_BadSequence);
-        return DISCONNECT;
+    } else if (strcasecmp(BufString.c_str(), "auth login\r\n") == 0) { // 250-AUTH login\r\n
+        ReplyString.assign("354 dXNlcm5hbWU6\r\n");
+        return AUTHPASS;
+    } else if (strncasecmp(BufString.c_str(), "auth plain", 10) == 0) { // 250-AUTH PLAIN xxx:xxx\r\n
+        return onAuthPLAIN(BufString, ReplyString);
+    } else if (strncasecmp(BufString.c_str(), "auth login", 10) == 0) { // 250-AUTH LOGIN xxx
+        std::string tempString = Utils::trim(BufString.substr(10), std::string("\r\n"));
+        return onAuthPass(tempString, ReplyString);
     }
-    ReplyString.assign("354 dXNlcm5hbWU6\r\n");
-    return AUTHPASS;
+    ReplyString.assign(SERVER_Response_UnSupportCommand);
+    return DISCONNECT;
 }
 
 MAIL_STATE MailProcess::onAuthPass(const std::string &BufString, std::string &ReplyString) {
     ReplyString.assign("334 UGFzc3dvcmQ6\r\n");
-    std::string strTempAuthUser = BufString.substr(0, m_strAuthUser.size() - 2);
+    std::string strTempAuthUser = Utils::trimRight(BufString, std::string("\r\n"));
     std::string Result;
     if (HashUtils::DecodeBase64(strTempAuthUser, Result) <= 0 || Result.empty() || !isValidMailBox(Result)) {
         logger.info("user is not base64 encode. invalid input authuser %s.", strTempAuthUser);
@@ -293,8 +298,8 @@ MAIL_STATE MailProcess::onAuthPass(const std::string &BufString, std::string &Re
         return DISCONNECT;
     }
     // check auth user is exists or not
-
     m_MailContext.m_strAuthUser = Result;
+    logger.info("auth login user:%s", Result);
     return AUTHEND;
 }
 
@@ -309,7 +314,29 @@ MAIL_STATE MailProcess::onAuthEND(const std::string &BufString, std::string &Rep
     // 这里查询后端接口 用于校验是否Auth OK.
     m_MailContext.m_strAuthPass = Result;
     ReplyString.assign("235 Authentication successful\r\n");
-    logger.info("get auth user:%s pass:%s", m_strAuthUser, m_strAuthPass);
+    logger.info("get auth user:%s pass:%s", m_MailContext.m_strAuthUser, m_MailContext.m_strAuthPass);
+    m_bAuthPassed = true;
+    return MAILFROM;
+}
+
+MAIL_STATE MailProcess::onAuthPLAIN(const std::string &BufString, std::string &ReplyString) {
+    std::string strCommand = Utils::trimRight(BufString, std::string("\r\n"));
+    auto        UserPass   = Utils::split(strCommand, ' ');
+    if (UserPass.size() != 3) {
+        ReplyString.assign("502 Error.Syntax error.\r\n");
+        return DISCONNECT;
+    }
+    std::string DecodeUserPass;
+    int         nSize        = HashUtils::DecodeBase64(UserPass[ 2 ], DecodeUserPass);
+    auto        tempUserPass = Utils::split(DecodeUserPass, '\0');
+    if (tempUserPass.size() < 2) {
+        ReplyString.assign("502 Error.Syntax error.\r\n");
+        return DISCONNECT;
+    }
+    m_MailContext.m_strAuthUser = tempUserPass[ tempUserPass.size() - 2 ];
+    m_MailContext.m_strAuthPass = tempUserPass.back();
+    logger.debug("decode %s byte %d --> auth user:%s auth pass:%s", BufString, nSize, m_MailContext.m_strAuthUser, m_MailContext.m_strAuthPass);
+    ReplyString.assign("235 Authentication successful\r\n");
     m_bAuthPassed = true;
     return MAILFROM;
 }
@@ -327,20 +354,22 @@ MAIL_STATE MailProcess::onMailFrom(const std::string &BufString, std::string &Re
         ReplyString.assign(SERVER_Response_BadSequence);
         return DISCONNECT;
     }
-    logger.info("mail rcpt:%s %s", mailPair.first, mailPair.second);
+
     if (mailPair.second.front() != '<' && mailPair.second.back() != '>') {
         logger.warning("invalid mail from:%s", mailPair.second);
         ReplyString.assign("550 invalid user" + mailPair.second + "\r\n");
         return DISCONNECT;
     }
+
     auto MailAddress = Utils::trimLeft(Utils::trimRight(mailPair.second, std::string(">")), std::string("<"));
-    auto MailRcpt    = getMailRcpt(MailAddress);
-    if (MailRcpt.first.empty() && MailRcpt.second.empty()) {
+    logger.info("mail from:%s", MailAddress);
+    auto vec = SplitMailAddress(MailAddress);
+    if (vec.first.empty() && vec.second.empty()) {
         logger.warning("invalid mail from: %s", MailAddress);
         ReplyString.assign("550 invalid user\r\n");
         return DISCONNECT;
     }
-    if (MailEnv::getInstance().NeedAuth(MailRcpt.second) && !m_bAuthPassed) {
+    if (MailEnv::getInstance().NeedAuth(vec.second) && !m_bAuthPassed) {
         ReplyString.assign("553 authentication is required\r\n");
         return DISCONNECT;
     }
@@ -363,13 +392,14 @@ MAIL_STATE MailProcess::onRcptTo(const std::string &BufString, std::string &Repl
         return DISCONNECT;
     }
     auto MailAddress = Utils::trimLeft(Utils::trimRight(command.second, std::string(">")), std::string("<"));
-    auto MailRcpt    = getMailRcpt(MailAddress);
-    if (MailRcpt.first.empty() && MailRcpt.second.empty()) {
+    auto vec         = SplitMailAddress(MailAddress);
+    if (vec.first.empty() && vec.second.empty()) {
         logger.warning("invalid mail from: %s", MailAddress);
         ReplyString.assign("550 invalid user\r\n");
         return DISCONNECT;
     }
-    if (MailEnv::getInstance().NeedAuth(MailRcpt.second) && !m_bAuthPassed) {
+    logger.info("rcpt to:%s", MailAddress);
+    if (MailEnv::getInstance().NeedAuth(vec.second) && !m_bAuthPassed) {
         ReplyString.assign("553 authentication is required\r\n");
         return DISCONNECT;
     }
@@ -383,11 +413,7 @@ MAIL_STATE MailProcess::onRcptTo(const std::string &BufString, std::string &Repl
     return RCPTTO;
 }
 MAIL_STATE MailProcess::onData(const std::string &BufString, std::string &ReplyString) {
-    auto command = getCommandVal(BufString);
-    if (!SupportCommand(command.first)) {
-        ReplyString.assign(SERVER_Response_UnSupportCommand);
-        return DISCONNECT;
-    } else if (strcasecmp(command.first.c_str(), "data") != 0) {
+    if (strcasecmp(BufString.c_str(), "data\r\n") != 0) {
         ReplyString.assign(SERVER_Response_BadSequence);
         return DISCONNECT;
     }
@@ -400,4 +426,9 @@ MAIL_STATE MailProcess::onDataFinish(const std::string &BufString, std::string &
     return DISCONNECT;
 }
 
+MAIL_STATE MailProcess::onRest(const std::string &BufString, std::string &ReplyString){
+    ReplyString.assign("250 OK\r\n");
+    m_MailContext.clearContext();
+    return AUTH;
+}
 } // namespace mail

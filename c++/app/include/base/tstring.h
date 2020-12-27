@@ -3,7 +3,7 @@
 
 #include <list>
 #include "xmtdef.h"
-#include <cstring>
+#include <string.h>
 #include "texception.h"
 #include <algorithm>
 #include <string>
@@ -210,6 +210,15 @@ public:
      * @return: the Capitailized String
      */
     static tstring title(const tstring &str);
+
+    /**
+     * @brief: how many char do the string contain
+     * @function: count
+     * @param: the input string const
+     * @return: the count of char
+     */
+    static size_t count(const tstring &src, char ch);
+
 };
 template <class typeStream>
 class TFormatStream : public typeStream {
