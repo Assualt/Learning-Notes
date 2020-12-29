@@ -1,7 +1,7 @@
 #include "mailserver.h"
 #include "base64.h"
 #include "hashutils.hpp"
-#include "logging.h"
+#include "log.h"
 #include "mailcontext.h"
 #include "mailutils.hpp"
 #include <arpa/inet.h>
@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <sys/resource.h>
+#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -19,18 +20,36 @@ namespace mail {
 MailServer::MailServer()
     : m_nMailServerSocket(-1) {
 }
+MailServer::~MailServer() {
+    if (m_nMailServerSocket != -1)
+        close(m_nMailServerSocket);
+    if (m_ptrConfigMgr)
+        delete m_ptrConfigMgr;
+    if (m_ptrServerLogger)
+        delete m_ptrServerLogger;
+    if (m_ptrServerCommandLogger)
+        delete m_ptrServerCommandLogger;
+    if (m_ptrServerTransLogger)
+        delete m_ptrServerTransLogger;
+}
 
 void MailServer::initEx(const std::string &strConfigPath) {
-    if (!m_ConfigMgr.initEx(strConfigPath)) {
-        logger.info("init configuration env failed.");
-        return;
-    }
-    MailEnv::getInstance().initMailEnv(m_ConfigMgr);
+
+    m_ptrServerLogger        = new tlog::Logger(SERVER_LOGGER);
+    m_ptrServerCommandLogger = new tlog::Logger(SERVER_COMMAND_LOGGER);
+    m_ptrServerTransLogger   = new tlog::Logger(SERVER_TRANS_LOGGER);
+    m_ptrServerLogger->BasicConfig("%(process)s %(threadname)s %(levelname)s %(ctime)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "test.log");
+    m_ptrServerCommandLogger->BasicConfig("%(process)s %(threadname)s %(levelname)s %(ctime)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "");
+    m_ptrServerTransLogger->BasicConfig("%(process)s %(threadname)s %(levelname)s %(ctime)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "");
+    tlog::logImpl::AppendLogger(SERVER_LOGGER, m_ptrServerLogger);
+    tlog::logImpl::AppendLogger(SERVER_COMMAND_LOGGER, m_ptrServerCommandLogger);
+    tlog::logImpl::AppendLogger(SERVER_TRANS_LOGGER, m_ptrServerTransLogger);
+    m_ptrConfigMgr = new conf::ConfigureManager(strConfigPath);
+    m_ptrConfigMgr->init();
+    MailEnv::getInstance().initMailEnv(*m_ptrConfigMgr);
 }
 
 void MailServer::startServer(size_t nThreadCount) {
-    WaitEvent(nThreadCount);
-    return;
     int pid = fork();
     int status;
     if (pid == -1) {
@@ -39,16 +58,83 @@ void MailServer::startServer(size_t nThreadCount) {
     } else if (pid == 0) { // child process.
         WaitEvent(nThreadCount);
     } else {
+        StartCommandEvent(nThreadCount);
         logger.info("run in father process, wait child process exit...");
         waitpid(pid, &status, 0);
         logger.info("child process exit. and status is %d", WEXITSTATUS(status));
     }
 }
 
+bool MailServer::StartCommandEvent(size_t nThreadCount) {
+    m_MailCommandThreadsPool.startPool(nThreadCount);
+    auto pEnv = &MailEnv::getInstance();
+    int  ret  = 0;
+    // 设置 每个进程允许打开的最大文件数
+    struct rlimit rt;
+    rt.rlim_max = rt.rlim_cur = 1000;
+    if (setrlimit(RLIMIT_NOFILE, &rt) == -1) {
+        logger.warning("setrlimit failed. %s", strerror(errno));
+        return false;
+    }
+    int nCommandListenSocket = -1;
+    // 1.创建server socket 用作监听使用，使用TCP可靠的连接和 IPV4的形式进行事件进行监听，协议使用IPV4
+    nCommandListenSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (nCommandListenSocket == -1) {
+        logger.warning("create socket error with erros:%s", strerror(errno));
+        return false;
+    }
+
+    int yes = 1;
+    if (setsockopt(nCommandListenSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+        logger.warning("set address reuse failed");
+        return false;
+    }
+    // 设置端口为非阻塞模式
+    // int oldFlag = setFDnonBlock(m_nServerFd);
+    // 2.server端进行bind 并初始化server的地址结构体, 注意字节序的转化
+    struct sockaddr_in server_addr;
+    bzero(&server_addr, sizeof(server_addr));
+    server_addr.sin_family      = AF_INET;
+    server_addr.sin_addr.s_addr = inet_addr(pEnv->getServerIP().c_str());
+    server_addr.sin_port        = htons(pEnv->getCommandPort());
+    if ((ret = bind(nCommandListenSocket, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))) == -1) {
+        logger.warning("bind port %d error with erros:%s", pEnv->getCommandPort(), strerror(errno));
+        return false;
+    }
+    // 3.server端进行监听
+    if ((ret = listen(nCommandListenSocket, pEnv->getMaxClient())) == -1) {
+        logger.warning("listen error with erros:%s", strerror(errno));
+        return false;
+    }
+
+    logger.info("MailServer command to listen at %s:%d ...", pEnv->getServerIP(), pEnv->getCommandPort());
+
+    while (1) {
+        struct sockaddr_in client_addr;
+        socklen_t          addr_len  = sizeof(client_addr);
+        int                client_fd = accept(nCommandListenSocket, (struct sockaddr *)&client_addr, &addr_len);
+        if (client_fd != -1) {
+            if (m_MailCommandThreadsPool.idlCount() < 1) {
+                logger.info("current thread pool is full . closing transmission channel.");
+                close(client_fd);
+            } else {
+                logger.info("begin to assign one thread to handle such request from client_fd:%d , thread pool left size:%d", client_fd, m_MailQueueThreadsPool.idlCount());
+                ConnectionInfo info;
+                info.m_strConnectIP = inet_ntoa(client_addr.sin_addr);
+                info.m_nPort        = ntohs(client_addr.sin_port);
+                info.m_nClientFd    = client_fd;
+                info.m_nFDFlag      = 10;
+                m_MailCommandThreadsPool.commit(MailServer::HandleCommandRequest, &info);
+            }
+        }
+    }
+    close(nCommandListenSocket);
+}
+
 bool MailServer::WaitEvent(size_t nThreadCount) {
     m_MailQueueThreadsPool.startPool(nThreadCount);
+    m_MailCommandThreadsPool.startPool(nThreadCount);
     auto pEnv = &MailEnv::getInstance();
-    int  n    = 10;
     int  ret  = 0;
     // 设置 每个进程允许打开的最大文件数
     struct rlimit rt;
@@ -65,6 +151,11 @@ bool MailServer::WaitEvent(size_t nThreadCount) {
         logger.warning("create socket error with erros:%s", strerror(errno));
         return false;
     }
+    int yes = 1;
+    if (setsockopt(m_nMailServerSocket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+        logger.warning("set address reuse failed");
+        return false;
+    }
     // 设置端口为非阻塞模式
     // int oldFlag = setFDnonBlock(m_nServerFd);
     // 2.server端进行bind 并初始化server的地址结构体, 注意字节序的转化
@@ -74,7 +165,7 @@ bool MailServer::WaitEvent(size_t nThreadCount) {
     server_addr.sin_addr.s_addr = inet_addr(pEnv->getServerIP().c_str());
     server_addr.sin_port        = htons(pEnv->getServerPort());
     if ((ret = bind(m_nMailServerSocket, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))) == -1) {
-        logger.warning("bind error with erros:%s", strerror(errno));
+        logger.warning("bind port %d error with erros:%s", pEnv->getServerPort(), strerror(errno));
         return false;
     }
     // 3.server端进行监听
@@ -82,7 +173,6 @@ bool MailServer::WaitEvent(size_t nThreadCount) {
         logger.warning("listen error with erros:%s", strerror(errno));
         return false;
     }
-
     logger.info("MailServer begin to listen at %s:%d ...", pEnv->getServerIP(), pEnv->getServerPort());
 
     while (1) {
@@ -110,7 +200,37 @@ bool MailServer::WaitEvent(size_t nThreadCount) {
 MailProcess::MailProcess(MailContext &MailContext)
     : m_MailContext(MailContext) {
 }
+
+void MailServer::HandleCommandRequest(ConnectionInfo *info) {
+    char buf[ 1024 ];
+    while (1) {
+        memset(buf, 0, 1024);
+        size_t nRead = ::recv(info->m_nClientFd, buf, 1024, 0);
+        if (nRead < 0) {
+            break;
+        }
+        std::string command = Utils::trimRight(std::string(buf, nRead), std::string("\r\n"));
+        if (strncasecmp(command.c_str(), "quit", 4) == 0) {
+            commandlogger.info("recv app command quit.");
+            break;
+        } else if (strncasecmp(command.c_str(), "help", 4) == 0) {
+            size_t nWrite = ::send(info->m_nClientFd, SERVER_APP_HELP_MESSGAE, strlen(SERVER_APP_HELP_MESSGAE), 0);
+            commandlogger.debug("write App command bytes %d", nWrite);
+        } else if (strncasecmp(command.c_str(), "version", 7) == 0) {
+            std::string BuildRelease = MailEnv::getInstance().getBuildVersionDate();
+            BuildRelease.append("\r\n");
+            size_t nWrite = ::send(info->m_nClientFd, (void *)BuildRelease.c_str(), BuildRelease.size(), 0);
+            commandlogger.debug("write App command bytes %d", nWrite);
+        } else {
+            size_t nWrite = ::send(info->m_nClientFd, "UnSupported Command.\r\n", 22, 0);
+            commandlogger.debug("write App command bytes %d", nWrite);
+        }
+    }
+    close(info->m_nClientFd);
+}
+
 void MailServer::HandleRequest(ConnectionInfo *info) {
+
     char        buf[ MAX_BUF_SIZE ];
     MailContext context;
     MailProcess handleProcess(context);
@@ -122,7 +242,7 @@ void MailServer::HandleRequest(ConnectionInfo *info) {
     std::string strWelComeMessage = Welcome_Message(MailEnv::getInstance().getPrimaryDomain(), MailEnv::getInstance().getBuildVersionDate());
     int         nWrite            = ::send(info->m_nClientFd, (void *)strWelComeMessage.c_str(), strWelComeMessage.size(), 0);
     if (nWrite != strWelComeMessage.size()) {
-        logger.warning("write data to client %d failed. write size:%d left size:%d", info->m_nClientFd, nWrite, strWelComeMessage.size() - nWrite);
+        serverlogger.warning("write data to client %d failed. write size:%d left size:%d", info->m_nClientFd, nWrite, strWelComeMessage.size() - nWrite);
         close(info->m_nClientFd);
         return;
     }
@@ -132,17 +252,17 @@ void MailServer::HandleRequest(ConnectionInfo *info) {
         size_t nRead = ::recv(info->m_nClientFd, buf, MAX_BUF_SIZE, 0);
         if (nRead < 0) {
             if (errno == EAGAIN) {
-                logger.info("eagain");
+                serverlogger.info("eagain");
                 continue;
             } else {
-                logger.warning("recv from client fd:%d error. %s\\r\\n", info->m_nClientFd, strerror(errno));
+                serverlogger.warning("recv from client fd:%d error. %s\\r\\n", info->m_nClientFd, strerror(errno));
                 break;
             }
         } else if (nRead == 0) {
 
             continue;
         } else {
-            logger.info("recv body buffer from client fd:%d, %s state:%d", info->m_nClientFd, std::string(buf, nRead - 2), state);
+            serverlogger.info("recv body buffer from client fd:%d, %s state:%d", info->m_nClientFd, std::string(buf, nRead - 2), state);
             if (strncasecmp(buf, "quit", 4) == 0) {
                 logger.info("recv quit command . and disconnect now..");
                 ::send(info->m_nClientFd, "221 bye\r\n", 9, 0);
@@ -153,13 +273,13 @@ void MailServer::HandleRequest(ConnectionInfo *info) {
                 std::string tempBuf(buf, nRead);
                 ss << tempBuf;
                 if (ss.str().find("\r\n.\r\n") == ss.str().size() - 5) { // recv finished.
-                    logger.info("recv finished.");
+                    serverlogger.info("recv finished.");
                     state         = handleProcess.process(state, ss.str().substr(0, ss.str().size() - 5), strReplyString);
                     size_t nWrite = ::send(info->m_nClientFd, strReplyString.c_str(), strReplyString.size(), 0);
-                    logger.info("write buffer size:%d ReplayString:%s", nWrite, strReplyString.substr(0, strReplyString.size() - 2));
+                    serverlogger.info("write buffer size:%d ReplayString:%s", nWrite, strReplyString.substr(0, strReplyString.size() - 2));
                 }
             } else if (state == DISCONNECT) {
-                logger.info("421 close transimission channel");
+                serverlogger.info("421 close transimission channel");
                 ::send(info->m_nClientFd, "221 bye\r\n", 9, 0);
                 break;
             } else {
@@ -169,7 +289,7 @@ void MailServer::HandleRequest(ConnectionInfo *info) {
                 std::string strReplyString;
                 state         = handleProcess.process(state, std::string(buf, nRead), strReplyString);
                 size_t nWrite = ::send(info->m_nClientFd, strReplyString.c_str(), strReplyString.size(), 0);
-                logger.info("write buffer size:%d ReplayString:%s", nWrite, strReplyString.substr(0, strReplyString.size() - 2));
+                serverlogger.info("write buffer size:%d ReplayString:%s", nWrite, strReplyString.substr(0, strReplyString.size() - 2));
             }
         }
     }
@@ -426,7 +546,7 @@ MAIL_STATE MailProcess::onDataFinish(const std::string &BufString, std::string &
     return DISCONNECT;
 }
 
-MAIL_STATE MailProcess::onRest(const std::string &BufString, std::string &ReplyString){
+MAIL_STATE MailProcess::onRest(const std::string &BufString, std::string &ReplyString) {
     ReplyString.assign("250 OK\r\n");
     m_MailContext.clearContext();
     return AUTH;
