@@ -8,13 +8,14 @@
 #define MAIL_VERSION_PATCH 1
 
 #define Welcome_Message(domain, build_date) "220 " + domain + " Mail TransPort Server for Free License (" + build_date + ")\r\n"
+#define Welcome_Command(domain) "Mail Server Command Server " + domain + "\r\n.\r\n"
 #define SERVER_Response_UnSupportCommand "500 UnSupported command\r\n"
 #define SERVER_Response_BadSequence "503 Bad sequence of commands\r\n"
 
 #define SERVER_APP_HELP_MESSGAE                      \
     "help       display the help\r\n"                \
     "version    show mail server build version \r\n" \
-    "status     show mail server status\r\n"
+    "status     show mail server status\r\n.\r\n"
 
 #include "configure.hpp"
 #include <algorithm>

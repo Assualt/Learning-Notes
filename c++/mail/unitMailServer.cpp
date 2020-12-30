@@ -4,9 +4,7 @@
 #include "mailserver.h"
 int main(int argc, char const *argv[]) {
 
-    tlog::Logger stdLogger(STDOUT_PREFIX);
-    tlog::logImpl::AppendLogger(STDOUT_PREFIX, &stdLogger);
-    logger.BasicConfig("%(process)s %(threadname)s %(levelname)s %(ctime)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S,%s", "", "a");
+    logger.BasicConfig("T:%(process)s(%(ctime)s) [%(user)s-%(appname)s-%(levelname)s]  [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "mailserver.log");
 
     cmdline::parser CommandParse;
     CommandParse.add("version", 'v', "show this Simple Mailer Version and exit");

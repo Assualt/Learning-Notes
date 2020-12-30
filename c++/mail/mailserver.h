@@ -9,11 +9,9 @@
 #include "mailenv.h"
 #include "threadpool.h"
 #include <iostream>
-#define SERVER_LOGGER "server.main"
-#define SERVER_COMMAND_LOGGER "server.command.main"
-#define SERVER_TRANS_LOGGER "server.trans.main"
-#define serverlogger LOGGER(SERVER_LOGGER)
-#define commandlogger LOGGER(SERVER_COMMAND_LOGGER)
+#define SERVER_Trans_LOGGER "server.trans"
+#define APP "App.command"
+
 using namespace std;
 namespace mail {
 enum MAIL_STATE { HELO, EHLO, AUTH, AUTHPASS, AUTHEND, MAILFROM, RCPTTO, DATA, DATAFINISH, DISCONNECT, REST };
@@ -70,10 +68,11 @@ public:
     void initEx(const std::string &strConfigPath);
     void startServer(size_t nThreadCount = 10);
     ~MailServer();
+    std::string getMailServerStatus();
 
 public:
     static void HandleRequest(ConnectionInfo *info);
-    static void HandleCommandRequest(ConnectionInfo *info);
+    static void HandleCommandRequest(ConnectionInfo *info, MailServer *pServer);
 
 protected:
     bool WaitEvent(size_t nThreadCount);
@@ -83,9 +82,8 @@ protected:
     std::threadpool         m_MailQueueThreadsPool;
     std::threadpool         m_MailCommandThreadsPool;
     int                     m_nMailServerSocket;
+    int                     m_nCommandListenSocket;
     conf::ConfigureManager *m_ptrConfigMgr;
-    tlog::Logger *          m_ptrServerLogger;
-    tlog::Logger *          m_ptrServerCommandLogger;
     tlog::Logger *          m_ptrServerTransLogger;
 };
 
