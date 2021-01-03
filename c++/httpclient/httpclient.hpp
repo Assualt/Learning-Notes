@@ -50,6 +50,8 @@ using namespace std;
 #include <exception>
 #define TempFile ".httpclient.download"
 
+#include "threadpool.h"
+
 namespace http {
 typedef enum { EncodingLength, EncodingChunk, EncodingGzip, EncodingOther } Encoding;
 
@@ -117,6 +119,22 @@ public:
         parse();
     }
     HttpUrl() = default;
+
+    void resetUrl(const std::string &url) {
+        fullurl = url;
+        parse();
+    }
+
+    std::string getHostUrl() const {
+        std::stringstream ss;
+        ss << scheme << "://";
+        if (!username.empty())
+            ss << username;
+        if (!username.empty() && !password.empty())
+            ss << ":" << password << "@";
+        ss << host << path;
+        return ss.str();
+    }
 
 private:
     void parse() {
@@ -223,7 +241,8 @@ public:
             os << "Range: " << obj.m_strRangeBytes << CTRL;
         os << "> Host: " << obj.m_strRequestHost << CTRL;
         if (!obj.m_strRequestParams.empty())
-            os << obj.m_strRequestParams << CTRL;
+            os << CTRL << obj.m_strRequestParams;
+        os << CTRL;
         return os;
     }
     ResourceMap getHeader() const {
@@ -471,7 +490,28 @@ private:
             return false;
         }
 
+        printSSLConnection(m_pConnection->m_ptrHandle);
+
         return true;
+    }
+
+    void printSSLConnection(SSL *ssl) {
+        X509 *cert = SSL_get_peer_certificate(ssl);
+        if(cert == nullptr){
+            logger.warning("get server's certifiacte error. ");
+            return;
+        }
+        X509_NAME *name = X509_get_subject_name(cert);
+        if(name == nullptr){
+            logger.warning("get server's x509 error. ");
+            return;
+        }
+        char buf[8192] = {0};
+        X509_NAME_oneline(name, buf, 8191);
+        
+
+        X509_free(cert);
+        logger.info("server subject name:%s", buf);
     }
 
     void SSLDisConnect() {
@@ -995,6 +1035,7 @@ protected:
     std::chrono::system_clock::time_point m_ConnectTime;
     SocketClient                          m_SocketClient;
     std::string                           m_strRequestHost;
+    std::threadpool                       m_DownloadsThreadPool;
 
 public:
     class DownloadThreadMgr {
@@ -1212,7 +1253,7 @@ public:
         std::string HttpRequestString = m_ReqHeader.toStringHeader();
         if (verbose) {
             std::cout << "* Request Header\n";
-            std::cout << HttpRequestString;
+            std::cout << m_ReqHeader;
         }
         ssize_t nWrite = m_SocketClient.write(HttpRequestString.c_str(), HttpRequestString.size());
         if (nWrite != HttpRequestString.size())
@@ -1228,13 +1269,16 @@ public:
             logger.info("begin to redirect url:%s", strRedirectUrl);
             if (strncmp(strRedirectUrl.c_str(), "http", 4) == 0) {
                 tempUrl = HttpUrl(strRedirectUrl);
+            } else {
+                std::string requestUrl = tempUrl.getHostUrl() + strRedirectUrl;
+                tempUrl.resetUrl(requestUrl);
             }
             goto request;
         }
 
         if (strcasecmp(m_SocketClient.getRequestType().c_str(), "head") == 0) {
             logger.debug("Requst Header Only.");
-        } else if (m_Response.getResponseBytesSize() == 0 && atoi(m_Response.getResponseItem("code").c_str()) / 100 != 3 ) {
+        } else if (m_Response.getResponseBytesSize() == 0 && atoi(m_Response.getResponseItem("code").c_str()) / 100 != 3) {
             logger.info("get response data is empty.");
             return HttpResult(500, "", "Can't get any data from url");
         } else if (!m_Response.getResponseItem(ContentEncoding).empty()) {

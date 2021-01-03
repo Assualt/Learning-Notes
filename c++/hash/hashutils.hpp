@@ -1,5 +1,7 @@
 #pragma once
 #include "base64.h"
+#include <brotli/decode.h>
+#include <brotli/encode.h>
 #include <iostream>
 #include <sstream>
 #include <string.h>
@@ -65,13 +67,13 @@ public:
         strm.opaque   = Z_NULL;
         strm.avail_in = 0;
         strm.next_in  = Z_NULL;
-        // level 
+        // level
         int ret;
-        if(nLevel == 1){// gzip
+        if (nLevel == 1) { // gzip
             ret = inflateInit2(&strm, MAX_WBITS + 16);
-        }else if(nLevel == 2){ // deflate
+        } else if (nLevel == 2) { // deflate
             ret = inflateInit2(&strm, -MAX_WBITS);
-        }else if(nLevel == 3){ // raw
+        } else if (nLevel == 3) { // raw
             ret = inflateInit(&strm);
         }
         if (ret != Z_OK) {
@@ -172,7 +174,7 @@ public:
     }
 
     static uLongf GzipDecompress(MyStringBuffer &in, std::stringstream &out) {
-        return DecompressWithZlib(in, out,1);
+        return DecompressWithZlib(in, out, 1);
     }
 
     static uLongf DeflateDecompress(MyStringBuffer &in, std::stringstream &out) {
@@ -181,5 +183,18 @@ public:
 
     static uLongf ZlibDeCompress(MyStringBuffer &in, std::stringstream &out) { // zlib
         return DecompressWithZlib(in, out, 3);
+    }
+
+    static BROTLI_BOOL BrotliCompress(MyStringBuffer &in, MyStringBuffer &out) {
+        BROTLI_BOOL         ret   = BROTLI_TRUE;
+        BrotliEncoderState *state = BrotliEncoderCreateInstance(nullptr, nullptr, nullptr);
+        if (!state)
+            return BROTLI_FALSE;
+
+        return ret;
+    }
+
+    static uLongf BrotliDecompress(MyStringBuffer &in, std::stringstream &out) {
+        return 0;
     }
 };

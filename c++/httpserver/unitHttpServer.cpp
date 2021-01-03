@@ -10,7 +10,7 @@ bool IndexPatter(http::HttpRequest &request, http::HttpResponse &response, HttpC
     std::string resultString = utils::loadFileString("./html/index.html");
     response.setStatusMessage(200, request.getRequestType(), "OK");
     response.setHeader(ContentLength, resultString.size() + 4);
-    response.setHeader(ContentType, "text/html");
+    response.setHeader(ContentType, "text/html; charset=utf-8");
     response.setBodyString(resultString);
     return true;
 }
@@ -20,14 +20,14 @@ bool NotFoundIndexPatter(http::HttpRequest &request, http::HttpResponse &respons
     size_t nRead = response.loadFileString("html/40x.html");
     response.setStatusMessage(404, request.getHttpVersion(), "not found");
     response.setHeader(ContentLength, nRead);
-    response.setHeader(ContentType, "text/html");
+    response.setHeader(ContentType, "text/html; charset=utf8");
     return true;
 }
 
 bool BadRequestIndexPattern(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
     response.setStatusMessage(400, request.getHttpVersion(), "Bad Request");
     response.setHeader(ContentLength, strlen(BADREQUEST));
-    response.setHeader(ContentType, "text/html");
+    response.setHeader(ContentType, "text/html; charset=utf8");
     response.setBodyString(BADREQUEST);
     return true;
 }
@@ -118,10 +118,10 @@ bool ListDirIndexPatter(http::HttpRequest &request, http::HttpResponse &response
 }
 
 bool AuthRequiredIndexPattern(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
-    response.setStatusMessage(401, request.getHttpVersion(), "Unauthorized");
+    response.setStatusMessage(401, "HTTP/1.1", "Unauthorized");
     response.setHeader(ContentType, "text/html");
     response.setHeader(ContentLength, strlen(AUTHREQUIRED));
-    response.setHeader("WWW-Authenticate", "Basic realm=\"User Authentication\"");
+    response.setHeader("WWW-Authenticate", config.getAuthName());
     response.setBodyString(AUTHREQUIRED);
     return true;
 }
@@ -130,12 +130,7 @@ int main(int argc, char **argv) {
     logger.BasicConfig("%(thread)s %(levelname)s %(ctime)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S,%s", "", "a");
 
     cmdline::parser CommandParse;
-    CommandParse.add("version",'v', "show this HttpServer Version and exit");
-    CommandParse.add<std::string>("server_name", 's', "The http server name", false, "HttpServer 1.10");
-    CommandParse.add<std::string>("server_ip", 'i', "The http server ip.", false, "127.0.0.1");
-    CommandParse.add<std::string>("server_description", 'd', "The http server's description.", false, "A simple Http Server");
-    CommandParse.add<int>("server_port", 'p', "The http server's port", false, 8080, cmdline::range<int>(1, 65535));
-    CommandParse.add<std::string>("server_root", 'r', "The http server's root path", false);
+    CommandParse.add("version", 'v', "show this HttpServer Version and exit");
     CommandParse.add<int>("threads_count", 'n', "The http server's threads count", false, 3, cmdline::range<int>(1, 10));
     CommandParse.add<std::string>("config_path", 'c', "The http server's config path.", true);
     CommandParse.add<int>("logLevel", 'l', "The http server's logs level.", false, 1, cmdline::range<int>(0, 3));
@@ -145,20 +140,14 @@ int main(int argc, char **argv) {
         std::cout << CommandParse.error() << std::endl;
         std::cout << CommandParse.usage() << std::endl;
     } else {
-        std::string strServerName        = CommandParse.get<std::string>("server_name");
-        std::string strServerIP          = CommandParse.get<std::string>("server_ip");
-        std::string strServerDescription = CommandParse.get<std::string>("server_description");
-        std::string strServerRoot        = CommandParse.get<std::string>("server_root");
-        int         nPort                = CommandParse.get<int>("server_port");
-        std::string strConfigPath        = CommandParse.get<std::string>("config_path");
+        std::string strConfigPath = CommandParse.get<std::string>("config_path");
 
         auto nLevel = CommandParse.get<int>("logLevel");
         logger.setLevel(static_cast<tlog::detail::Level>(nLevel));
 
-        http::HttpServer server(strServerName, strServerIP, strServerDescription, nPort);
-        server.setServerRoot(strServerRoot);
-        logger.info("setting server root:%s", server.getServerRoot());
+        http::HttpServer server;
         server.loadHttpConfig(strConfigPath);
+        logger.info("Run in server Root:%s", server.getServerRoot());
         // server.getHttpConfig().loadMimeType("html/mime.types");
         // server.getHttpConfig().loadDirentTmplateHtml("./html/dirHtml.tmpl");
         auto &mapper = server.getMapper();
@@ -168,9 +157,8 @@ int main(int argc, char **argv) {
         mapper.addRequestMapping({"/#//"}, std::move(ListDirIndexPatter));
         mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
         mapper.addRequestMapping({"/400"}, std::move(BadRequestIndexPattern));
-        // server.StartThreads(CommandParse.get<int>("threads_count"));
-        // server.ExecForever();
-        
+        server.StartThreads(CommandParse.get<int>("threads_count"));
+        server.ExecForever();
     }
     return 0;
 }

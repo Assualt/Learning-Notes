@@ -1,4 +1,5 @@
 #pragma once
+#include "configure.h"
 #include <iostream>
 #include <sstream>
 #define PARAM_SETER_GETER(strParamName, valType)          \
@@ -49,8 +50,50 @@ protected:                                                \
 #include "httputils.h"
 #include "logging.h"
 #include <set>
-
+#ifdef USE_OPENSSL
+#include <openssl/ssl.h>
+#endif
 namespace http {
+
+enum SSLProtocols { Type_TLS1_1, Type_TLS1_2, Type_TLS1_3, Type_TLS1_23 };
+
+class ConnectionInfo {
+public:
+    std::string m_strConnectIP;
+    std::string m_strServerRoot;
+    int         m_nPort;
+    int         m_nClientFd;
+    int         m_nFDFlag;
+#ifdef USE_OPENSSL
+    SSL *ssl;
+#endif
+    ConnectionInfo()
+        : m_nClientFd(-1) {
+#ifdef USE_OPENSSL
+        ssl = nullptr;
+#endif
+    }
+    void disconnect() {
+#ifdef USE_OPENSSL
+        if (ssl) {
+            SSL_shutdown(ssl);
+            SSL_free(ssl);
+            ssl = nullptr;
+        }
+#endif
+        close(m_nClientFd);
+    }
+};
+
+class SSLConfig {
+public:
+    SSLProtocols protocol;
+    std::string  servername;
+    std::string  certificate;
+    std::string  certificate_private_key;
+    std::string  ciphers;
+    std::string  ca;
+};
 
 struct StringCaseCmp : std::binary_function<std::string, std::string, bool> {
 public:
@@ -62,14 +105,36 @@ public:
 class HttpConfig {
 public:
     HttpConfig();
+    ~HttpConfig();
     bool        loadConfig(const std::string &strConfigFilePath);
     bool        loadMimeType(const std::string &mimeType = "mime.types");
     std::string getMimeType(const std::string &strFileName);
 
 public:
-    std::string getServerRoot() const;
-    void        setServerRoot(const std::string &strServerRoot);
-
+    std::string getServerRoot() const {
+        return m_strServerRoot;
+    }
+    std::string getServerHost() const {
+        return m_strServerHost;
+    }
+    int getServerPort() const {
+        return m_nServerPort;
+    }
+    int getMaxAcceptClient() const {
+        return m_nMaxAcceptClients;
+    }
+    std::string getAuthName() const {
+        return m_strAuthName;
+    }
+    SSLConfig getSSLConfig() const {
+        return m_sslconfig;
+    }
+    std::string getLoggerFormat() const {
+        return m_strLoggerFmt;
+    }
+    bool supportSSL() const {
+        return m_bSSLServer;
+    }
     void                                 loadDirentTmplateHtml(const std::string &tmplatePath);
     std::string &                        getDirentTmplateHtml();
     std::set<std::string, StringCaseCmp> getSuffixSet();
@@ -77,16 +142,21 @@ public:
     bool                                 checkAuth(const std::string &AuthString);
     bool                                 checkMethod(const std::string &RequestMethod);
     bool                                 checkHttpVersion(const std::string &HttpVersion);
-    std::string                          getLoggerFormat() {
-        return m_strLoggerFmt;
-    }
 
 protected:
     void loadAuthFile(const std::string &strAuthFile);
     void parseSection(const std::string strSectionName, const std::string &strSection);
+    void initSetting();
 
 private:
-    std::string                                               m_strServerRoot;
+    bool        m_bSSLServer;
+    std::string m_strServerRoot;
+    int         m_nServerPort;
+    std::string m_strServerHost;
+    int         m_nMaxAcceptClients;
+    std::string m_strAuthName;
+    SSLConfig   m_sslconfig;
+
     std::string                                               m_strDirentTmplateHtml;
     std::set<std::string, StringCaseCmp>                      m_SuffixSet;
     std::map<std::string, std::string>                        m_ExtMimeType;
@@ -96,15 +166,7 @@ private:
     std::set<std::string, StringCaseCmp>                      m_SupportMethodSet;
     std::set<std::string, StringCaseCmp>                      m_SupportHttpVersionSet;
     std::string                                               m_strLoggerFmt;
-};
-
-class ConnectionInfo {
-public:
-    std::string m_strConnectIP;
-    std::string m_strServerRoot;
-    int         m_nPort;
-    int         m_nClientFd;
-    int         m_nFDFlag;
+    conf::ConfigureManager *                                  m_ptrConfigure;
 };
 
 } // namespace http

@@ -4,7 +4,7 @@
 #include "mailserver.h"
 int main(int argc, char const *argv[]) {
 
-    logger.BasicConfig("T:%(process)s(%(ctime)s) [%(user)s-%(appname)s-%(levelname)s]  [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "mailserver.log");
+    logger.BasicConfig("T:%(process)s(%(ctime)s)[%(user)s-%(appname)s-%(levelname)s] [%(filename)s-%(lineno)s-%(funcname)s] %(message)s", "mailserver.log");
 
     cmdline::parser CommandParse;
     CommandParse.add("version", 'v', "show this Simple Mailer Version and exit");

@@ -1,10 +1,10 @@
 CC=g++
 CFLAGS=-I../log -I../argparse -I../hash -Wno-deprecated-declarations -std=c++11  -g -I../threadpool -I../conf
 
-vpath %.cpp ../log ../hash
+vpath %.cpp ../log ../hash ../conf
 
 
-ALLOBJS=log.o  mailserver.o unitMailServer.o mailenv.o
+ALLOBJS=log.o  mailserver.o unitMailServer.o mailenv.o configure.o
 
 .cpp.o:
 	$(CC) -c $(CFLAGS) $< 

@@ -1,10 +1,16 @@
 #include "httpconfig.h"
 namespace http {
 HttpConfig::HttpConfig()
-    : m_SuffixSet{"index.html", "index.shtml", "index.htm"}
+    : m_bSSLServer(false)
+    , m_SuffixSet{"index.html", "index.shtml", "index.htm"}
     , m_bRequiredAuth(false)
     , m_SupportMethodSet{"GET", "POST", "PUT", "DELETE", "HEAD"}
-    , m_SupportHttpVersionSet{"Http/1.1", "Http/1.0"} {
+    , m_SupportHttpVersionSet{"Http/1.1", "Http/1.0"}
+    , m_nMaxAcceptClients(20) {
+}
+HttpConfig::~HttpConfig() {
+    if (m_ptrConfigure)
+        delete m_ptrConfigure;
 }
 bool HttpConfig::needAuth() {
     return m_bRequiredAuth;
@@ -46,66 +52,55 @@ bool HttpConfig::loadConfig(const std::string &strConfigFilePath) {
         logger.error("load httconfig(%s) failed due to nonexistance.", strConfigFilePath);
         return false;
     }
-    std::string strLine;
-    std::string strSection;
-    size_t      nPos;
-    bool        sectionStart = false;
-    std::string strSectionName;
-    while (getline(fin, strLine)) {
-        strLine = utils::trim(strLine);
-        if (strLine.empty())
-            continue;
-        else if (strLine[ 0 ] == '#')
-            continue;
-        else if ((nPos = strLine.find("{")) != std::string::npos && !sectionStart) {
-            strSectionName = utils::trim(strLine.substr(0, nPos));
-            sectionStart   = true;
-        } else if ((nPos = strLine.find("}")) != std::string::npos && sectionStart) {
-            sectionStart = false;
-            // std::cout << "Name:" << strSectionName << " {" << strSection << "}" << std::endl;
-            parseSection(strSectionName, strSection);
-            strSectionName.clear();
-            strSection.clear();
-            sectionStart = false;
-        } else if (sectionStart) {
-            strSection += utils::trim(strLine, '\'');
-        }
-    }
-    fin.close();
+    m_ptrConfigure = new conf::ConfigureManager(strConfigFilePath, ".conf");
+    m_ptrConfigure->init();
+    initSetting();
     return true;
 }
 
-void HttpConfig::parseSection(const std::string strSectionName, const std::string &strSection) {
-    std::map<std::string, std::string> sectionMap;
-    auto                               vectors = utils::split(strSection, ';');
-    for (auto vec : vectors) {
-        auto kval = utils::split(vec, ' ');
-        if (kval.size() != 2)
-            kval[ 0 ] = utils::trim(kval[ 0 ]);
-        kval[ 1 ] = utils::trim(kval[ 1 ]);
-        if (kval.size() == 2 && !kval[ 0 ].empty() && !kval[ 1 ].empty()) {
-            sectionMap[ kval[ 0 ] ] = kval[ 1 ];
-            logger.debug("key:%s--->val:%s", kval[ 0 ], kval[ 1 ]);
-        } else if (kval.size() >= 2) {
-            if (kval[ 0 ] == "log_format") {
-                m_strLoggerFmt.clear();
-                for (auto i = 2; i < kval.size(); ++i) {
-                    m_strLoggerFmt.append(utils::trim(kval[ i ], '\''));
-                    m_strLoggerFmt.append(" ");
-                }
-            }
-            logger.info("line: %s", vec);
-        } else
-            logger.warning("invalid line: %s", vec);
-        if (strSectionName == "http")
-            if (kval[ 0 ] == "basic_auth")
-                loadAuthFile(kval[ 1 ]);
-            else if (kval[ 0 ] == "mime_type")
-                loadMimeType(kval[ 1 ]);
-            else if (kval[ 0 ] == "dirent_tmpl")
-                loadDirentTmplateHtml(kval[ 1 ]);
+void HttpConfig::initSetting() {
+    std::string Prefix = "/httpd/";
+    m_ptrConfigure->changeAccessPath(Prefix + "server/http/");
+    m_strServerRoot        = m_ptrConfigure->getString("", "root");
+    m_strDirentTmplateHtml = m_ptrConfigure->getString("", "DirentTmpl");
+    loadDirentTmplateHtml(m_strDirentTmplateHtml);
+    int AuthType = m_ptrConfigure->getInt(0, "AuthType");
+    if (AuthType == 1) { // Auth Basic
+        m_strAuthName             = m_ptrConfigure->getString("", "AuthBasic");
+        std::string BasicAuthFile = m_ptrConfigure->getString("", "BasicAuthFile");
+        loadAuthFile(BasicAuthFile);
+        m_strAuthName = "Basic realm=\"" + m_strAuthName + "\"";
     }
-    m_SectionMap[ strSectionName ] = sectionMap;
+
+    m_strLoggerFmt           = m_ptrConfigure->getString("", "log_format");
+    std::string MimeTypeFile = m_ptrConfigure->getString("", "MimeTypeFile");
+    m_nServerPort            = m_ptrConfigure->getInt(8080, "ListenPort");
+    m_strServerHost          = m_ptrConfigure->getString("127.0.0.1", "Host");
+    m_nMaxAcceptClients      = m_ptrConfigure->getInt(20, "MaxClients");
+
+    // init ssl config
+    m_ptrConfigure->changeAccessPath(Prefix + "server/ssl/");
+    bool enableSSL = m_ptrConfigure->getBool(false, "EnableSSL");
+    if (enableSSL) {
+        m_sslconfig.certificate = m_ptrConfigure->getString("", "ssl_certificate");
+        std::string protocol    = m_ptrConfigure->getString("", "ssl_protocols");
+        if (strcasecmp(protocol.c_str(), "tlsv1.1") == 0)
+            m_sslconfig.protocol = Type_TLS1_1;
+        else if (strcasecmp(protocol.c_str(), "tlsv1.2") == 0)
+            m_sslconfig.protocol = Type_TLS1_2;
+        else if (strcasecmp(protocol.c_str(), "tlsv1.3") == 0)
+            m_sslconfig.protocol = Type_TLS1_3;
+        else {
+            m_sslconfig.protocol = Type_TLS1_23;
+            logger.warning("unsupported ssl encrypt version %s using default protocol 23", protocol);
+        }
+        m_sslconfig.certificate_private_key = m_ptrConfigure->getString("", "ssl_certificate_key");
+        m_sslconfig.ciphers                 = m_ptrConfigure->getString("", "ssl_ciphers");
+        m_sslconfig.ca                      = m_ptrConfigure->getString("", "ca_cert");
+        m_bSSLServer                        = true;
+    }
+
+    loadMimeType(MimeTypeFile);
 }
 
 bool HttpConfig::loadMimeType(const std::string &mimeType) {
@@ -145,13 +140,6 @@ std::string HttpConfig::getMimeType(const std::string &strFileName) {
     return utils::FileMagicType(strFileName);
 }
 
-std::string HttpConfig::getServerRoot() const {
-    return m_strServerRoot;
-}
-void HttpConfig::setServerRoot(const std::string &strServerRoot) {
-    m_strServerRoot = strServerRoot;
-}
-
 void HttpConfig::loadDirentTmplateHtml(const std::string &tmplatePath) {
     m_strDirentTmplateHtml = utils::loadFileString(tmplatePath);
 }
@@ -179,6 +167,7 @@ void HttpConfig::loadAuthFile(const std::string &strAuthFile) {
         if (vec.size() != 2)
             continue;
         m_AuthPassMap.insert(std::pair<std::string, std::string>(vec[ 0 ], vec[ 1 ]));
+        logger.debug("insert user:[%s] -> pass:[%s]", vec[ 0 ], vec[ 1 ]);
     }
     fin.close();
     logger.debug("success insert %d user into auth map", m_AuthPassMap.size());

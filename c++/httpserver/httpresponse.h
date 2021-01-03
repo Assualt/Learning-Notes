@@ -34,9 +34,9 @@ public:
     void            WriteBodyBytes(const char *buf, size_t n);
     MyStringBuffer &getBuffer();
 
-    int    loadBinaryFile(const std::string &strFilePath);
-    int    loadFileString(const std::string &strFilePath);
-    size_t WriteBytes(int fd);
+    int loadBinaryFile(const std::string &strFilePath);
+    int loadFileString(const std::string &strFilePath);
+    int WriteBytes(ConnectionInfo *info);
 
 protected:
     void    EncodeBodyString(MyStringBuffer &out, int CompressType);

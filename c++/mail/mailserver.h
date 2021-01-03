@@ -3,7 +3,7 @@
 #ifndef MAIL_SERVER_H_2020_12_24
 #define MAIL_SERVER_H_2020_12_24
 
-#include "configure.hpp"
+#include "configure.h"
 #include "log.h"
 #include "mailcontext.h"
 #include "mailenv.h"

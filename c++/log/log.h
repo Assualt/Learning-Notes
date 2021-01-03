@@ -19,18 +19,18 @@
 #include <unistd.h>
 #include <vector>
 
-using namespace std;
 #define STDOUT_PREFIX "main.stdout"
+
 namespace tlog {
 enum Level { DEBUG, INFO, WARNING, ERRORS, ALERT, EMERGENCY };
-typedef struct {
+struct CommandLineInfo {
     size_t      lineno;
-    const char *funcName;
-    const char *fileName;
-} commandLineInfo;
-enum RotatingMode { DayRotatingMode, SizeLimitRotatingMode, LineLmitRotatingMode };
+    std::string funcName;
+    std::string fileName;
+};
 
-struct detail {
+class detail {
+public:
     static std::vector<std::string>   levelStringVector;
     static std::map<std::string, int> levelMap;
     static std::string                timeFmt;
@@ -38,9 +38,9 @@ struct detail {
     static std::set<char>             timeOperator;
     static std::vector<std::string>   WeekDayEngList;
     static std::vector<std::string>   MonthEngList;
+    static std::set<char>             basicMsgFmt;
 
-    static std::set<char> basicMsgFmt;
-
+public:
     static void FormatTimeString(struct tm *t, struct timeval *tv, const std::string &FilledString, const char op, std::stringstream &ss) {
         char FilledChar;
         int  FilledLength = 0;
@@ -59,17 +59,17 @@ struct detail {
             // ISO String
             ss << detail::WeekDayEngList[ t->tm_wday ] << " ";
             ss << detail::MonthEngList[ t->tm_mon ] << " ";
-            ss << setw(2) << setfill('0') << (t->tm_mday) << " ";
-            ss << setw(2) << setfill('0') << (t->tm_hour) << ":";
-            ss << setw(2) << setfill('0') << (t->tm_min) << ":";
-            ss << setw(2) << setfill('0') << (t->tm_sec) << " ";
-            ss << "CST " << setw(4) << (t->tm_year + 1900);
+            ss << std::setw(2) << std::setfill('0') << (t->tm_mday) << " ";
+            ss << std::setw(2) << std::setfill('0') << (t->tm_hour) << ":";
+            ss << std::setw(2) << std::setfill('0') << (t->tm_min) << ":";
+            ss << std::setw(2) << std::setfill('0') << (t->tm_sec) << " ";
+            ss << "CST " << std::setw(4) << (t->tm_year + 1900);
             return;
         }
         if (FilledLength != 0)
-            ss << setw(FilledLength);
+            ss << std::setw(FilledLength);
         if (FilledChar)
-            ss << setfill(FilledChar);
+            ss << std::setfill(FilledChar);
         if (op == 'Y')
             ss << (t->tm_year + 1900);
         else if (op == 'm')
@@ -93,7 +93,6 @@ struct detail {
         else if (op == 'a')
             ss << (t->tm_hour / 12 >= 1 ? "PM." : "AM.") << (t->tm_hour % 12);
     }
-
     static std::string getFormatTimeString(const char *strFmt) {
         if (nullptr == strFmt)
             return "";
@@ -168,9 +167,9 @@ struct detail {
         FilledWithZS = FilledLength;
         FilledLength += Find_Pointer ? 1 + FilledWithPointer : 0;
         if (FilledLength != 0 && op != 'f')
-            ss << setw(FilledWithZS);
+            ss << std::setw(FilledWithZS);
         if (FilledChar && op != 'f')
-            ss << setfill(FilledChar);
+            ss << std::setfill(FilledChar);
         if (op == 's' || op == 'd') {
             ss << item;
         } else if (op == 'f') {
@@ -186,7 +185,7 @@ struct detail {
                     } else if (zs.size() == FilledWithZS) {
                         ss << zs;
                     } else {
-                        ss << setfill('0') << setw(FilledWithZS) << zs;
+                        ss << std::setfill('0') << std::setw(FilledWithZS) << zs;
                     }
                     ss << ".";
                     std::string pointer = item.substr(item.find('.') + 1);
@@ -250,7 +249,7 @@ struct detail {
         return ss.str();
     }
 
-    static void FormatLogMessage(const std::string &key, std::stringstream &ss, const std::string &message, const std::string &levelName, const commandLineInfo &info, const std::string &loggerName,
+    static void FormatLogMessage(const std::string &key, std::stringstream &ss, const std::string &message, const std::string &levelName, CommandLineInfo &info, const std::string &loggerName,
                                  const std::string &strAppName) {
         if (key == "(message)")
             ss << message;
@@ -282,10 +281,7 @@ struct detail {
         }
     }
 
-    static std::string getLogMessageFormat(const char *fmt, const char *message, const char *levelName, const commandLineInfo &info, const std::string &loggerName, const std::string &strAppName) {
-        if (nullptr == fmt || nullptr == message || nullptr == levelName)
-            return "";
-
+    static std::string getLogMessageFormat(const char *fmt, const char *message, const char *levelName, CommandLineInfo &info, const std::string &loggername, const std::string &appName) {
         std::stringstream ss;
         const char *      p = fmt;
         for (; *p != '\0'; p++) {
@@ -294,12 +290,14 @@ struct detail {
                     ss << "%";
                     p = p + 1;
                 } else if (*(p + 1) == '(') {
+                    bool key_start = true;
                     p++;
                     std::string key;
                     do {
                         key.push_back(*p);
                     } while (*p++ != ')');
-                    FormatLogMessage(key, ss, message, levelName, info, loggerName, strAppName);
+                    // std::cout << "type:" << *p << key << std::endl;
+                    FormatLogMessage(key, ss, message, levelName, info, loggername, appName);
                 }
             } else {
                 ss << *p;
@@ -307,7 +305,6 @@ struct detail {
         }
         return ss.str();
     }
-
     static std::ios::openmode getFileMode(const std::string &strMode) {
         std::ios::openmode mode = std::ios::app;
         for (char i : strMode) {
@@ -323,55 +320,49 @@ struct detail {
         return mode;
     }
 
-    static Level getLevelFromString(const string &strLevel) {
+    static Level getLevelFromString(const std::string &strLevel) {
         return static_cast<Level>(levelMap[ strLevel ]);
     }
 };
 
 class Logger {
 public:
-    Logger(const std::string &loggerName = STDOUT_PREFIX)
+    Logger(const std::string &prefix = STDOUT_PREFIX)
         : m_strMessageFmt("%(asctime)s %(levelname)s %(message)s")
         , m_nLevel(Level::DEBUG)
-        , m_strLoggerName(loggerName) {
+        , m_strLoggerName(prefix) {
     }
 
-    Logger(const std::string &loggerName, const char *messageFmt, const std::string &logFileName, const std::string &logFileFmt = "%04Y-%02m-%02d", const std::string &OpenMode = "a")
-        : m_strMessageFmt(messageFmt)
-        , m_strLogFileName(logFileName)
-        , m_strAppendFileFmt(logFileFmt)
-        , m_strLoggerName(loggerName) {
-        std::string FileName = m_strLogFileName;
-        if (!FileName.empty()) {
-            if (!logFileFmt.empty())
-                FileName += "." + detail::getFormatTimeString(logFileFmt.c_str());
-            if (m_OutStream.is_open())
-                throw std::runtime_error("Open " + FileName + " Failed ");
-            m_OutStream.open(FileName, detail::getFileMode(OpenMode));
-            std::cout << "Open AppendFile " << loggerName << " FileName:" << FileName << " Result:" << m_OutStream.is_open() << std::endl;
-        }
+    Logger(const std::string &prefix, const std::string &msgfmt, const std::string &filename = "", const std::string &filefmt = "%04Y-%02m-%02d", const std::string &openMode = "a")
+        : m_strMessageFmt(msgfmt)
+        , m_strLogFileName(filename)
+        , m_strAppendFileFmt(filefmt)
+        , m_strLoggerName(prefix)
+        , m_strAppendMode(openMode) {
+        initSetting();
     }
 
-    void setLevel(Level level) {
-        m_nLevel = level;
+    void setLevel(Level nLevel) {
+        m_nLevel = nLevel;
     }
-    void BasicConfig(const char *messageFmt, const std::string &appendingFileName = "", const std::string &appendingFileFmt = "%04Y-%02m-%02d", const std::string &OpenMode = "a") {
-        m_strLogFileName   = appendingFileName;
-        m_strMessageFmt    = messageFmt;
-        m_strAppendFileFmt = appendingFileFmt;
-        if (!appendingFileName.empty()) {
-            std::string FileName = appendingFileName;
-            if (!appendingFileFmt.empty())
-                FileName += "." + detail::getFormatTimeString(appendingFileFmt.c_str());
-            if (m_OutStream.is_open()) {
-                throw std::runtime_error("appending file is opened.");
-            }
-            m_OutStream.open(FileName, detail::getFileMode(OpenMode));
-        }
+
+    void BasicConfig(const std::string &msgfmt, const std::string &filename = "", const std::string &filefmt = "%04Y-%02m-%02d", const std::string &openMode = "a") {
+        m_strMessageFmt    = msgfmt;
+        m_strLogFileName   = filename;
+        m_strAppendFileFmt = filefmt;
+        m_strAppendMode    = openMode;
+        initSetting();
     }
 
     Logger &setAppName(const std::string &appName = "") {
-        this->m_strAppName = appName;
+        m_strAppName = appName;
+        return *this;
+    }
+
+    Logger &setCommandLineInfo(const std::string &filename, const std::string &funcname, int fileno) {
+        m_CommandInfo.fileName = filename;
+        m_CommandInfo.funcName = funcname;
+        m_CommandInfo.lineno   = fileno;
         return *this;
     }
 
@@ -380,8 +371,48 @@ public:
             m_OutStream.close();
     }
 
+protected:
+    void initSetting() {
+        if (!m_strLogFileName.empty()) {
+            std::string FileName = m_strLogFileName;
+            if (!m_strAppendFileFmt.empty()) {
+                FileName += "." + detail::getFormatTimeString(m_strAppendFileFmt.c_str());
+            }
+            if (m_OutStream.is_open())
+                m_OutStream.close();
+            m_OutStream.open(FileName, detail::getFileMode(m_strAppendMode));
+        }
+    }
+
+    bool levelCompare(const std::string &levelName) {
+        return detail::getLevelFromString(levelName) >= this->m_nLevel;
+    }
+
+    void logMessage(const std::string &levelName, const char *msgfmt, std::queue<std::string> &args) {
+        std::string message = detail::getFormatMessageString(msgfmt, args);
+        message             = detail::getLogMessageFormat(m_strMessageFmt.c_str(), message.c_str(), levelName.c_str(), m_CommandInfo, m_strLoggerName, m_strAppName);
+        if (m_OutStream.is_open()) {
+            std::lock_guard<std::mutex> guard(m_Lock);
+            m_OutStream << message << std::endl;
+        } else {
+            std::cout << message << std::endl;
+        }
+    }
+
+protected:
+    std::string     m_strMessageFmt;
+    std::string     m_strLogFileName;
+    std::string     m_strAppendFileFmt;
+    CommandLineInfo m_CommandInfo;
+    Level           m_nLevel;
+    std::string     m_strLoggerName;
+    std::ofstream   m_OutStream;
+    std::mutex      m_Lock;
+    std::string     m_strAppName;
+    std::string     m_strAppendMode;
+
 public:
-    static Logger stdOutLogger;
+    static Logger stdoutLogger;
 
 public:
     template <typename... Args> void debug(const char *ptrMsg, Args &&... args) {
@@ -426,58 +457,23 @@ public:
             this->logMessage("Emergency", ptrMsg, argsQueue);
         }
     }
-    Logger &setFileCommandInfo(const std::string &filename, const std::string &funcname, int fileno) {
-        m_CommandInfo.fileName = filename.c_str();
-        m_CommandInfo.funcName = funcname.c_str();
-        m_CommandInfo.lineno   = fileno;
-        return *this;
-    }
-
-private:
-    bool levelCompare(const std::string &levelName) {
-        return detail::getLevelFromString(levelName) >= this->m_nLevel;
-    }
-
-    void logMessage(const char *levelName, const char *msgfmt, std::queue<std::string> &args) {
-        std::string messageString = detail::getFormatMessageString(msgfmt, args);
-        std::string LogMessage    = detail::getLogMessageFormat(m_strMessageFmt.c_str(), messageString.c_str(), levelName, m_CommandInfo, m_strLoggerName, m_strAppName);
-        if (m_OutStream.is_open()) {
-            m_OutStream << LogMessage << std::endl;
-            m_OutStream.flush();
-        } else {
-            std::cout << LogMessage << std::endl;
-        }
-    }
-
-private:
-    std::string     m_strMessageFmt;
-    std::string     m_strLogFileName;
-    std::string     m_strAppendFileFmt;
-    commandLineInfo m_CommandInfo;
-    Level           m_nLevel;
-    std::string     m_strLoggerName;
-    std::ofstream   m_OutStream;
-    mutex           m_Lock;
-    RotatingMode    m_RotatingMode;
-    std::string     m_strAppName;
 };
-
-class logImpl {
+} // namespace tlog
+class LogImpl {
 private:
-    static std::map<std::string, Logger &&> g_LoggerMap;
+    static std::map<std::string, tlog::Logger &&> g_LoggerMap;
 
 public:
-    static Logger &getLogger(const std::string &prefix) {
+    static tlog::Logger &getLogger(const std::string &prefix) {
         if (prefix == STDOUT_PREFIX)
-            return Logger::stdOutLogger;
+            return tlog::Logger::stdoutLogger;
         return g_LoggerMap.at(prefix);
     }
-    static void AppendLogger(const std::string &prefix, Logger &&x) {
-        g_LoggerMap.insert(std::pair<std::string, Logger &&>(prefix, std::forward<Logger>(x)));
+    static void AppendLogger(const std::string &prefix, tlog::Logger &&x) {
+        g_LoggerMap.insert(std::pair<std::string, tlog::Logger &&>(prefix, std::forward<tlog::Logger>(x)));
     }
 };
-
-} // namespace tlog
-#define logger tlog::logImpl::getLogger(STDOUT_PREFIX).setFileCommandInfo(__FILE__, __func__, __LINE__).setAppName("main")
-#define log(appname) tlog::logImpl::getLogger(STDOUT_PREFIX).setFileCommandInfo(__FILE__, __func__, __LINE__).setAppName(appname)
-#define Log(name, appname) tlog::logImpl::getLogger(name).setFileCommandInfo(__FILE__, __func__, __LINE__).setAppName(appname)
+#define LOGGER(prefix, appname) LogImpl::getLogger(prefix).setAppName(appname).setCommandLineInfo(__FILE__, __func__, __LINE__)
+// #define logger LogImpl::getLogger(STDOUT_PREFIX).setAppName("main").setCommandLineInfo(__FILE__, __func__, __LINE__)
+#define AppLogger(name) LOGGER(STDOUT_PREFIX, name)
+#define logger LOGGER(STDOUT_PREFIX, "main")

@@ -72,7 +72,7 @@ int HttpResponse::loadBinaryFile(const std::string &strFilePath) {
 }
 
 int HttpResponse::loadFileString(const std::string &strFilePath) {
-    m_strBodyString = utils::loadFileString(strFilePath);
+    m_strBodyString   = utils::loadFileString(strFilePath);
     m_nBodyStringSize = m_strBodyString.size();
     return m_strBodyString.size();
 }
@@ -123,9 +123,8 @@ ssize_t HttpResponse::ChunkString(MyStringBuffer &buffer, int nChunkSize, MyStri
     return nSendBytes + 7;
 }
 
-size_t HttpResponse::WriteBytes(int fd) {
-    if (fd == -1)
-        return 0;
+int HttpResponse::WriteBytes(ConnectionInfo *info) {
+
     int CompressType = 0;
     // 0 no-compress
     // 1 gzip
@@ -155,8 +154,16 @@ size_t HttpResponse::WriteBytes(int fd) {
         strncpy(temp, strHeader.c_str(), nHeaderSize);
         strncpy(temp + nHeaderSize, m_strBodyString.c_str(), m_nBodyStringSize);
         mybuf.seekReadPos(0);
-        size_t nRead  = mybuf.sgetn(temp + nHeaderSize + m_nBodyStringSize, m_nBodybytesSize);
-        size_t nWrite = ::send(fd, temp, nRead + nHeaderSize + m_nBodyStringSize, 0);
+        size_t nRead = mybuf.sgetn(temp + nHeaderSize + m_nBodyStringSize, m_nBodybytesSize);
+        int nWrite;
+#ifdef USE_OPENSSL
+        if (info->ssl)
+            nWrite = SSL_write(info->ssl, temp, nRead + nHeaderSize + m_nBodyStringSize);
+        else
+            nWrite = ::send(info->m_nClientFd, temp, nRead + nHeaderSize + m_nBodyStringSize, 0);
+#else
+        nWrite = ::send(info->m_nClientFd, temp, nRead + nHeaderSize + m_nBodyStringSize, 0);
+#endif
         delete[] temp;
         return nWrite;
     } else if (CompressType == 1 || CompressType == 2) { // gzip
@@ -173,7 +180,15 @@ size_t HttpResponse::WriteBytes(int fd) {
         memset(temp, 0, nSendBytes);
         outBuffer.seekReadPos(0);
         outBuffer.sgetn(temp, nSendBytes);
-        size_t nWrite = send(fd, temp, nSendBytes, 0);
+        int nWrite;
+#ifdef USE_OPENSSL
+        if (info->ssl)
+            nWrite = SSL_write(info->ssl, temp, nSendBytes);
+        else
+            nWrite = send(info->m_nClientFd, temp, nSendBytes, 0);
+#else
+        nWrite = send(info->m_nClientFd, temp, nSendBytes, 0);
+#endif
         // for (int i = 0; i < nSendBytes; i++) {
         //     if (temp[ i ] != '\n')
         //         printf("%02x ", temp[ i ] & 0xFF);

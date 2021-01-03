@@ -4,13 +4,13 @@
 #include "log.h"
 
 namespace tlog {
-Logger                           Logger::stdOutLogger;
-std::map<std::string, Logger &&> logImpl::g_LoggerMap;
-std::map<std::string, int>       detail::levelMap          = {{"Debug", 0}, // NOLINT
+Logger Logger::stdoutLogger;
+
+std::map<std::string, int> detail::levelMap          = {{"Debug", 0}, // NOLINT
                                                {"Info", 1},  {"Warning", 2}, {"Error", 3}, {"Alert", 4}, {"Emergency", 5}};
-std::string                      detail::ctime             = "%02H:%02M:%02S.%06u";
-std::string                      detail::timeFmt           = "%04Y-%02m-%02d %02H:%02M:%02S.%03n"; /* NO INT */
-std::vector<std::string>         detail::levelStringVector = {                                     // NOINT
+std::string                detail::ctime             = "%02H:%02M:%02S.%06u";
+std::string                detail::timeFmt           = "%04Y-%02m-%02d %02H:%02M:%02S.%03n"; /* NO INT */
+std::vector<std::string>   detail::levelStringVector = {                                     // NOINT
     "Debug",    "Info", "Warning", "Errors",
     "Alert",      // NOLINT
     "Emergency"}; // NOLINT
@@ -36,3 +36,5 @@ std::set<char>           detail::timeOperator   = {
     'u', /* the useconds */
 };
 } // namespace tlog
+
+std::map<std::string, tlog::Logger &&> LogImpl::g_LoggerMap;

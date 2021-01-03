@@ -17,7 +17,7 @@
     "version    show mail server build version \r\n" \
     "status     show mail server status\r\n.\r\n"
 
-#include "configure.hpp"
+#include "configure.h"
 #include <algorithm>
 #include <mutex>
 #include <set>

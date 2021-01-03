@@ -1,10 +1,10 @@
 CC=g++
-CFLAGS=-I../log -I../http -I../http/url/include -I../hash -I../argparse -Wno-deprecated-declarations -std=c++11 -DUSE_OPENSSL -g #-O2
+CFLAGS=-I../log -I./ -I./url/include -I../hash -I../argparse -I../threadpool -Wno-deprecated-declarations -std=c++11 -DUSE_OPENSSL -g #-O2
 
 vpath %.cpp ../log ../hash
 
-URLPARSE=-L ../http/url -lurlparse
-GURLLIB=-L ../http/gurl -gurl
+URLPARSE=-L ./url -lurlparse
+GURLLIB=-L ./gurl -gurl
 
 
 ALLOBJS=logging.o unitHttpClient.o base64.o

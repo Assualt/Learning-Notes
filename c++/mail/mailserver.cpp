@@ -33,8 +33,6 @@ MailServer::~MailServer() {
 }
 
 void MailServer::initEx(const std::string &strConfigPath) {
-    m_ptrServerTransLogger = new tlog::Logger(SERVER_Trans_LOGGER, "%(process)s %(threadname)s %(levelname)s %(ctime)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "");
-    tlog::logImpl::AppendLogger(SERVER_Trans_LOGGER, std::move(*m_ptrServerTransLogger));
     m_ptrConfigMgr = new conf::ConfigureManager(strConfigPath);
     m_ptrConfigMgr->init();
     MailEnv::getInstance().initMailEnv(*m_ptrConfigMgr);
@@ -164,7 +162,7 @@ bool MailServer::WaitEvent(size_t nThreadCount) {
         return false;
     }
     logger.info("MailServer begin to listen at %s:%d ...", pEnv->getServerIP(), pEnv->getServerPort());
-    std::cout << "MailServer All is OK....................\n";
+    std::cout << "All is OK....................\n";
     while (1) {
         struct sockaddr_in client_addr;
         socklen_t          addr_len  = sizeof(client_addr);
@@ -219,26 +217,26 @@ void MailServer::HandleCommandRequest(ConnectionInfo *info, MailServer *pServer)
         }
         std::string command = Utils::trimRight(std::string(buf, nRead), std::string("\r\n"));
         if (strncasecmp(command.c_str(), "quit", 4) == 0) {
-            log(APP).info("recv app command quit.");
+            AppLogger(APP).info("recv app command quit.");
             break;
         } else if (strncasecmp(command.c_str(), "help", 4) == 0) {
             std::string HelpMessage = "<\r\n";
             HelpMessage.append(SERVER_APP_HELP_MESSGAE);
             size_t nWrite = ::send(info->m_nClientFd, HelpMessage.c_str(), HelpMessage.size(), 0);
-            log(APP).debug("write App command bytes %d", nWrite);
+            AppLogger(APP).debug("write App command bytes %d", nWrite);
         } else if (strncasecmp(command.c_str(), "version", 7) == 0) {
             std::string BuildRelease = "<\r\n";
             BuildRelease.append(MailEnv::getInstance().getBuildVersionDate());
             BuildRelease.append("\r\n.\r\n");
             size_t nWrite = ::send(info->m_nClientFd, (void *)BuildRelease.c_str(), BuildRelease.size(), 0);
-            log(APP).debug("write App command bytes %d", nWrite);
+            AppLogger(APP).debug("write App command bytes %d", nWrite);
         } else if (strncasecmp(command.c_str(), "status", 6) == 0) {
             const std::string BuildRelease = pServer->getMailServerStatus();
             size_t            nWrite       = ::send(info->m_nClientFd, (void *)BuildRelease.c_str(), BuildRelease.size(), 0);
-            log(APP).debug("write App command bytes %d", nWrite);
+            AppLogger(APP).debug("write App command bytes %d", nWrite);
         } else {
             size_t nWrite = ::send(info->m_nClientFd, "<\r\nUnSupported Command.\r\n.\r\n", 27, 0);
-            log(APP).debug("write App command bytes %d", nWrite);
+            AppLogger(APP).debug("write App command bytes %d", nWrite);
         }
     }
     close(info->m_nClientFd);
@@ -272,8 +270,7 @@ void MailServer::HandleRequest(ConnectionInfo *info) {
                 logger.warning("recv from client fd:%d error. %s\\r\\n", info->m_nClientFd, strerror(errno));
                 break;
             }
-        } else if (nRead == 0) {
-
+        } else if (nRead == 0) {    
             continue;
         } else {
             logger.info("recv body buffer from client fd:%d, %s state:%d", info->m_nClientFd, std::string(buf, nRead - 2), state);

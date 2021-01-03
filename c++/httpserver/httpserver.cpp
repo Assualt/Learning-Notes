@@ -79,7 +79,7 @@ http::Func RequestMapper::find(const std::string &RequestPath) {
     };
 }
 
-bool ClientThread::parseHeader(const ConnectionInfo *info, HttpRequest &request, HttpConfig *config) {
+bool ClientThread::parseHeader(ConnectionInfo *info, HttpRequest &request, HttpConfig *config) {
     char           temp[ BUF_SIZE ];
     bool           bFindBody = false;
     std::string    strLine, strKey, strVal;
@@ -89,21 +89,29 @@ bool ClientThread::parseHeader(const ConnectionInfo *info, HttpRequest &request,
     int            HeaderSize = 0;
     std::string    HttpVersion, RequestType, RequestPath;
     MyStringBuffer mybuf;
+
+#ifdef USE_OPENSSL
+    if (info->ssl && config->supportSSL()) {
+        fcntl(info->m_nClientFd, F_SETFD, info->m_nFDFlag);
+        logger.info("set client fd be block mode");
+    }
+#endif
     while (!bFindBody) {
         memset(temp, 0, BUF_SIZE);
-        int nRead = recvData(info->m_nClientFd, temp, BUF_SIZE, 0);
+        int nRead;
+
+        nRead = recvData(info, temp, BUF_SIZE, 0);
         if (nRead < 0) {
             if (errno == EAGAIN)
                 continue;
             else {
-                logger.info("recv data from fd:%d error", info->m_nClientFd);
+                logger.info("recv data from fd:%d error, read bytes:%d", info->m_nClientFd, nRead);
                 return false;
             }
         } else if (nRead == 0) {
             break;
         }
         // client fd is non block
-
         for (size_t i = 0; i < nRead;) {
             if (i + 1 < nRead && temp[ i ] == '\r' && temp[ i + 1 ] == '\n' && !bFindBody) {
                 if (LineCnt == 0) {
@@ -191,19 +199,17 @@ void ClientThread::ParseFirstLine(const std::string &line, std::string &HttpVers
         }
     }
 }
-void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *config, const ConnectionInfo *info) {
-
+void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *config, ConnectionInfo *info) {
     HttpRequest  request;
     HttpResponse response;
-
     if (!parseHeader(info, request, config)) {
         logger.info("disconnect from client:%d ...", info->m_nClientFd);
         http::Func iter = handlerMapping->find("/401");
         iter(request, response, *config);
-        size_t nWrite = response.WriteBytes(info->m_nClientFd);
+        int nWrite = response.WriteBytes(info);
+        info->disconnect();
         logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
                     request.getRequestPath(), request.getHttpVersion(), response.getStatusCode(), nWrite, request.get(UserAgent), request.get("Connection"));
-        close(info->m_nClientFd);
         return;
     }
 
@@ -212,11 +218,10 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
         if (!config->checkAuth(request.get(Authorization))) {
             http::Func iter = handlerMapping->find("/401");
             iter(request, response, *config);
-            size_t nWrite = response.WriteBytes(info->m_nClientFd);
+            int nWrite = response.WriteBytes(info);
             logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
                         request.getRequestPath(), request.getHttpVersion(), response.getStatusCode(), nWrite, request.get(UserAgent), request.get("Connection"));
-
-            close(info->m_nClientFd);
+            info->disconnect();
             return;
         }
     }
@@ -239,7 +244,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
             http::Func iter = handlerMapping->find("/#/");
             request.setRequestFilePath(basicRequest);
             iter(request, response, *config);
-            nWrite = response.WriteBytes(info->m_nClientFd);
+            nWrite = response.WriteBytes(info);
         } else {
             if (basicRequest.back() != '/')
                 basicRequest.append("/");
@@ -249,14 +254,14 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
                     request.setRequestFilePath(basicRequest + suffix);
                     http::Func iter = handlerMapping->find("/#/");
                     iter(request, response, *config);
-                    nWrite = response.WriteBytes(info->m_nClientFd);
+                    nWrite = response.WriteBytes(info);
                     break;
                 }
             }
             if (!redirectFile) {
                 http::Func iter = handlerMapping->find("/#//");
                 iter(request, response, *config);
-                nWrite = response.WriteBytes(info->m_nClientFd);
+                nWrite = response.WriteBytes(info);
             }
             // printf("%s\n", response.toResponseHeader());
         }
@@ -264,11 +269,11 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
         logger.info("request path:%s is not exists", basicRequest);
         http::Func iter = handlerMapping->find(request.getRequestPath(), recvHeaderMap);
         iter(request, response, *config);
-        nWrite = response.WriteBytes(info->m_nClientFd);
+        nWrite = response.WriteBytes(info);
     }
+    info->disconnect();
     logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
                 request.getRequestPath(), request.getHttpVersion(), response.getStatusCode(), nWrite, request.get(UserAgent), request.get("Connection"));
-    close(info->m_nClientFd);
 }
 
 ssize_t ClientThread::writeResponse(int client_fd, HttpResponse &response) {
@@ -277,21 +282,28 @@ ssize_t ClientThread::writeResponse(int client_fd, HttpResponse &response) {
     return writeData(client_fd, (void *)responseHeader.c_str(), responseHeader.size(), 0);
 }
 
-int ClientThread::recvData(int fd, void *buf, size_t n, int ops) {
-    return ::recv(fd, buf, n, ops);
+int ClientThread::recvData(ConnectionInfo *info, void *buf, size_t n, int ops) {
+#ifdef USE_OPENSSL
+    if (info->ssl)
+        return SSL_read(info->ssl, buf, n);
+    return ::recv(info->m_nClientFd, buf, n, ops);
+#endif
+    return ::recv(info->m_nClientFd, buf, n, ops);
 }
 int ClientThread::writeData(int fd, void *buf, size_t n, int ops) {
     return ::send(fd, buf, n, ops);
 }
 
-HttpServer::HttpServer(const std::string &strServerName, const std::string &strServerIP, const std::string &strServerDescription, int nPort)
-    : m_strServerName(strServerName)
-    , m_strServerIP(strServerIP)
-    , m_strServerDescription(strServerDescription)
-    , m_nPort(nPort)
+HttpServer::HttpServer()
+    : m_nPort(0)
     , m_nMaxListenClients(20)
     , m_nServerFd(-1)
     , m_nEpollTimeOut(10) {
+
+#ifdef USE_OPENSSL
+    ctx  = nullptr;
+    meth = nullptr;
+#endif
 }
 
 bool HttpServer::ExecForever() {
@@ -303,7 +315,7 @@ bool HttpServer::ExecForever() {
         logger.warning("setrlimit failed. %s", strerror(errno));
         return false;
     }
-    logger.info("set rlimit ok.");
+    logger.info("set rlimit %d ok.", m_nMaxListenClients);
 
     // 1.创建server socket 用作监听使用，使用TCP可靠的连接和 IPV4的形式进行事件进行监听，协议使用IPV4
     m_nServerFd = socket(PF_INET, SOCK_STREAM, 0);
@@ -318,7 +330,7 @@ bool HttpServer::ExecForever() {
     //     return false;
     // }
     // 设置端口为非阻塞模式
-    // int oldFlag = setFDnonBlock(m_nServerFd);
+    int oldFlag = setFDnonBlock(m_nServerFd);
     // 2.server端进行bind 并初始化server的地址结构体, 注意字节序的转化
     struct sockaddr_in server_addr;
     bzero(&server_addr, sizeof(server_addr));
@@ -336,6 +348,12 @@ bool HttpServer::ExecForever() {
     }
 
     logger.info("httpserver:%s listening at %s:%d ....", m_strServerName, m_strServerIP, m_nPort);
+#ifdef USE_OPENSSL
+    if (m_mConfig.supportSSL()) {
+        switchToSSLServer();
+        logger.info("init https safe server ok.");
+    }
+#endif
     // 1. epoll wait
     int epoll_fd = epoll_create(m_nMaxListenClients);
     // 2.定义并填充epoll_event,和监听连接接的server的所有epoll_events事件数组
@@ -367,16 +385,80 @@ bool HttpServer::ExecForever() {
                     logger.info("accept error. ");
                     continue;
                 }
-                int client_oldFlag = setFDnonBlock(client_fd);
-                event.events       = EPOLLIN | EPOLLET;
-                event.data.fd      = client_fd;
+                int            client_oldFlag = setFDnonBlock(client_fd);
+                ConnectionInfo info;
+                event.events  = EPOLLIN | EPOLLET;
+                event.data.fd = client_fd;
                 if ((ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event)) == -1) {
                     logger.info("failed to epoll_add client fd:%d , errmsg:%s", client_fd, strerror(errno));
                     continue;
                 }
+#ifdef USE_OPENSSL
+                if (m_mConfig.supportSSL()) {
+                    info.ssl = SSL_new(ctx);
+                    if (nullptr == info.ssl) {
+                        logger.info("ssl connect failed. closing transmission channel.");
+                        close(client_fd);
+                        continue;
+                    }
+                    if (0 == SSL_set_fd(info.ssl, client_fd)) {
+                        logger.warning("attach client fd:%d failed", client_fd);
+                        close(client_fd);
+                        continue;
+                    }
+                    bool isContinue = true;
+                    bool sslAccept  = false;
+                    while (isContinue) {
+                        if ((ret = SSL_accept(info.ssl)) != 1) {
+                            int icode = -1;
+                            int iret  = SSL_get_error(info.ssl, icode);
+                            if ((iret == SSL_ERROR_WANT_WRITE) || (iret == SSL_ERROR_WANT_READ)) {
+                                isContinue = true;
+                            } else {
+                                ERR_print_errors_fp(stderr);
+                                logger.info("ssl accept error with error %d %d %d", ret, iret, icode);
+                                break;
+                            }
+                        } else {
+                            sslAccept = true;
+                            break;
+                        }
+                    }
+                    if (sslAccept) {
+                        logger.info("ssl accept success. client cipher is:%s", SSL_get_cipher(info.ssl));
+
+                        X509 *client_cert = SSL_get_peer_certificate(info.ssl);
+                        if (client_cert != nullptr) {
+                            logger.warning("certificate error.");
+                            char *str = X509_NAME_oneline(X509_get_subject_name(client_cert), 0, 0);
+                            if (str != nullptr) {
+                                logger.warning("get subject from client fd:%d. %s.", client_fd, str);
+                                OPENSSL_free(str);
+                            }
+                            char *str1 = X509_NAME_oneline(X509_get_issuer_name(client_cert), 0, 0);
+                            if (str1 != nullptr) {
+                                logger.warning("get issuser from client fd:%d. %s", client_fd, str1);
+                                OPENSSL_free(str1);
+                            }
+                            X509_free(client_cert);
+                        } else {
+                            logger.info("can't get client certificate yet. ignore check here");
+                        }
+                        char buf[ 1024 ] = {0};
+                        int  nRead       = SSL_read(info.ssl, buf, 1024);
+                        close(client_fd);
+                        continue;
+                    } else {
+                        logger.info("ssl accept failed. closing transmission channel.");
+                        close(client_fd);
+                        continue;
+                    }
+                }
+#endif
+
                 logger.debug("recv client:%d from address %s:%d success.", client_fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
                 current_fds++;
-                ConnectionInfo info; //{inet_ntoa(client_addr.sin_addr), m_strServerRoot, ntohs(client_addr.sin_port), current_fd, client_oldFlag};
+                //{inet_ntoa(client_addr.sin_addr), m_strServerRoot, ntohs(client_addr.sin_port), current_fd, client_oldFlag};
                 info.m_strConnectIP  = inet_ntoa(client_addr.sin_addr);
                 info.m_strServerRoot = m_mConfig.getServerRoot();
                 info.m_nPort         = ntohs(client_addr.sin_port);
@@ -401,7 +483,9 @@ bool HttpServer::ExecForever() {
                     // tempThread.join();
                 }
             } else if (event_client_array[ i ].events & EPOLLOUT) {
-
+                int current_fd = event_client_array[ i ].data.fd;
+                // ConnectionInfoMap.erase(current_fd);
+                // logger.info("closing transmission channel. %d", current_fd);
             } else {
                 int fd = event_client_array[ i ].data.fd;
                 close(fd);
@@ -416,10 +500,69 @@ bool HttpServer::ExecForever() {
     return false;
 }
 
+#ifdef USE_OPENSSL
+bool HttpServer::switchToSSLServer() {
+    SSLConfig config = m_mConfig.getSSLConfig();
+    // ssl init
+#if OPENSSL_VERSION_NUMBER < 0x10100003L
+    OPENSSL_config(nullptr);
+    // Register the error strings for libcrypto & libssl
+    SSL_load_error_strings();
+
+    // Register the available ciphers and digests
+    SSL_library_init();
+
+    OpenSSL_add_all_algorithms();
+#else
+    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, nullptr);
+    ERR_clear_error();
+#endif
+    if (config.protocol == Type_TLS1_1)
+        meth = (SSL_METHOD *)TLSv1_1_server_method();
+    else if (config.protocol == Type_TLS1_2)
+        meth = (SSL_METHOD *)TLSv1_2_server_method();
+    else
+        meth = (SSL_METHOD *)SSLv23_method();
+    ctx = SSL_CTX_new(meth);
+    if (nullptr == ctx) {
+        logger.warning("create ssl ctx for server failed.");
+        return false;
+    }
+    // 要求校验对方的证书
+    // SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, nullptr);
+    // 夹在 CA证书
+    // SSL_CTX_load_verify_locations(ctx, config.ca.c_str(), nullptr);
+
+    // load certificate
+    if (SSL_CTX_use_certificate_file(ctx, config.certificate.c_str(), SSL_FILETYPE_PEM) == 0) {
+        ERR_print_errors_fp(stderr);
+        return false;
+    }
+    // load private file
+    if (SSL_CTX_use_PrivateKey_file(ctx, config.certificate_private_key.c_str(), SSL_FILETYPE_PEM) == 0) {
+        ERR_print_errors_fp(stderr);
+        return false;
+    }
+    // check private key
+    if (!SSL_CTX_check_private_key(ctx)) {
+        logger.error("Private key does not match the certificate public key");
+        return false;
+    }
+    // SSL_CTX_set_cipher_list(ctx, config.ciphers.c_str());
+    SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
+    return true;
+}
+
+#endif
+
 bool HttpServer::loadHttpConfig(const std::string &strHttpServerConfig) {
     logger.info("begin to load config %s ...", strHttpServerConfig);
     bool ret = m_mConfig.loadConfig(strHttpServerConfig);
     logger.info("end to load config %s ...", strHttpServerConfig);
+
+    m_strServerIP       = m_mConfig.getServerHost();
+    m_nPort             = m_mConfig.getServerPort();
+    m_nMaxListenClients = m_mConfig.getMaxAcceptClient();
     return ret;
 }
 int HttpServer::setFDnonBlock(int fd) {

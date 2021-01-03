@@ -60,9 +60,9 @@ typedef std::map<std::string, Func> RequestMapping;
 class ClientThread {
 public:
     // ClientThread(int serverFd, int clientFd);
-    static void    handleRequest(RequestMapper *handlerMapping, HttpConfig *config, const ConnectionInfo *info);
-    static bool    parseHeader(const ConnectionInfo *info, HttpRequest &request, HttpConfig *config);
-    static int     recvData(int fd, void *buf, size_t n, int ops);
+    static void    handleRequest(RequestMapper *handlerMapping, HttpConfig *config, ConnectionInfo *info);
+    static bool    parseHeader(ConnectionInfo *info, HttpRequest &request, HttpConfig *config);
+    static int     recvData(ConnectionInfo *info, void *buf, size_t n, int ops);
     static int     writeData(int fd, void *buf, size_t n, int ops);
     static ssize_t writeResponse(int client_fd, HttpResponse &response);
 
@@ -74,7 +74,7 @@ private:
 
 class HttpServer {
 public:
-    HttpServer(const std::string &strServerName, const std::string &strServerIP = "127.0.0.1", const std::string &strServerDescription = "A simple Http Server", int nPort = 80);
+    HttpServer();
 
 public:
     bool           addRequestMapping(const std::string &path, Func &&F);
@@ -82,8 +82,7 @@ public:
     RequestMapper &getMapper() {
         return m_mapper;
     }
-    bool loadHttpConfig(const std::string &strHttpServerConfig = "httpd.conf");
-
+    bool        loadHttpConfig(const std::string &strHttpServerConfig = "httpd.conf");
     HttpConfig &getHttpConfig() {
         return m_mConfig;
     }
@@ -95,10 +94,13 @@ public:
     std::string getServerRoot() {
         return m_mConfig.getServerRoot();
     }
+#ifdef USE_OPENSSL
+    bool switchToSSLServer();
 
-    void setServerRoot(const std::string &strServerRoot) {
-        m_mConfig.setServerRoot(strServerRoot);
-    }
+private:
+    SSL_METHOD *meth;
+    SSL_CTX *   ctx;
+#endif
 
 private:
     std::string m_strServerName;
