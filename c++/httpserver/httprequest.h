@@ -7,6 +7,9 @@
 namespace http {
 class HttpRequest {
 public:
+    HttpRequest()
+        : m_strPostParams("") {
+    }
     typedef std::vector<std::pair<std::string, std::string>> ResourceMap;
     template <class T> void                                  setHeader(const std::string &key, const T &val) {
         std::string tmpVal = std::stringstream(val).str();
@@ -40,6 +43,10 @@ public:
             os << obj.m_strPostParams << CTRL;
         return os;
     }
+    void setParams(const std::map<std::string, std::string> &headerMap);
+
+    std::string                        getParams(const std::string &key);
+    std::map<std::string, std::string> getAllParams() const;
 
 private:
     std::string m_strRequestType;
@@ -48,8 +55,9 @@ private:
     std::string m_strRequestPath;
     std::string m_strRequestFilePath;
 
-    ResourceMap m_vReqestHeader;
-    std::string m_strRequestHost;
-    std::string m_strRangeBytes;
+    ResourceMap                        m_vReqestHeader;
+    std::string                        m_strRequestHost;
+    std::string                        m_strRangeBytes;
+    std::map<std::string, std::string> m_HeaderMap;
 };
 } // namespace http

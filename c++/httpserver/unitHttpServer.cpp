@@ -1,8 +1,8 @@
 #include "httpserver.h"
+#include "json.hpp"
 #include <cmdline.hpp>
 #include <dirent.h>
 #include <fstream>
-#include <regex>
 #include <sys/stat.h>
 using namespace http;
 
@@ -126,8 +126,35 @@ bool AuthRequiredIndexPattern(http::HttpRequest &request, http::HttpResponse &re
     return true;
 }
 
+/// login/{user}/{id}
+bool AuthLoginIndexPattern(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
+    std::string        user = request.getParams("user");
+    int                id   = atoi(request.getParams("id").c_str());
+    json::Json::object obj;
+    auto               kvalmap = request.getAllParams();
+    for (auto &iter : kvalmap) {
+        obj.insert(iter);
+    }
+    json::Json retJson({{"ret", 200}, {"errmsg", ""}, {"data", json::Json(obj)}, {"postdata", request.getPostParams()}});
+
+    response.setStatusMessage(200, request.getHttpVersion(), "OK");
+    response.setHeader(ContentType, "application/json");
+    response.setHeader(ContentLength, retJson.dump().size());
+    response.setBodyString(retJson.dump());
+    return true;
+}
+
+bool MethodAllowIndexPatterm(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
+    response.setStatusMessage(405, request.getHttpVersion(), "Method Not Allowed");
+    response.setHeader(ContentType, "text/html");
+    std::string methodAllowString = METHODNOTALLOWED;
+    response.setHeader(ContentLength, methodAllowString.size());
+    response.setBodyString(methodAllowString);
+    return true;
+}
+
 int main(int argc, char **argv) {
-    logger.BasicConfig("%(thread)s %(levelname)s %(ctime)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S,%s", "", "a");
+    logger.BasicConfig("%(thread)s %(ctime)s %(levelname)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S,%s", "", "a");
 
     cmdline::parser CommandParse;
     CommandParse.add("version", 'v', "show this HttpServer Version and exit");
@@ -155,8 +182,10 @@ int main(int argc, char **argv) {
         mapper.addRequestMapping({"/404"}, std::move(NotFoundIndexPatter));
         mapper.addRequestMapping({"/#/"}, std::move(DefaultIndexPattern));
         mapper.addRequestMapping({"/#//"}, std::move(ListDirIndexPatter));
+        mapper.addRequestMapping({"/405"}, std::move(MethodAllowIndexPatterm));
         mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
         mapper.addRequestMapping({"/400"}, std::move(BadRequestIndexPattern));
+        mapper.addRequestMapping({"/login/{user}/{id}", "POST", true}, std::move(AuthLoginIndexPattern));
         server.StartThreads(CommandParse.get<int>("threads_count"));
         server.ExecForever();
     }

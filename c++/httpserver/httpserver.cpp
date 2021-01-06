@@ -21,11 +21,18 @@ RequestMapper::Key::Key(const std::string &pattern, const std::string &method, b
         }
     }
 }
-bool RequestMapper::Key::MatchFilter(const std::string &reqPath, std::map<std::string, std::string> &valMap) {
+bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::string &reqType, std::map<std::string, std::string> &valMap, bool &MethodAllowed) {
+    if (strcasecmp(reqType.c_str(), method.c_str()) == 0)
+        MethodAllowed = true;
+    else
+        MethodAllowed = false;
     if (!needval)
         return reqPath == pattern;
     else {
-        auto itemList    = utils::split(reqPath, '/');
+        std::string path = reqPath;
+        if (reqPath.find("?") != std::string::npos)
+            path = path.substr(0, path.find("?"));
+        auto itemList    = utils::split(path, '/');
         auto patternList = utils::split(pattern, '/');
         // reqpath: /index/
         // pattern: /index/{user}/{pass}  false
@@ -47,7 +54,9 @@ bool RequestMapper::Key::MatchFilter(const std::string &reqPath, std::map<std::s
     }
 }
 
-bool RequestMapper::Key::MatchFilter(const std::string &reqPath) {
+bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::string &reqType, bool &MethodAllowed) {
+    if (strcasecmp(reqType.c_str(), method.c_str()) == 0)
+        MethodAllowed = true;
     return reqPath == pattern;
 }
 
@@ -55,19 +64,25 @@ void RequestMapper::addRequestMapping(const Key &key, http::Func &&F) {
     m_vRequestMapper.push_back(std::pair<RequestMapper::Key, http::Func>(key, F));
 }
 
-http::Func RequestMapper::find(const std::string &RequestPath, std::map<std::string, std::string> &resultMap) {
+http::Func RequestMapper::find(const std::string &RequestPath, const std::string &reqType, std::map<std::string, std::string> &resultMap) {
     for (auto iter : m_vRequestMapper) {
-        if (iter.first.MatchFilter(RequestPath, resultMap)) {
-            logger.debug("request path:%s, handle path:%s", RequestPath, iter.first.pattern);
+        bool MethodAllowed;
+        if (iter.first.MatchFilter(RequestPath, reqType, resultMap, MethodAllowed)) {
+            logger.debug("request path:%s, handle path:%s, method:%s allow:%d", RequestPath, iter.first.pattern, reqType, MethodAllowed);
+            if (!MethodAllowed)
+                return find("/405", "GET");
             return iter.second;
         }
     }
-    return find(NOTFOUND, resultMap);
+    return find(NOTFOUND, reqType, resultMap);
 }
-http::Func RequestMapper::find(const std::string &RequestPath) {
+http::Func RequestMapper::find(const std::string &RequestPath, const std::string &reqType) {
     for (auto iter : m_vRequestMapper) {
-        if (iter.first.MatchFilter(RequestPath)) {
-            logger.debug("request path:%s, handle path:%s", RequestPath, iter.first.pattern);
+        bool MethodAllowed;
+        if (iter.first.MatchFilter(RequestPath, reqType, MethodAllowed)) {
+            logger.debug("request path:%s, handle path:%s, method:%s allow:%d", RequestPath, iter.first.pattern, reqType, MethodAllowed);
+            if (!MethodAllowed)
+                return find("/405", "GET");
             return iter.second;
         }
     }
@@ -159,8 +174,11 @@ bool ClientThread::parseHeader(ConnectionInfo *info, HttpRequest &request, HttpC
             }
         }
     }
-    if (strcasecmp(RequestType.c_str(), "post") == 0)
-        request.setPostParams(mybuf.toString());
+    if (strcasecmp(RequestType.c_str(), "post") == 0) {
+        if (recvSize != 0)
+            request.setPostParams(mybuf.toString());
+        logger.debug("recv body size:%d", recvSize);
+    }
     return true;
 }
 
@@ -204,7 +222,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
     HttpResponse response;
     if (!parseHeader(info, request, config)) {
         logger.info("disconnect from client:%d ...", info->m_nClientFd);
-        http::Func iter = handlerMapping->find("/401");
+        http::Func iter = handlerMapping->find("/400", request.getRequestType());
         iter(request, response, *config);
         int nWrite = response.WriteBytes(info);
         info->disconnect();
@@ -216,7 +234,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
     // check the access right of html
     if (config->needAuth()) {
         if (!config->checkAuth(request.get(Authorization))) {
-            http::Func iter = handlerMapping->find("/401");
+            http::Func iter = handlerMapping->find("/401", request.getRequestType());
             iter(request, response, *config);
             int nWrite = response.WriteBytes(info);
             logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
@@ -241,7 +259,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
         // resource
         logger.debug("requst path:%s is exists", basicRequest);
         if (!utils::ISDir(basicRequest)) {
-            http::Func iter = handlerMapping->find("/#/");
+            http::Func iter = handlerMapping->find("/#/", request.getRequestType());
             request.setRequestFilePath(basicRequest);
             iter(request, response, *config);
             nWrite = response.WriteBytes(info);
@@ -252,14 +270,14 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
             for (auto &suffix : config->getSuffixSet()) {
                 if ((redirectFile = utils::FileExists(basicRequest + suffix)) == true) {
                     request.setRequestFilePath(basicRequest + suffix);
-                    http::Func iter = handlerMapping->find("/#/");
+                    http::Func iter = handlerMapping->find("/#/", request.getRequestType());
                     iter(request, response, *config);
                     nWrite = response.WriteBytes(info);
                     break;
                 }
             }
             if (!redirectFile) {
-                http::Func iter = handlerMapping->find("/#//");
+                http::Func iter = handlerMapping->find("/#//", request.getRequestType());
                 iter(request, response, *config);
                 nWrite = response.WriteBytes(info);
             }
@@ -267,7 +285,8 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
         }
     } else {
         logger.info("request path:%s is not exists", basicRequest);
-        http::Func iter = handlerMapping->find(request.getRequestPath(), recvHeaderMap);
+        http::Func iter = handlerMapping->find(request.getRequestPath(), request.getRequestType(), recvHeaderMap);
+        request.setParams(recvHeaderMap);
         iter(request, response, *config);
         nWrite = response.WriteBytes(info);
     }

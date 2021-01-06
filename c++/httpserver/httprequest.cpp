@@ -16,6 +16,31 @@ std::string HttpRequest::toStringHeader() {
     return ss.str();
 }
 
+void HttpRequest::setParams(const std::map<std::string, std::string> &headerMap) {
+    for (auto iter : headerMap) {
+        m_HeaderMap.insert(iter);
+    }
+    size_t nPos = m_strRequestPath.find("?");
+    if (nPos != std::string::npos) {
+        std::string strKey, strVal;
+        bool        bFindKey = false;
+        for (int i = nPos + 1; i < m_strRequestPath.size(); ++i) {
+            if (m_strRequestPath[ i ] == '=')
+                bFindKey = true;
+            else if (m_strRequestPath[ i ] == '&') {
+                bFindKey = false;
+                m_HeaderMap.insert({strKey, strVal});
+                strKey = strVal = "";
+            } else if (bFindKey) {
+                strVal.push_back(m_strRequestPath[ i ]);
+            } else if (!bFindKey)
+                strKey.push_back(m_strRequestPath[ i ]);
+        }
+        if(!strKey.empty())
+            m_HeaderMap.insert({strKey, strVal});
+    }
+}
+
 std::string HttpRequest::get(const std::string &key) {
     for (auto item : m_vReqestHeader) {
         if (strcasecmp(item.first.c_str(), key.c_str()) == 0)
@@ -55,8 +80,16 @@ std::string HttpRequest::getRequestFilePath() const {
     return m_strRequestFilePath;
 }
 void HttpRequest::setRequestFilePath(const std::string &strRequestFilePath) {
-
     m_strRequestFilePath = UrlUtils::UrlDecode(strRequestFilePath);
+}
+
+std::string HttpRequest::getParams(const std::string &key) {
+    if (!m_HeaderMap.count(key))
+        return "";
+    return m_HeaderMap.at(key);
+}
+std::map<std::string, std::string> HttpRequest::getAllParams() const {
+    return m_HeaderMap;
 }
 
 } // namespace http
