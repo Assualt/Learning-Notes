@@ -50,8 +50,12 @@ using namespace std;
 #include <exception>
 #define TempFile ".httpclient.download"
 
+// 如果 接收数据大小大于 50M 如果没有指定 output,则提示用户不会展示
+#define MAX_RECV_BYTES 50 * 1024 * 1024
+
 #include "threadpool.h"
 
+using cstring = const std::string &;
 namespace http {
 typedef enum { EncodingLength, EncodingChunk, EncodingGzip, EncodingOther } Encoding;
 
@@ -65,25 +69,25 @@ template <class T> std::string toString(const T &val) {
 
 enum HttpVersion { HTTP_1_0, HTTP_1_1 };
 
-static std::string _ltrim(const std::string &src, char ch = ' ') {
+static std::string _ltrim(cstring src, char ch = ' ') {
     std::string           temp = src;
     std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [ &ch ](char c) { return ch != c; });
     temp.erase(temp.begin(), p);
     return temp;
 }
 
-static std::string _rtrim(const std::string &src, char ch = ' ') {
+static std::string _rtrim(cstring src, char ch = ' ') {
     string                   temp = src;
     string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [ &ch ](char c) { return ch != c; });
     temp.erase(p.base(), temp.end());
     return temp;
 }
 
-static std::string trim(const std::string &src, char ch = ' ') {
+static std::string trim(cstring src, char ch = ' ') {
     return _rtrim(_ltrim(src, ch), ch);
 }
 
-static size_t chunkSize(const std::string &strChunkSize) {
+static size_t chunkSize(cstring strChunkSize) {
     std::string temp;
     for (size_t i = 0; i < strChunkSize.size(); i++) {
         if ((strChunkSize[ i ] >= '0' && strChunkSize[ i ] <= '9') || (strChunkSize[ i ] >= 'A' && strChunkSize[ i ] <= 'F') || (strChunkSize[ i ] >= 'a' && strChunkSize[ i ] <= 'f')) {
@@ -112,7 +116,7 @@ public:
     std::string netloc;
 
 public:
-    HttpUrl(const std::string &url)
+    HttpUrl(cstring url)
         : fullurl(url)
         , scheme("http")
         , port(80) {
@@ -120,7 +124,7 @@ public:
     }
     HttpUrl() = default;
 
-    void resetUrl(const std::string &url) {
+    void resetUrl(cstring url) {
         fullurl = url;
         parse();
     }
@@ -190,7 +194,7 @@ public:
         : m_vReqestHeader(headerMap) {
     }
 
-    template <class T> void setHeader(const std::string &key, const T &val) {
+    template <class T> void setHeader(cstring key, const T &val) {
         if (key == "Host")
             m_strRequestHost = utils::toString(val);
         else if (key == "Range")
@@ -198,11 +202,11 @@ public:
         else
             m_vReqestHeader.push_back(std::pair<std::string, std::string>(key, utils::toString(val)));
     }
-    void setRequestType(const std::string &reqType) {
+    void setRequestType(cstring reqType) {
         m_strRequestType = reqType;
     }
 
-    void setRequestPath(const std::string &reqPath) {
+    void setRequestPath(cstring reqPath) {
         m_strRequestPath = reqPath;
     }
 
@@ -210,11 +214,11 @@ public:
         return m_strRequestPath;
     }
 
-    void setHttpVersion(const std::string &httpversion) {
+    void setHttpVersion(cstring httpversion) {
         m_strRequestHttpVersion = httpversion;
     }
 
-    void setParams(const std::string &params) {
+    void setParams(cstring params) {
         m_strRequestParams = params;
     }
 
@@ -264,7 +268,7 @@ public:
         , m_nBodyDecodeBytes(0)
         , m_bDecodeBodyStatus(false) {
     }
-    void setBody(const std::string &key, const std::string &val) {
+    void setBody(cstring key, cstring val) {
         if (val.empty())
             m_vResponseBody.back().second += key;
         else
@@ -292,7 +296,7 @@ public:
     size_t getResponseDecodeBytesSize() const {
         return m_nBodyDecodeBytes;
     }
-    std::string getResponseItem(const std::string &key) {
+    std::string getResponseItem(cstring key) {
         for (auto &item : m_vResponseBody) {
             if (strcasecmp(item.first.c_str(), key.c_str()) == 0)
                 return item.second;
@@ -402,7 +406,7 @@ public:
     HttpResult()
         : m_nStatusCode(200) {
     }
-    HttpResult(int code, const std::string &text, const std::string &relayError)
+    HttpResult(int code, cstring text, cstring relayError)
         : m_nStatusCode(code)
         , m_strText(text)
         , m_strRelayError(relayError) {
@@ -497,18 +501,17 @@ private:
 
     void printSSLConnection(SSL *ssl) {
         X509 *cert = SSL_get_peer_certificate(ssl);
-        if(cert == nullptr){
+        if (cert == nullptr) {
             logger.warning("get server's certifiacte error. ");
             return;
         }
         X509_NAME *name = X509_get_subject_name(cert);
-        if(name == nullptr){
+        if (name == nullptr) {
             logger.warning("get server's x509 error. ");
             return;
         }
-        char buf[8192] = {0};
+        char buf[ 8192 ] = {0};
         X509_NAME_oneline(name, buf, 8191);
-        
 
         X509_free(cert);
         logger.info("server subject name:%s", buf);
@@ -636,7 +639,7 @@ private:
                         strVal = utils::trim(strVal);
                         logger.debug("Find Response Body Header: %s->%s", strKey, strVal);
                         if (strcasecmp(strKey.c_str(), ContentLength) == 0) {
-                            BodySizeInResponse = atoi(strVal.c_str());
+                            BodySizeInResponse = atol(strVal.c_str());
                             EncodingType       = EncodingLength;
                         } else if (strcasecmp(strKey.c_str(), TransferEncoding) == 0 && strcasecmp(strVal.c_str(), "chunked") == 0) {
                             EncodingType = EncodingChunk;
@@ -696,7 +699,7 @@ private:
         }
         return EncodingType;
     }
-    void ParseHeaderLine(const std::string &line, std::string &key, std::string &val) {
+    void ParseHeaderLine(cstring line, std::string &key, std::string &val) {
         int nBlankCnt = 0;
         key.clear();
         val.clear();
@@ -711,7 +714,7 @@ private:
         }
     }
 
-    void ParseFirstLine(const std::string &line, std::string &HttpVersion, int &StatusCode, std::string &StatusMessage) {
+    void ParseFirstLine(cstring line, std::string &HttpVersion, int &StatusCode, std::string &StatusMessage) {
         int nBlankCnt = 0;
         StatusCode    = 0;
         for (size_t i = 0; i < line.size(); i++) {
@@ -731,7 +734,7 @@ private:
     }
 
 public:
-    ssize_t read(HttpResponse &Response) {
+    ssize_t read(HttpResponse &Response, cstring outfile) {
         auto    tBegin = std::chrono::system_clock::now();
         char    tempBuf[ MAX_SIZE ];
         ssize_t HeaderSize = 0, BodySize = 0;
@@ -754,18 +757,57 @@ public:
         recvBodySize += BodySize;
         if (EncodingType == EncodingLength) {
             nTotal = nRead;
-        } else if (EncodingType == EncodingChunk)
+        } else if (EncodingType == EncodingChunk) {
             nTotal = nRead + BodySize;
+            // write bytes header first
+            if (!Response.getResponseItem(ContentEncoding).empty()) {
+                Response.tryDecodeBody();
+            }
+            std::ofstream fout;
+            if (!outfile.empty()) {
+                fout.open(outfile.c_str(), std::ios::binary | std::ios::out);
+                if (!fout.is_open()) {
+                    logger.warning("open %s file failed. err:%s", outfile, strerror(errno));
+                    return nTotal;
+                } else {
+                    if (Response.BodyIsDecoded())
+                        fout << Response.getResponseText();
+                    else
+                        Response.getResponseBytes(fout);
+                    fout.close();
+                }
+            }
+        }
         if (LeftSize <= 0 && EncodingType == EncodingLength) {
             logger.debug("Request Finished.");
         } else if (EncodingType == EncodingLength) {
+            bool          Appended = false;
+            std::ofstream fout;
+            if (!outfile.empty()) {
+                Appended = true;
+                fout.open(outfile.c_str(), std::ios::binary | std::ios::out);
+                if (!fout.is_open()) {
+                    logger.warning("open %s file failed. err:%s", outfile, strerror(errno));
+                    return nTotal;
+                } else {
+                    // write bytes header first
+                    Response.getResponseBytes(fout);
+                }
+            } else if (outfile.empty() && BodySizeInResponse >= MAX_RECV_BYTES) {
+                logger.warning("response bytes %d is out of range(%d). data is not shown. use -o output instead", BodySizeInResponse, MAX_RECV_BYTES);
+                Appended = false;
+            } else {
+                Appended = true;
+            }
             while (LeftSize > 0) {
                 memset(tempBuf, 0, MAX_SIZE);
                 nRead = recvData(m_nConnectFd, tempBuf, MAX_SIZE, 0);
                 if (nRead <= 0)
                     break;
-
-                Response.WriteBodyBytes(tempBuf, nRead);
+                if (Appended && !fout.is_open()) // < limit
+                    Response.WriteBodyBytes(tempBuf, nRead);
+                else if (Appended && fout.is_open()) // 直接写入文件
+                    fout.write(tempBuf, nRead);
                 recvBodySize += nRead;
                 nTotal += nRead;
                 LeftSize -= nRead;
@@ -778,6 +820,8 @@ public:
                              "recvBodySize:%d, speed:%.2f kb/s left time:%.2fs",
                              Progress, nRead, LeftSize, recvBodySize, speed, leftTime);
             }
+            if (fout.is_open())
+                fout.close();
         } else if (EncodingType == EncodingGzip) {
             while (1) {
                 memset(tempBuf, 0, MAX_SIZE);
@@ -845,7 +889,7 @@ public:
 #endif
     }
 
-    bool connect(const std::string &url) {
+    bool connect(cstring url) {
         return connect(HttpUrl(url));
     }
 
@@ -995,7 +1039,7 @@ public:
         return m_strErrorString;
     }
 
-    void setRequestType(const std::string &RequestType) {
+    void setRequestType(cstring RequestType) {
         m_strRequestType = RequestType;
     }
 
@@ -1036,6 +1080,7 @@ protected:
     SocketClient                          m_SocketClient;
     std::string                           m_strRequestHost;
     std::threadpool                       m_DownloadsThreadPool;
+    std::string                           m_strOutputFile;
 
 public:
     class DownloadThreadMgr {
@@ -1056,17 +1101,17 @@ public:
                 ss << "bytes=" << nBegin << "-" << nEnd;
                 return ss.str();
             }
-            void setRequestHeader(const std::string &header) {
+            void setRequestHeader(cstring header) {
                 strRequstHeader = header;
             }
-            void setThreadTmpFile(const std::string &tmpFile) {
+            void setThreadTmpFile(cstring tmpFile) {
                 strTmpFile = tmpFile;
             }
-            void setReqUrl(const std::string &strUrl) {
+            void setReqUrl(cstring strUrl) {
                 strReqUrl = strUrl;
             }
         };
-        DownloadThreadMgr(ssize_t FileLength, int nThreadCount, const std::string &reqUrl, HttpRequest &RequestHeader, const std::string &strDownloadPath)
+        DownloadThreadMgr(ssize_t FileLength, int nThreadCount, cstring reqUrl, HttpRequest &RequestHeader, cstring strDownloadPath)
             : m_nThreadCount(nThreadCount)
             , m_strDownLoadFile(strDownloadPath)
             , m_nReceivedBytes(0) {
@@ -1116,10 +1161,10 @@ public:
                             return;
                         }
 
-                        std::string        threadName      = "Thread " + to_string(index);
-                        auto               ThreadtimeBegin = std::chrono::system_clock::now();
-                        const RangeInfo &  tempRangeInfo   = this->m_vthreadsInfo[ index ].second;
-                        const std::string &ThreadName      = this->m_vthreadsInfo[ index ].first;
+                        std::string      threadName      = "Thread " + to_string(index);
+                        auto             ThreadtimeBegin = std::chrono::system_clock::now();
+                        const RangeInfo &tempRangeInfo   = this->m_vthreadsInfo[ index ].second;
+                        cstring          ThreadName      = this->m_vthreadsInfo[ index ].first;
 
                         ssize_t nReadBytes = tempRangeInfo.nEnd - tempRangeInfo.nBegin;
                         // std::cout << "Requst Header:\n" << tempRangeInfo.strRequstHeader << " -->" << nReadBytes << std::endl;
@@ -1201,9 +1246,9 @@ public:
                 return false;
             int n = 0;
             for (int i = 0; i < m_nThreadCount; i++) {
-                const std::string &resultTmpFile = m_vthreadsInfo[ i ].second.strTmpFile;
-                FILE *             fd            = fopen(resultTmpFile.c_str(), "rb");
-                char               ch;
+                cstring resultTmpFile = m_vthreadsInfo[ i ].second.strTmpFile;
+                FILE *  fd            = fopen(resultTmpFile.c_str(), "rb");
+                char    ch;
 
                 if (fd == nullptr)
                     continue;
@@ -1228,7 +1273,11 @@ public:
         std::mutex                                     m_lock;
     };
 
-    HttpResult Request(const std::string &reqUrl, bool bRedirect = false, bool verbose = false) {
+    void setOutputFile(cstring file) {
+        m_strOutputFile = file;
+    }
+
+    HttpResult Request(cstring reqUrl, bool bRedirect = false, bool verbose = false) {
         HttpUrl tempUrl(reqUrl);
     request:
         m_Response.clear();
@@ -1258,7 +1307,7 @@ public:
         ssize_t nWrite = m_SocketClient.write(HttpRequestString.c_str(), HttpRequestString.size());
         if (nWrite != HttpRequestString.size())
             return HttpResult(500, "", "Write data to server error");
-        ssize_t nRead = m_SocketClient.read(m_Response);
+        ssize_t nRead = m_SocketClient.read(m_Response, m_strOutputFile);
         if (verbose) {
             std::cout << "* Response Body:\n" << m_Response;
             std::cout << "------------------\n";
@@ -1278,17 +1327,15 @@ public:
 
         if (strcasecmp(m_SocketClient.getRequestType().c_str(), "head") == 0) {
             logger.debug("Requst Header Only.");
-        } else if (m_Response.getResponseBytesSize() == 0 && atoi(m_Response.getResponseItem("code").c_str()) / 100 != 3) {
+        } else if (m_Response.getResponseBytesSize() == 0 && atoi(m_Response.getResponseItem("code").c_str()) / 100 != 2) {
             logger.info("get response data is empty.");
             return HttpResult(500, "", "Can't get any data from url");
-        } else if (!m_Response.getResponseItem(ContentEncoding).empty()) {
-            m_Response.tryDecodeBody();
         }
 
         return HttpResult(atoi(m_Response.getResponseItem("code").c_str()), m_Response.getResponseText(), m_Response.getResponseItem("message"));
     }
 
-    std::string GetRedirectLocation(const std::string &strLocation, const std::string &RequestPath) {
+    std::string GetRedirectLocation(cstring strLocation, cstring RequestPath) {
         std::string strTempLocation;
         // remove #fragment
         std::string strLocationWithOutFragment = strLocation;
@@ -1309,26 +1356,26 @@ public:
         return strTempLocation;
     }
 
-    HttpResult Get(const std::string &reqUrl, bool bRedirect = false, bool verbose = false) {
+    HttpResult Get(cstring reqUrl, bool bRedirect = false, bool verbose = false) {
         m_ReqHeader.setRequestType("GET");
         m_SocketClient.setRequestType("GET");
         return Request(reqUrl, bRedirect, verbose);
     }
 
-    HttpResult Post(const std::string &reqUrl, const std::string &strParams, bool bRedirect = false, bool verbose = false) {
+    HttpResult Post(cstring reqUrl, cstring strParams, bool bRedirect = false, bool verbose = false) {
         m_ReqHeader.setRequestType("POST");
         m_SocketClient.setRequestType("POST");
         m_ReqHeader.setParams(strParams);
         return Request(reqUrl, bRedirect, verbose);
     }
 
-    HttpResult Head(const std::string &reqUrl, bool verbose = false) {
+    HttpResult Head(cstring reqUrl, bool verbose = false) {
         m_ReqHeader.setRequestType("HEAD");
         m_SocketClient.setRequestType("HEAD");
         return Request(reqUrl, false, verbose);
     }
 
-    void SaveResultToFile(const std::string &fileName) {
+    void SaveResultToFile(cstring fileName) {
         if (m_Response.getResponseBytesSize() == 0) {
             logger.warning("Download File bytes is empty. skip download");
             return;
@@ -1346,7 +1393,7 @@ public:
         fout.close();
     }
 
-    void setBasicAuthUserPass(const std::string &user, const std::string &passwd) {
+    void setBasicAuthUserPass(cstring user, cstring passwd) {
         std::stringstream ss;
         ss << user << ":" << passwd;
         std::string Base64String;
@@ -1354,23 +1401,23 @@ public:
         this->setHeader(Authorization, "Basic " + Base64String);
     }
 
-    void setUserAgent(const std::string &AgentVal) {
+    void setUserAgent(cstring AgentVal) {
         this->setHeader(UserAgent, AgentVal);
     }
 
-    void setContentType(const std::string &ContentTypeVal) {
+    void setContentType(cstring ContentTypeVal) {
         this->setHeader(ContentType, ContentTypeVal);
     }
 
-    void setAcceptLanguage(const std::string &AcceptLanguageVal) {
+    void setAcceptLanguage(cstring AcceptLanguageVal) {
         this->setHeader(AcceptLanguage, AcceptLanguageVal);
     }
 
-    void setAcceptEncoding(const std::string &AcceptEncodingVal) {
+    void setAcceptEncoding(cstring AcceptEncodingVal) {
         this->setHeader(AcceptEncoding, AcceptEncodingVal);
     }
 
-    void setAccept(const std::string &AcceptVal) {
+    void setAccept(cstring AcceptVal) {
         this->setHeader(Accept, AcceptVal);
     }
 
@@ -1380,7 +1427,7 @@ public:
         else if (version == utils::HTTP_1_1)
             this->m_ReqHeader.setHttpVersion(HTTP1_1);
     }
-    template <class T> void setHeader(const std::string &key, const T &val) {
+    template <class T> void setHeader(cstring key, const T &val) {
         this->m_ReqHeader.setHeader(key, val);
     }
 
@@ -1388,7 +1435,7 @@ public:
         m_SocketClient.setConnectTimeout(nSeconds);
     }
 
-    void setCookie(const std::string &strCookie) {
+    void setCookie(cstring strCookie) {
         this->setHeader(Cookie, strCookie);
     }
 
@@ -1411,7 +1458,7 @@ public:
         m_SocketClient.disconnect();
     }
 
-    void setReferer(const std::string &strReferer) {
+    void setReferer(cstring strReferer) {
         this->setHeader(Referer, strReferer);
     }
 
@@ -1419,7 +1466,7 @@ public:
         return m_Response.getCookie();
     }
 
-    void DownloadFile(const std::string &reqUrl, const std::string &downloadPath, int nThreadCount = 10, bool verbose = false) {
+    void DownloadFile(cstring reqUrl, cstring downloadPath, int nThreadCount = 10, bool verbose = false) {
         HttpResult  result          = Head(reqUrl, verbose);
         std::string strDownLoadPath = downloadPath;
         if (strDownLoadPath.empty()) {

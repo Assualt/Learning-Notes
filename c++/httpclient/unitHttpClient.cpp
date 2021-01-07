@@ -1,7 +1,7 @@
 #include "cmdline.hpp"
 #include "httpclient.hpp"
 #include <signal.h>
-#define AcceptEncoding_Default "gzip, deflate, br"
+#define AcceptEncoding_Default "gzip, deflate"
 #define AcceptLanguage_Default "zh-CN,zh;q=0.9"
 #define Accept_Default "*/*"
 #define UserAgent_Default "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
@@ -75,6 +75,9 @@ int main(int argc, char **argv) {
         std::string      reqType = CommandParse.get<std::string>("type");
         http::HttpResult Result;
         std::string      downloadPath = CommandParse.get<string>("output");
+        if (!downloadPath.empty()) {
+            client.setOutputFile(downloadPath);
+        }
         if (strcasecmp(reqType.c_str(), "get") == 0) {
             Result = client.Get(reqUrl, bRedireect, bVerbose);
         } else if (strcasecmp(reqType.c_str(), "post") == 0) {
@@ -94,11 +97,7 @@ int main(int argc, char **argv) {
             client.DownloadFile(reqUrl, downloadPath, nThreads, bVerbose);
         }
         std::cout << "\nStatus Code:" << Result.status_code() << std::endl << "Text Size:" << Result.text().size() << std::endl << "Relay Message:" << Result.error() << std::endl;
-        if (!downloadPath.empty() && strcasecmp(reqType.c_str(), "Download") != 0) {
-            client.SaveResultToFile(downloadPath);
-            logger.info("Data is not shown..");
-            logger.info("succesful save response to %s file", downloadPath);
-        }else{
+        if (downloadPath.empty()) {
             std::cout << "Text :" << Result.text() << std::endl;
         }
     }
