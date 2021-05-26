@@ -4,6 +4,9 @@
 #include <dirent.h>
 #include <fstream>
 #include <sys/stat.h>
+#include <signal.h>
+http::HttpServer server;
+
 using namespace http;
 
 bool IndexPatter(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
@@ -153,8 +156,38 @@ bool MethodAllowIndexPatterm(http::HttpRequest &request, http::HttpResponse &res
     return true;
 }
 
+
+bool PrintConnectionInfoPatterm(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
+    std::map<int, ConnectionInfo> connMap = server.getAllConnectionInfo();
+    stringstream ss;
+    ss << "<table border=\"1\"><tr><th>连接Socket fd</th><th>连接IP</th><th>连接端口</th><th>连接次数</th><tr>";
+    std::map<int, ConnectionInfo>::iterator iter(connMap.begin());
+    
+    for(;iter!=connMap.end(); ++ iter) {
+        ss << "<tr><td>" << iter->first << "</td><td>" << iter->second.m_strConnectIP << "</td><td>" << iter->second.m_nPort << "</td><td>" << iter->second.m_nRequestTimes << "</td></tr>";
+    }
+    ss << "</table>";
+    response.setStatusMessage(200, request.getHttpVersion(), "OK");
+    response.setHeader(ContentType, "text/html; charset=utf8");
+    response.setHeader(ContentLength, ss.str().size());
+    response.setBodyString(ss.str());
+    return true;
+}
+
+void handle(int sig) {
+    if(sig == SIGINT) {
+        logger.info("recved signal sigint. begin to run shutdown httpserver now.");
+        server.shutdown();
+    }
+    exit(0);
+}
+
+void HandleSignal() {
+    signal(SIGINT, handle);
+}
+
 int main(int argc, char **argv) {
-    logger.BasicConfig("%(thread)s %(ctime)s %(levelname)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S,%s", "", "a");
+    logger.BasicConfig("%(process)s %(ctime)s %(levelname)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S,%s", "", "a");
 
     cmdline::parser CommandParse;
     CommandParse.add("version", 'v', "show this HttpServer Version and exit");
@@ -172,7 +205,7 @@ int main(int argc, char **argv) {
         auto nLevel = CommandParse.get<int>("logLevel");
         logger.setLevel(static_cast<tlog::detail::Level>(nLevel));
 
-        http::HttpServer server;
+        HandleSignal();
         server.loadHttpConfig(strConfigPath);
         logger.info("Run in server Root:%s", server.getServerRoot());
         // server.getHttpConfig().loadMimeType("html/mime.types");
@@ -185,6 +218,7 @@ int main(int argc, char **argv) {
         mapper.addRequestMapping({"/405"}, std::move(MethodAllowIndexPatterm));
         mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
         mapper.addRequestMapping({"/400"}, std::move(BadRequestIndexPattern));
+        mapper.addRequestMapping({"/systeminfo"}, std::move(PrintConnectionInfoPatterm));
         mapper.addRequestMapping({"/login/{user}/{id}", "POST", true}, std::move(AuthLoginIndexPattern));
         server.StartThreads(CommandParse.get<int>("threads_count"));
         server.ExecForever();

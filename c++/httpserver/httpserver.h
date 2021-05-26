@@ -29,6 +29,7 @@
 #include "logging.h"
 #include "threadpool.h"
 #include <queue>
+#include <signal.h>
 
 namespace http {
 typedef enum { EncodingLength, EncodingChunk, EncodingGzip, EncodingOther } Encoding;
@@ -94,6 +95,8 @@ public:
     std::string getServerRoot() {
         return m_mConfig.getServerRoot();
     }
+    void shutdown();
+    const std::map<int, ConnectionInfo> &getAllConnectionInfo() const {return ConnectionInfoMap; }
 #ifdef USE_OPENSSL
     bool switchToSSLServer();
 
@@ -102,18 +105,29 @@ private:
     SSL_CTX *   ctx;
 #endif
 
-private:
-    std::string m_strServerName;
-    std::string m_strServerIP;
-    std::string m_strServerDescription;
-    int         m_nPort;
-    int         m_nMaxListenClients;
-    int         m_nServerFd;
-    int         m_nEpollTimeOut;
+protected:
+    bool setRLimit(int nMaxOpenedFd);
+    bool setSocketResused(int fd);
+    bool startBindAndListen(int fd,const std::string& strServerIP, int nPort);
+    bool startAccept(int fd);
 
+    void destorySSL();
+    void destoryEpollContext();
+
+private:
+    std::string     m_strServerName;
+    std::string     m_strServerIP;
+    std::string     m_strServerDescription;
+    int             m_nPort;
+    int             m_nMaxListenClients;
+    int             m_nServerFd;
+    int             m_nEpollTimeOut;
+    int             m_nEpoll_fd;
     HttpConfig      m_mConfig;
     RequestMapper   m_mapper;
     std::threadpool ThreadsPool;
+    std::vector<struct epoll_event> m_vEvent;
+    std::map<int, ConnectionInfo> ConnectionInfoMap;
 };
 
 } // namespace http

@@ -68,11 +68,13 @@ public:
     int         m_nPort;
     int         m_nClientFd;
     int         m_nFDFlag;
+    int         m_nRequestTimes;
 #ifdef USE_OPENSSL
     SSL *ssl;
 #endif
     ConnectionInfo()
-        : m_nClientFd(-1) {
+        : m_nClientFd(-1)
+        , m_nRequestTimes(0) {
 #ifdef USE_OPENSSL
         ssl = nullptr;
 #endif
@@ -86,6 +88,7 @@ public:
         }
 #endif
         close(m_nClientFd);
+        m_nRequestTimes++;
     }
 };
 
@@ -166,7 +169,7 @@ private:
     std::map<std::string, std::string>                        m_ExtMimeType;
     bool                                                      m_bRequiredAuth;
     std::map<std::string, std::string>                        m_AuthPassMap;
-    std::map<std::string, std::map<std::string, std::string>> m_SectionMap;
+    std::map<std::string, std::map<std::string, std::string> >m_SectionMap;
     std::set<std::string, StringCaseCmp>                      m_SupportMethodSet;
     std::set<std::string, StringCaseCmp>                      m_SupportHttpVersionSet;
     std::string                                               m_strLoggerFmt;

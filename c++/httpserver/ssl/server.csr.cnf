@@ -1,0 +1,14 @@
+[req]
+default_bits = 2048
+prompt = no
+default_md = sha256
+distinguished_name = dn
+ 
+[dn]
+C=CN
+ST=RandomState
+L=GuangZhou
+O=RandomOrganization
+OU=RandomOrganizationUnit
+emailAddress=1159321967@qq.com
+CN = hp.dev

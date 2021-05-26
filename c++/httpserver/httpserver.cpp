@@ -247,9 +247,9 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
     std::map<std::string, std::string> recvHeaderMap;
     int                                nWrite;
     std::string                        basicRequest = info->m_strServerRoot;
-    if (basicRequest.back() != '/')
+    if (basicRequest[ basicRequest.size() - 1 ] != '/')
         basicRequest += "/";
-    if (request.getRequestFilePath().front() == '/')
+    if (request.getRequestFilePath()[ 0 ] == '/')
         basicRequest += request.getRequestFilePath().substr(1);
     else
         basicRequest += request.getRequestFilePath();
@@ -264,7 +264,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
             iter(request, response, *config);
             nWrite = response.WriteBytes(info);
         } else {
-            if (basicRequest.back() != '/')
+            if (basicRequest[ basicRequest.size() - 1 ] != '/')
                 basicRequest.append("/");
             bool redirectFile = false;
             for (auto &suffix : config->getSuffixSet()) {
@@ -325,80 +325,72 @@ HttpServer::HttpServer()
 #endif
 }
 
-bool HttpServer::ExecForever() {
-    int ret = 0;
-    // 设置 每个进程允许打开的最大文件数
+bool HttpServer::setRLimit(int nMaxOpenedFd) {
     struct rlimit rt;
-    rt.rlim_max = rt.rlim_cur = m_nMaxListenClients;
+    rt.rlim_max = rt.rlim_cur = nMaxOpenedFd;
     if (setrlimit(RLIMIT_NOFILE, &rt) == -1) {
-        logger.warning("setrlimit failed. %s", strerror(errno));
+        logger.warning("setrtlimit failed. %s", strerror(errno));
         return false;
     }
-    logger.info("set rlimit %d ok.", m_nMaxListenClients);
-
-    // 1.创建server socket 用作监听使用，使用TCP可靠的连接和 IPV4的形式进行事件进行监听，协议使用IPV4
-    m_nServerFd = socket(PF_INET, SOCK_STREAM, 0);
-    if (m_nServerFd == -1) {
-        logger.warning("create socket error with erros:%s", strerror(errno));
+    logger.info("set rtlimit %d for server OK", nMaxOpenedFd);
+    return true;
+}
+bool HttpServer::setSocketResused(int fd) {
+    int opt = SO_REUSEADDR;
+    if (setsockopt(fd, SOL_SOCKET, SO_ACCEPTCONN, &opt, sizeof(opt)) == -1) {
+        logger.warning("set socket opt to reuse failed. %s", strerror(errno));
         return false;
     }
-    // 设置socket属性端口可以重用
-    // int opt = SO_REUSEADDR;
-    // if (setsockopt(m_nServerFd, SOL_SOCKET, SO_ACCEPTCONN, &opt, sizeof(opt)) == -1) {
-    //     logger.warning("set socket opt to reuse failed. %s", strerror(errno));
-    //     return false;
-    // }
-    // 设置端口为非阻塞模式
-    int oldFlag = setFDnonBlock(m_nServerFd);
-    // 2.server端进行bind 并初始化server的地址结构体, 注意字节序的转化
+    return true;
+}
+bool HttpServer::startBindAndListen(int fd, const std::string &strServerIP, int nPort) {
+    int                ret;
     struct sockaddr_in server_addr;
     bzero(&server_addr, sizeof(server_addr));
     server_addr.sin_family      = PF_INET;
-    server_addr.sin_addr.s_addr = inet_addr(m_strServerIP.c_str());
-    server_addr.sin_port        = htons(m_nPort);
-    if ((ret = bind(m_nServerFd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))) == -1) {
+    server_addr.sin_addr.s_addr = inet_addr(strServerIP.c_str());
+    server_addr.sin_port        = htons(nPort);
+    if ((ret = bind(fd, (struct sockaddr *)&server_addr, sizeof(struct sockaddr))) == -1) {
         logger.warning("bind error with erros:%s", strerror(errno));
         return false;
     }
     // 3.server端进行监听
-    if ((ret = listen(m_nServerFd, m_nMaxListenClients)) == -1) {
+    if ((ret = listen(fd, m_nMaxListenClients)) == -1) {
         logger.warning("listen error with erros:%s", strerror(errno));
         return false;
     }
-
-    logger.info("httpserver:%s listening at %s:%d ....", m_strServerName, m_strServerIP, m_nPort);
+    logger.info("httpserver:%s listening at %s:%d ....", m_strServerName, m_strServerIP, nPort);
+    return true;
+}
+bool HttpServer::startAccept(int fd) {
 #ifdef USE_OPENSSL
     if (m_mConfig.supportSSL()) {
         switchToSSLServer();
         logger.info("init https safe server ok.");
     }
 #endif
-    // 1. epoll wait
-    int epoll_fd = epoll_create(m_nMaxListenClients);
+    m_nEpoll_fd = epoll_create(m_nMaxListenClients);
     // 2.定义并填充epoll_event,和监听连接接的server的所有epoll_events事件数组
-    struct epoll_event event;
-    event.events                           = EPOLLIN | EPOLLET;
-    event.data.fd                          = m_nServerFd; //服务器绑定的fd
-    struct epoll_event *event_client_array = new epoll_event[ m_nMaxListenClients ];
+    m_vEvent.resize(m_nMaxListenClients, epoll_event());
+    struct epoll_event ev;
+    ev.events  = EPOLLIN | EPOLLET;
+    ev.data.fd = fd; // 指定为监听的fd
     // 3.注册事件,将当前的epoll_fd注册到内核中去用于事件的监听
-    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, m_nServerFd, &event) < 0) {
-        logger.warning("epoll set insertion error. fd:%d", epoll_fd);
+    if (epoll_ctl(m_nEpoll_fd, EPOLL_CTL_ADD, m_nServerFd, &ev) < 0) {
+        logger.warning("epoll set insertion error. fd:%d", fd);
         return false;
     }
-    int                                     current_fds = 1;
-    std::unordered_map<int, ConnectionInfo> ConnectionInfoMap;
-    // 4. 进入事件等待
+    int current_fds = 0;
     while (true) {
         //设置最大的监听的数量,以及EPOLL 的超时时间
-        int ready_count = epoll_wait(epoll_fd, event_client_array, m_nMaxListenClients, m_nEpollTimeOut);
+        int ready_count = epoll_wait(m_nEpoll_fd, &m_vEvent[ 0 ], m_nMaxListenClients, m_nEpollTimeOut);
         // 5.从就绪的event里面进行accept,用于创建链接到客户端
-        for (int i = 0; i < ready_count; i++) {
+        for (int i = 0; i < ready_count; ++i) {
             struct sockaddr_in client_addr;
             socklen_t          addr_len = sizeof(client_addr);
             int                client_fd;
-
-            if (event_client_array[ i ].data.fd == m_nServerFd) { //确定为连接服务器的请求
-                int client_fd = accept(m_nServerFd, (struct sockaddr *)&client_addr, &addr_len);
+            if (m_vEvent[ i ].data.fd == fd) { //确定为连接服务器的请求
+                int client_fd = accept(fd, (struct sockaddr *)&client_addr, &addr_len);
                 // 6.把接收到client的fd 添加到epoll的监听事件中去
                 if (client_fd < 0) {
                     logger.info("accept error. ");
@@ -406,9 +398,10 @@ bool HttpServer::ExecForever() {
                 }
                 int            client_oldFlag = setFDnonBlock(client_fd);
                 ConnectionInfo info;
-                event.events  = EPOLLIN | EPOLLET;
-                event.data.fd = client_fd;
-                if ((ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event)) == -1) {
+                ev.events  = EPOLLIN | EPOLLET;
+                ev.data.fd = client_fd;
+                int ret;
+                if ((ret = epoll_ctl(m_nEpoll_fd, EPOLL_CTL_ADD, client_fd, &ev)) == -1) {
                     logger.info("failed to epoll_add client fd:%d , errmsg:%s", client_fd, strerror(errno));
                     continue;
                 }
@@ -435,7 +428,7 @@ bool HttpServer::ExecForever() {
                                 isContinue = true;
                             } else {
                                 ERR_print_errors_fp(stderr);
-                                logger.info("ssl accept error with error %d %d %d", ret, iret, icode);
+                                logger.info("ssl accept error with error ret:%d ssl errorcode:%d icode:%d", ret, iret, icode);
                                 break;
                             }
                         } else {
@@ -461,12 +454,8 @@ bool HttpServer::ExecForever() {
                             }
                             X509_free(client_cert);
                         } else {
-                            logger.info("can't get client certificate yet. ignore check here");
+                            logger.info("can't get client certificate yet from client fd:%d. ignore check here", client_fd);
                         }
-                        char buf[ 1024 ] = {0};
-                        int  nRead       = SSL_read(info.ssl, buf, 1024);
-                        close(client_fd);
-                        continue;
                     } else {
                         logger.info("ssl accept failed. closing transmission channel.");
                         close(client_fd);
@@ -474,22 +463,20 @@ bool HttpServer::ExecForever() {
                     }
                 }
 #endif
-
                 logger.debug("recv client:%d from address %s:%d success.", client_fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
                 current_fds++;
-                //{inet_ntoa(client_addr.sin_addr), m_strServerRoot, ntohs(client_addr.sin_port), current_fd, client_oldFlag};
                 info.m_strConnectIP  = inet_ntoa(client_addr.sin_addr);
                 info.m_strServerRoot = m_mConfig.getServerRoot();
                 info.m_nPort         = ntohs(client_addr.sin_port);
                 info.m_nClientFd     = client_fd;
                 info.m_nFDFlag       = client_oldFlag;
                 ConnectionInfoMap.insert(std::pair<int, ConnectionInfo>(client_fd, info));
-            } else if (event_client_array[ i ].events & EPOLLIN) {
+            } else if (m_vEvent[ i ].events & EPOLLIN) { // 读事件就绪
                 // 7.进行数据的交流
                 // 可创建一个线程与此fd进行数据的处理操作
                 // 线程处理完毕之后就直接可以直接从监听的的fd中移除掉
                 // 为当前线程为非阻塞模式
-                int current_fd = event_client_array[ i ].data.fd;
+                int current_fd = m_vEvent[ i ].data.fd;
                 logger.debug("begin to assign one thread to handle the request from fd:%d, left free thread count is %d", current_fd, ThreadsPool.idlCount());
                 if (ThreadsPool.idlCount() < 0) {
                     logger.info("can't assign one thread to handle such request from [%s:%d]", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
@@ -501,21 +488,68 @@ bool HttpServer::ExecForever() {
                     // std::thread tempThread(ClientThread::handleRequest, &m_mapper, &m_mConfig, &info);
                     // tempThread.join();
                 }
-            } else if (event_client_array[ i ].events & EPOLLOUT) {
-                int current_fd = event_client_array[ i ].data.fd;
-                // ConnectionInfoMap.erase(current_fd);
-                // logger.info("closing transmission channel. %d", current_fd);
+                epoll_ctl(m_nEpoll_fd, EPOLL_CTL_DEL, current_fd, &m_vEvent[ i ]);
+            } else if (m_vEvent[ i ].events & EPOLLOUT) {
+                int current_fd = m_vEvent[ i ].data.fd;
+                ConnectionInfoMap.erase(current_fd);
+                logger.info("closing transmission channel. %d", current_fd);
             } else {
-                int fd = event_client_array[ i ].data.fd;
+                int fd = m_vEvent[ i ].data.fd;
                 close(fd);
                 logger.info("closing transmission channel %d ...", fd);
             }
         }
     }
+}
+void HttpServer::destorySSL() {
+#ifdef USE_OPENSSL
+    if (m_mConfig.supportSSL()) {
+        if (ctx) {
+            SSL_CTX_free(ctx);
+            ctx = nullptr;
+        }
+        logger.info("destory ssl ok.");
+    }
+#endif
+}
+void HttpServer::destoryEpollContext() {
+    if (m_nEpoll_fd != -1)
+        close(m_nEpoll_fd);
+    if (m_nServerFd != -1)
+        close(m_nServerFd);
+}
+
+void HttpServer::shutdown() {
+    destorySSL();
+    destoryEpollContext();
+}
+
+bool HttpServer::ExecForever() {
+    int ret = 0;
+    // 设置 每个进程允许打开的最大文件数
+    setRLimit(m_nMaxListenClients);
+
+    // 1.创建server socket 用作监听使用，使用TCP可靠的连接和 IPV4的形式进行事件进行监听，协议使用IPV4
+    m_nServerFd = socket(PF_INET, SOCK_STREAM, 0);
+    if (m_nServerFd == -1) {
+        logger.warning("create socket error with erros:%s", strerror(errno));
+        return false;
+    }
+    // 设置socket属性端口可以重用
+    // setSocketResused(m_nServerFd);
+
+    // 设置端口为非阻塞模式
+    int oldFlag = setFDnonBlock(m_nServerFd);
+    // 2.server端进行bind 并初始化server的地址结构体, 注意字节序的转化
+    if (!startBindAndListen(m_nServerFd, m_strServerIP, m_nPort)) {
+        logger.info("bind error. exit now.");
+        return false;
+    }
+
+    startAccept(m_nServerFd);
+
     // 8.关闭和释放支援
-    close(epoll_fd);
-    close(m_nServerFd);
-    delete[] event_client_array;
+    shutdown();
     return false;
 }
 
@@ -533,6 +567,7 @@ bool HttpServer::switchToSSLServer() {
 
     OpenSSL_add_all_algorithms();
 #else
+    SSL_library_init();
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, nullptr);
     ERR_clear_error();
 #endif
