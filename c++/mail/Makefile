@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-I../log -I../argparse -I../hash -Wno-deprecated-declarations -std=c++11  -g -I../threadpool -I../conf
+CFLAGS=-I../log -I../argparse -I../hash -Wno-deprecated-declarations -std=c++11  -g -I../threadpool -I../conf 
 
 vpath %.cpp ../log ../hash ../conf
 
