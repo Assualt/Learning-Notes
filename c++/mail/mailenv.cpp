@@ -25,7 +25,7 @@ MailEnv &MailEnv::getInstance() {
 bool MailEnv::initMailEnv(conf::ConfigureManager &config) {
 
     std::string strPrefix = "/programs/";
-    config.changeAccessPath(strPrefix + "mailserver");
+    config.changeAccessPath(strPrefix + "mailserver/");
     m_strMailServerPrimaryDomain = config.getString("", "PrimaryDomain");
     m_strServerIP                = config.getString("127.0.0.1", "Host");
     m_nServerPort                = config.getInt(8025, "ServerPort");

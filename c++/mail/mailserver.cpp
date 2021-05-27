@@ -194,7 +194,7 @@ std::string MailServer::getMailServerStatus() {
     std::stringstream ss;
     ss << "<\r\n";
     ss << "MailServer Free (Listen at:" << pEnv->getServerPort() << ") Thread count: " << m_MailQueueThreadsPool.idlCount() << std::endl;
-    ss << "Command  Free (Listen at:" << pEnv->getCommandPort() << ") Thread count: " << m_MailCommandThreadsPool.idlCount() << std::endl;
+    ss << "Command    Free (Listen at:" << pEnv->getCommandPort() << ") Thread count: " << m_MailCommandThreadsPool.idlCount() << std::endl;
     ss << ".\r\n";
     return ss.str();
 }
@@ -270,29 +270,41 @@ void MailServer::HandleRequest(ConnectionInfo *info) {
                 logger.warning("recv from client fd:%d error. %s\\r\\n", info->m_nClientFd, strerror(errno));
                 break;
             }
-        } else if (nRead == 0) {    
+        } else if (nRead == 0) {
+            if(state == DISCONNECT) {
+                logger.info("421 close transmission channel.");
+                ::send(info->m_nClientFd, "221 bye\r\n", 9, 0);
+                break;
+            }
             continue;
         } else {
-            logger.info("recv body buffer from client fd:%d, %s state:%d", info->m_nClientFd, std::string(buf, nRead - 2), state);
+            if(state != DATAFINISH)
+                logger.info("recv body buffer from client fd:%d, %s state:%d", info->m_nClientFd, std::string(buf, nRead - 2), state);
             if (strncasecmp(buf, "quit", 4) == 0) {
                 logger.info("recv quit command . and disconnect now..");
                 ::send(info->m_nClientFd, "221 bye\r\n", 9, 0);
                 fcntl(info->m_nClientFd, F_SETFD, old_flag);
+                break;
+            } else if(strcasecmp(buf, "rset\r\n") == 0) {
+                std::string strReplyString;
+                state = REST;
+                state = handleProcess.process(state, std::string(buf, nRead), strReplyString);
+                size_t nWrite = ::send(info->m_nClientFd, strReplyString.c_str(), strReplyString.size(), 0);
+                logger.info("write buffer size:%d ReplayString:%s", nWrite, strReplyString.substr(0, strReplyString.size() - 2));
+            } else if (state == DISCONNECT) {
+                logger.info("421 close transimission channel");
+                ::send(info->m_nClientFd, "221 bye\r\n", 9, 0);
                 break;
             } else if (state == DATAFINISH) {
                 std::string strReplyString;
                 std::string tempBuf(buf, nRead);
                 ss << tempBuf;
                 if (ss.str().find("\r\n.\r\n") == ss.str().size() - 5) { // recv finished.
-                    logger.info("recv finished.");
+                    logger.info("recv all eml finished. size:%d", ss.str().size());
                     state         = handleProcess.process(state, ss.str().substr(0, ss.str().size() - 5), strReplyString);
                     size_t nWrite = ::send(info->m_nClientFd, strReplyString.c_str(), strReplyString.size(), 0);
-                    logger.info("write buffer size:%d ReplayString:%s", nWrite, strReplyString.substr(0, strReplyString.size() - 2));
+                    logger.info("write buffer size:%d ReplayString:%s ,state is:%d", nWrite, strReplyString.substr(0, strReplyString.size() - 2), state);
                 }
-            } else if (state == DISCONNECT) {
-                logger.info("421 close transimission channel");
-                ::send(info->m_nClientFd, "221 bye\r\n", 9, 0);
-                break;
             } else {
                 if (strcasecmp(buf, "data\r\n") == 0) {
                     state = DATA;
@@ -307,7 +319,7 @@ void MailServer::HandleRequest(ConnectionInfo *info) {
     close(info->m_nClientFd);
 }
 
-TIgnoreCaseSet MailProcess::m_SupportMethods{"helo", "ehlo", "starttls", "mail from", "rcpt to", "data", "vrfy", "expn", "help", "rset", "quit", "auth login"};
+TIgnoreCaseSet MailProcess::m_SupportMethods{"helo", "ehlo", "starttls", "mail from", "rcpt to", "data", "vrfy", "expn", "help", "rset", "quit", "auth login", "bye"};
 
 bool MailProcess::SupportCommand(const std::string &strMethod) {
     return m_SupportMethods.count(strMethod);
@@ -560,6 +572,6 @@ MAIL_STATE MailProcess::onDataFinish(const std::string &BufString, std::string &
 MAIL_STATE MailProcess::onRest(const std::string &BufString, std::string &ReplyString) {
     ReplyString.assign("250 OK\r\n");
     m_MailContext.clearContext();
-    return AUTH;
+    return MAILFROM;
 }
 } // namespace mail
