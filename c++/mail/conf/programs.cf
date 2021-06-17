@@ -1,0 +1,6 @@
+[mailserver]
+PrimaryDomain=test.com
+Host=127.0.0.1
+ServerPort=8025
+AcceptClient=100
+CommandPort=8026

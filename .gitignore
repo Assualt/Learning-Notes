@@ -1,0 +1,10 @@
+*.o
+*.log
+*.log.*
+.idea
+
+*/__pycache__
+a.out
+*.gz
+*.tgz
+*.br

@@ -1,13 +1,13 @@
 CC=g++
 CFLAGS=-I../log -I./ -I./url/include -I../hash -I../argparse -I../threadpool -Wno-deprecated-declarations -std=c++11 -DUSE_OPENSSL -g #-O2
 
-vpath %.cpp ../log ../hash
+vpath %.cpp ../log ../hash ./tests
 
 URLPARSE=-L ./url -lurlparse
 GURLLIB=-L ./gurl -gurl
 
 
-ALLOBJS=logging.o unitHttpClient.o base64.o
+ALLOBJS=logging.o unitHttpClient.o base64.o httpclient.o
 
 .cpp.o:
 	$(CC) -c $(CFLAGS) $< 
@@ -23,5 +23,5 @@ http-url: $(ALLOBJS)
 	$(CC) $^ -o httpclient $(CFLAGS) -lz -g -std=c++11 -lssl -lcrypto -pthread $(URLPARSE)
 
 clean:
-	rm -rf *.o httpclient
+	rm -rf *.o httpclient *.log
 
