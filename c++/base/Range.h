@@ -18,7 +18,7 @@ template <> struct IsCharPointer<const char *> {
     typedef int type;
 };
 
-template <typename Char> constexpr std::size_t constexpr_strlen(const Char *s, unsigned) noexcept {
+template <typename Char> std::size_t constexpr_strlen(const Char *s, unsigned) noexcept {
     std::size_t ret = 0;
     while (*s++) {
         ++ret;

@@ -24,7 +24,7 @@ public:
     void bindAddress(const InetAddress &addr);
     void listen();
 
-    int accept(InetAddress &RemoteAddress);
+    int accept(const InetAddress *remoteAddress);
 
     ///
     /// Enable/disable TCP_NODELAY (disable/enable Nagle's algorithm).

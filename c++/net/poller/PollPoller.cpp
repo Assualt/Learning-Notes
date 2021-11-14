@@ -1,11 +1,3 @@
-// Copyright 2010, Shuo Chen.  All rights reserved.
-// http://code.google.com/p/muduo/
-//
-// Use of this source code is governed by a BSD-style license
-// that can be found in the License file.
-
-// Author: Shuo Chen (chenshuo at chenshuo dot com)
-
 #include "PollPoller.h"
 
 #include "base/Logging.h"
@@ -18,9 +10,6 @@
 using namespace muduo;
 using namespace muduo::net;
 
-#ifndef g_Logger
-#define g_Logger muduo::base::Logger::getLogger("main")
-#endif
 
 PollPoller::PollPoller(EventLoop *loop)
     : Poller(loop) {
@@ -34,14 +23,14 @@ Timestamp PollPoller::poll(int timeoutMs, ChannelList *activeChannels) {
     int       savedErrno = errno;
     Timestamp now(Timestamp::now());
     if (numEvents > 0) {
-        g_Logger.info("%d events happened", numEvents);
+        logger.info("%d events happened", numEvents);
         fillActiveChannels(numEvents, activeChannels);
     } else if (numEvents == 0) {
-        g_Logger.info(" nothing happened");
+        logger.info(" nothing happened");
     } else {
         if (savedErrno != EINTR) {
             errno = savedErrno;
-            g_Logger.info("PollPoller::poll() errno:%d", errno);
+            logger.info("PollPoller::poll() errno:%d", errno);
         }
     }
     return now;
@@ -64,7 +53,7 @@ void PollPoller::fillActiveChannels(int numEvents, ChannelList *activeChannels) 
 
 void PollPoller::updateChannel(Channel *channel) {
     Poller::assertInLoopThread();
-    g_Logger.info("fd = %d event=%d", channel->fd(), channel->events());
+    logger.info("fd = %d event=%d", channel->fd(), channel->events());
     if (channel->index() < 0) {
         // a new one, add to pollfds_
         assert(m_mChannels.find(channel->fd()) == m_mChannels.end());
@@ -96,7 +85,7 @@ void PollPoller::updateChannel(Channel *channel) {
 
 void PollPoller::removeChannel(Channel *channel) {
     Poller::assertInLoopThread();
-    g_Logger.info("fd = %d", channel->fd());
+    logger.info("fd = %d", channel->fd());
     assert(m_mChannels.find(channel->fd()) != m_mChannels.end());
     assert(m_mChannels[ channel->fd() ] == channel);
     assert(channel->isNoneEvent());

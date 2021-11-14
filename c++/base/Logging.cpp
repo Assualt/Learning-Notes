@@ -3,6 +3,14 @@
 #include <memory>
 namespace muduo {
 namespace base {
+
+string strip_filename(const std::string &filename) {
+    if (filename.rfind("/") != std::string::npos) {
+        return filename.substr(filename.rfind("/") + 1);
+    }
+    return filename;
+}
+
 std::map<std::string, Logger> Logger::_MapLogger;
 
 Logger &Logger::BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix, const char *fileFormat, const char *fileMode) {
@@ -90,9 +98,9 @@ void Logger::getKeyString(const std::string &key, std::stringstream &ss, const s
         ss << std::string(timeBuffer, strlen(timeBuffer) - 1);
     } else if (key == "(lineno)")
         ss << std::dec << m_FileAttribute.lineno;
-    else if (key == "(filename)")
-        ss << m_FileAttribute.filename;
-    else if (key == "(funcname)")
+    else if (key == "(filename)") {
+        ss << strip_filename(m_FileAttribute.filename);
+    } else if (key == "(funcname)")
         ss << m_FileAttribute.funcname;
     else if (key == "(threadname)")
         ss << "";

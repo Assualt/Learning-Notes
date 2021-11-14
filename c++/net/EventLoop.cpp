@@ -4,6 +4,7 @@
 
 #include "EventLoop.h"
 
+#include "Channel.h"
 #include "CurrentThread.h"
 #include "base/Logging.h"
 #include <algorithm>
@@ -14,9 +15,6 @@
 namespace muduo {
 namespace net {
 using muduo::net::Channel;
-#ifndef g_Logger
-#define g_Logger base::Logger::getLogger("main")
-#endif
 
 __thread muduo::net::EventLoop *t_loopInThisThread = 0;
 const int                       kPollTimeMs        = 10000;
@@ -43,27 +41,31 @@ EventLoop::~EventLoop() {
     ::close(m_nWakeUpFD);
 }
 
+void EventLoop::runInLoop(Functor cb) {
+    cb();
+}
+
 void EventLoop::loop() {
     m_bLooping = true;
     m_bQuit    = false;
     assertLoopThread();
-    g_Logger.alert("EventLoop start looping ...");
+    logger.alert("EventLoop start looping ...");
     while (!m_bQuit) {
         m_vActiveChannels.clear();
         m_tRecvTimeStamp = m_Poller->poll(kPollTimeMs, &m_vActiveChannels);
 
-        g_Logger.warning("Print Active All Channels");
+        logger.warning("Print Active All Channels");
         m_bEventHanding = true;
         for (Channel *channel : m_vActiveChannels) {
             m_pCurrentChannel = channel;
-            // m_pCurrentChannel->handleEvent(m_tRecvTimeStamp);
+            m_pCurrentChannel->handleEvent(m_tRecvTimeStamp);
         }
         m_pCurrentChannel = nullptr;
         m_bEventHanding   = false;
         doPendingFunctors();
     }
     m_bLooping = false;
-    g_Logger.alert("Event stop looping");
+    logger.alert("Event stop looping");
 }
 
 void EventLoop::assertLoopThread() {

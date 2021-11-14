@@ -1,10 +1,9 @@
-#include "Timestamp.h"
+#include "base/Timestamp.h"
 #include <iostream>
 using namespace muduo::base;
 int main(int agrc, char **argv) {
-    
-    Timestamp t = Timestamp::now();
 
+    Timestamp t = Timestamp::now();
 
     std::cout << t.toString() << std::endl;
     std::cout << t.toFormattedString() << std::endl;

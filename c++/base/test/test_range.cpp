@@ -1,6 +1,6 @@
-#include <Range.h>
+#include "base/Range.h"
 #include <vector>
-using namespace base;
+using namespace muduo::base;
 
 template <class T> struct IsSomeString : std::false_type {};
 
@@ -24,11 +24,10 @@ int main(int argc, char const *argv[]) {
 
     std::vector<int> test{1, 2, 3, 4};
 
-    base::Range<std::vector<int>::iterator> test_1(test.begin(), test.end());
+    Range<std::vector<int>::iterator> test_1(test.begin(), test.end());
 
     std::cout << test_1.front() << std::endl;
     std::cout << test_1.back() << std::endl;
-
 
     return 0;
 }

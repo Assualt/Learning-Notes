@@ -10,43 +10,15 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <vector>
+#ifndef APP
+#define APP "app"
+#endif
 namespace muduo {
 namespace base {
 
 class Logger {
 public:
     enum LogLevel { Debug, Info, Warn, Error, Fatal, Alert, Emergency };
-    class LogImpl {
-    public:
-        LogImpl(Logger *pLogger, int flushSize = 50) {
-            m_nflushSize = flushSize;
-            m_pLogger    = pLogger;
-        }
-        void setLevelAndLogger(LogLevel nLevel) {
-            m_nCurrentLevel = nLevel;
-        }
-
-        template <class valType> LogImpl &operator<<(const valType &val) {
-            m_sout << val;
-
-            std::string message = m_pLogger->MessageFormat(m_sout.str(), m_nCurrentLevel);
-            if (message.size() > m_nflushSize) {
-                m_pLogger->logMessage(m_nCurrentLevel, message.c_str());
-                m_sout.str("");
-            }
-            return *this;
-        }
-        ~LogImpl() {
-            std::string message = m_pLogger->MessageFormat(m_sout.str(), m_nCurrentLevel);
-            std::cout << message << " " << message.size()<< std::endl;
-        }
-
-    protected:
-        int                m_nflushSize;
-        std::ostringstream m_sout;
-        LogLevel           m_nCurrentLevel;
-        Logger *           m_pLogger;
-    };
 
     struct FileAttribute {
         int         lineno;
@@ -56,31 +28,31 @@ public:
 
     Logger &BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix, const char *fileFormat, const char *fileMode = "a+");
 
-    template <class... Args> void debug(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void debug(const char *messagefmt, Args &&...arg) {
         this->logMessage(Debug, messagefmt, arg...);
     }
 
-    template <class... Args> void info(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void info(const char *messagefmt, Args &&...arg) {
         this->logMessage(Info, messagefmt, arg...);
     }
 
-    template <class... Args> void warning(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void warning(const char *messagefmt, Args &&...arg) {
         this->logMessage(Warn, messagefmt, arg...);
     }
 
-    template <class... Args> void error(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void error(const char *messagefmt, Args &&...arg) {
         this->logMessage(Error, messagefmt, arg...);
     }
 
-    template <class... Args> void fatal(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void fatal(const char *messagefmt, Args &&...arg) {
         this->logMessage(Fatal, messagefmt, arg...);
     }
 
-    template <class... Args> void alert(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void alert(const char *messagefmt, Args &&...arg) {
         this->logMessage(Alert, messagefmt, arg...);
     }
 
-    template <class... Args> void emergency(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void emergency(const char *messagefmt, Args &&...arg) {
         this->logMessage(Emergency, messagefmt, arg...);
     }
 
@@ -93,25 +65,12 @@ public:
         m_vHandleList.push_back(au);
     }
 
-    LogImpl &log(LogLevel nLevel) {
-        if (m_Logger == nullptr)
-            m_Logger = new LogImpl(this);
-        m_Logger->setLevelAndLogger(nLevel);
-        return *m_Logger;
-    }
-
-    ~Logger() {
-        if (m_Logger)
-            delete m_Logger;
-        m_Logger = nullptr;
-    }
-
 protected:
     std::string getCurrentHourTime(bool showMicroSeconds);
     void        getKeyString(const std::string &key, std::stringstream &ss, const std::string &message, LogLevel nLevel);
     std::string MessageFormat(const std::string &FormattedLogmessage, LogLevel nLevel);
 
-    template <class... Args> void logMessage(LogLevel nLevel, const char *messagefmt, Args &&... arg) {
+    template <class... Args> void logMessage(LogLevel nLevel, const char *messagefmt, Args &&...arg) {
         if (nLevel < m_nLevel)
             return;
         std::string LogMessage = messagefmt;
@@ -123,7 +82,7 @@ protected:
         }
     }
 
-    template <class T, class... Args> void formatString(std::string &result, T &val, Args &&... arg) {
+    template <class T, class... Args> void formatString(std::string &result, T &val, Args &&...arg) {
         size_t      index    = 0;
         bool        finished = false;
         std::string keyPrefix;
@@ -189,11 +148,14 @@ protected:
     }
 
 public:
-    static Logger &getLogger(const std::string &LoggerName) {
-        if (!_MapLogger.count(LoggerName)) {
-            _MapLogger[ LoggerName ] = Logger();
+    static Logger &getLogger(const std::string &LoggerName = "") {
+        string strPrefix = LoggerName;
+        if (LoggerName.empty())
+            strPrefix = APP;
+        if (!_MapLogger.count(strPrefix)) {
+            _MapLogger[ strPrefix ] = Logger();
         }
-        return _MapLogger.at(LoggerName);
+        return _MapLogger.at(strPrefix);
     }
 
 private:
@@ -205,14 +167,11 @@ protected:
     std::string              m_strAppName;
     FileAttribute            m_FileAttribute;
     std::vector<LogHandle *> m_vHandleList;
-    LogImpl *                m_Logger;
 };
 
 } // namespace base
 } // namespace muduo
 
-// #define Log(Name, App) muduo::base::Logger::getLogger(Name).setFileAttr(__FILE__, __func__, __LINE__).setAppName(App)
+#define LOG(appname) muduo::base::Logger::getLogger(appname).setFileAttr(__FILE__, __func__, __LINE__)
 
-// #define logger(Name) Log(Name, __FILE__)
-
-// #define LOG_INFO muduo::base::Logger::getLogger("MAIN").setFileAttr(__FILE__, __func__, __LINE__).setAppName("System").log(muduo::base::Logger::Info)
+#define logger LOG(APP)

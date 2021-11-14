@@ -1,27 +1,34 @@
-#include <string.h>
 #include "Socket.h"
+#include "SocketsOP.h"
+#include "base/Logging.h"
+#include "net/InetAddress.h"
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <string.h>
 namespace muduo {
-namespace net{
+namespace net {
 
-Socket::Socket(int sockfd) 
-    :sockfd_(sockfd_) {
+Socket::Socket(int sockfd)
+    : sockfd_(sockfd) {
 }
 
 Socket::~Socket() {
 }
 
+int Socket::fd() {
+    return sockfd_;
+}
+
 bool Socket::getTcpInfo(struct tcp_info *tcpinfo) const {
     socklen_t len = sizeof(*tcpinfo);
-    memset(tcpinfo, 0, len); 
+    memset(tcpinfo, 0, len);
     return ::getsockopt(sockfd_, SOL_TCP, TCP_INFO, tcpinfo, &len) == 0;
 }
 
 bool Socket::getTcpInfoString(std::string &infostring) const {
     struct tcp_info tcpinfo;
-    bool ok = getTcpInfo(&tcpinfo);
-    if(ok) {
+    bool            ok = getTcpInfo(&tcpinfo);
+    if (ok) {
         std::stringstream ss;
         ss << "unrecovered=" << tcpinfo.tcpi_retransmits << " ";
         ss << "rto=" << tcpinfo.tcpi_rto << " ";
@@ -41,25 +48,42 @@ bool Socket::getTcpInfoString(std::string &infostring) const {
 }
 
 void Socket::bindAddress(const InetAddress &addr) {
-
+    sockets::bindOrDie(sockfd_, addr.getSockAddr());
 }
 
 void Socket::listen() {
-
+    sockets::listenOrDie(sockfd_);
 }
 
-int Socket::accept(InetAddress &RemoteAddr) {
-    struct sockaddr_in6 addr;
-    memset(&addr, 0, sizeof(addr));
-    socklen_t len;
-    int ConnectedFd = ::accept(sockfd_, (struct sockaddr *)&addr, &len);
-    if(ConnectedFd >0) {
-        //
+void Socket::setReuseAddr(bool on) {
+    int optval = on ? 1 : 0;
+    ::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEADDR, &optval, static_cast<socklen_t>(sizeof optval));
+}
+
+void Socket::setReusePort(bool on) {
+#ifdef SO_REUSEPORT
+    int optval = on ? 1 : 0;
+    int ret    = ::setsockopt(sockfd_, SOL_SOCKET, SO_REUSEPORT, &optval, static_cast<socklen_t>(sizeof optval));
+    if (ret < 0 && on) {
+        logger.error("SO_REUSEPORT failed.");
+    }
+#else
+    if (on) {
+        logger.info("SO_REUSEPORT is not supported.");
+    }
+#endif
+}
+
+int Socket::accept(const InetAddress *remoteAddr) {
+    struct sockaddr_in addr;
+    socklen_t          len;
+    bzero(&addr, sizeof addr);
+    int ConnectedFd = ::accept(sockfd_, (struct sockaddr *)&(remoteAddr->m_uAddr), &len);
+    if (ConnectedFd < 0) {
+        return -1;
     }
     return ConnectedFd;
 }
-
-
 
 } // namespace net
 } // namespace muduo

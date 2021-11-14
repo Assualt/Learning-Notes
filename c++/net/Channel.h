@@ -39,7 +39,7 @@ public:
     }
 
     inline void set_revents(int evt) {
-        m_nEvents = evt;
+        m_nrecv_events = evt;
     }
 
     EventLoop *getLoop() {
@@ -64,6 +64,33 @@ public:
     }
     bool isNoneEvent() const {
         return m_nEvents == kNoneEvent;
+    }
+
+    void enableReading() {
+        m_nEvents |= kReadEvent;
+        update();
+    }
+    void disableReading() {
+        m_nEvents &= ~kReadEvent;
+        update();
+    }
+    void enableWriting() {
+        m_nEvents |= kWriteEvent;
+        update();
+    }
+    void disableWriting() {
+        m_nEvents &= ~kWriteEvent;
+        update();
+    }
+    void disableAll() {
+        m_nEvents = kNoneEvent;
+        update();
+    }
+    bool isWriting() const {
+        return m_nEvents & kWriteEvent;
+    }
+    bool isReading() const {
+        return m_nEvents & kReadEvent;
     }
 
 protected:

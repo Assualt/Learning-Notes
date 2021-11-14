@@ -34,16 +34,13 @@ const int kAdded   = 1;
 const int kDeleted = 2;
 } // namespace
 
-#ifndef g_Logger
-#define g_Logger muduo::base::Logger::getLogger("main")
-#endif
 
 EPollPoller::EPollPoller(EventLoop *loop)
     : Poller(loop)
     , epollfd_(::epoll_create1(EPOLL_CLOEXEC))
     , events_(kInitEventListSize) {
     if (epollfd_ < 0) {
-        g_Logger.info("EPollPoller::EPollPoller error");
+        logger.info("EPollPoller::EPollPoller error");
     }
 }
 
@@ -52,23 +49,23 @@ EPollPoller::~EPollPoller() {
 }
 
 Timestamp EPollPoller::poll(int timeoutMs, ChannelList *activeChannels) {
-    g_Logger.info("fd total count %d", m_mChannels.size());
+    logger.info("fd total count %d", m_mChannels.size());
     int       numEvents  = ::epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutMs);
     int       savedErrno = errno;
     Timestamp now(Timestamp::now());
     if (numEvents > 0) {
-        g_Logger.info(" %d events happended", numEvents);
+        logger.info(" %d events happended", numEvents);
         fillActiveChannels(numEvents, activeChannels);
         if (static_cast<size_t>(numEvents) == events_.size()) {
             events_.resize(events_.size() * 2);
         }
     } else if (numEvents == 0) {
-        g_Logger.info("nothing happend");
+        logger.info("nothing happend");
     } else {
         // error happens, log uncommon ones
         if (savedErrno != EINTR) {
             errno = savedErrno;
-            g_Logger.info("EPollPoller::poll() errno:%d", errno);
+            logger.info("EPollPoller::poll() errno:%d", errno);
         }
     }
     return now;
@@ -92,7 +89,7 @@ void EPollPoller::fillActiveChannels(int numEvents, ChannelList *activeChannels)
 void EPollPoller::updateChannel(Channel *channel) {
     Poller::assertInLoopThread();
     const int index = channel->index();
-    g_Logger.info("fd = %, events=%d index=%d", channel->fd(), channel->events(), index);
+    logger.info("fd=%d, events=%d index=%d", channel->fd(), channel->events(), index);
     if (index == kNew || index == kDeleted) {
         // a new one, add with EPOLL_CTL_ADD
         int fd = channel->fd();
@@ -151,9 +148,9 @@ void EPollPoller::update(int operation, Channel *channel) {
 
     if (::epoll_ctl(epollfd_, operation, fd, &event) < 0) {
         if (operation == EPOLL_CTL_DEL) {
-            g_Logger.setAppName("System").error("epoll_ctl op =, %s fd = %d", operationToString(operation), fd);
+            logger.setAppName("System").error("epoll_ctl op =, %s fd = %d", operationToString(operation), fd);
         } else {
-            g_Logger.setAppName("System").error("epoll_ctl op =, %s fd = %d", operationToString(operation), fd);
+            logger.setAppName("System").error("epoll_ctl op =, %s fd = %d", operationToString(operation), fd);
         }
     }
 }

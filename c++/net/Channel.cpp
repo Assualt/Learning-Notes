@@ -1,4 +1,5 @@
 #include "Channel.h"
+#include "EventLoop.h"
 #include <memory>
 #include <poll.h>
 namespace muduo {
@@ -13,7 +14,8 @@ Channel::Channel(EventLoop *loop, int fd)
     , m_nFD(fd)
     , m_nEvents(0)
     , m_nrecv_events(0)
-    , m_bUseLock(false) {
+    , m_bUseLock(false)
+    , m_nIndex(-1) {
 }
 
 Channel::~Channel() {
@@ -30,7 +32,7 @@ int Channel::events() const {
     return m_nEvents;
 }
 void Channel::update() {
-    // m_pLoop->updateChannel(this);
+    m_pLoop->updateChannel(this);
 }
 
 void Channel::handleEvent(const base::Timestamp &recvTime) {
