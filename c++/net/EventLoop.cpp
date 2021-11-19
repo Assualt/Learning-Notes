@@ -6,6 +6,7 @@
 
 #include "Channel.h"
 #include "CurrentThread.h"
+#include "SocketsOp.h"
 #include "base/Logging.h"
 #include <algorithm>
 #include <assert.h>
@@ -34,7 +35,11 @@ EventLoop::EventLoop()
     , m_nThreadId(CurrentThread::tid())
     , m_pCurrentChannel(nullptr)
     , m_bCallFuncs(false)
-    , m_Poller(Poller::newDefaultPoller(this)) {
+    , m_Poller(Poller::newDefaultPoller(this))
+    , m_wakeupChannel(new Channel(this, m_nWakeUpFD)) {
+
+    m_wakeupChannel->setReadCallback(std::bind(&EventLoop::handleRead, this));
+    m_wakeupChannel->enableReading();
 }
 
 EventLoop::~EventLoop() {
@@ -42,20 +47,43 @@ EventLoop::~EventLoop() {
 }
 
 void EventLoop::runInLoop(Functor cb) {
-    cb();
+    if (m_nThreadId == CurrentThread::tid()) {
+        cb();
+    } else {
+        queueInLoop(std::move(cb));
+    }
+}
+
+void EventLoop::queueInLoop(Functor cb) {
+    m_vPendingFunctors.push_back(std::move(cb));
+    if (m_nThreadId == CurrentThread::tid()) {
+        wakeup();
+    }
+}
+
+void EventLoop::quit() {
+    if (m_nThreadId == CurrentThread::tid()) {
+        wakeup();
+    }
+}
+
+void EventLoop::wakeup() {
+    uint64_t one = 1;
+    ssize_t  n   = sockets::write(m_nWakeUpFD, &one, sizeof one);
+    if (n != sizeof one) {
+        logger.info("EventLoop::wakeup() writes  bytes instead of 8");
+    }
 }
 
 void EventLoop::loop() {
     m_bLooping = true;
     m_bQuit    = false;
     assertLoopThread();
-    logger.alert("EventLoop start looping ...");
     while (!m_bQuit) {
         m_vActiveChannels.clear();
         m_tRecvTimeStamp = m_Poller->poll(kPollTimeMs, &m_vActiveChannels);
-
-        logger.warning("Print Active All Channels");
-        m_bEventHanding = true;
+        m_bEventHanding  = true;
+        // printActiveChannels();
         for (Channel *channel : m_vActiveChannels) {
             m_pCurrentChannel = channel;
             m_pCurrentChannel->handleEvent(m_tRecvTimeStamp);
@@ -101,6 +129,24 @@ void EventLoop::doPendingFunctors() {
         }
     }
     m_bCallFuncs = false;
+}
+
+void EventLoop::handleRead() {
+    uint64_t one     = 1;
+    ssize_t  readNum = sockets::read(m_nWakeUpFD, &one, sizeof one);
+    if (readNum != sizeof one) {
+        logger.info("EventLoop::handleRead() reads %d bytes instead of 8", readNum);
+    }
+}
+
+void EventLoop::printActiveChannels() const {
+    for (auto channel : m_vActiveChannels) {
+        logger.info("[channel: %s]", channel->reventsToString());
+    }
+}
+
+bool EventLoop::isInLoopThread() const {
+    return m_nThreadId == CurrentThread::tid();
 }
 
 } // namespace net

@@ -12,7 +12,7 @@ class EventLoop;
 class Channel : nonecopyable {
 public:
     using EventCallback     = std::function<void()>;
-    using ReadEventCallback = std::function<void(base::Timestamp)>;
+    using ReadEventCallback = std::function<void(const base::Timestamp &)>;
 
 public:
     Channel(EventLoop *loop, int fd);
@@ -92,6 +92,12 @@ public:
     bool isReading() const {
         return m_nEvents & kReadEvent;
     }
+
+    void remove();
+
+    std::string reventsToString() const;
+    std::string eventToString() const;
+    std::string eventsToString(int fd, int ev) const;
 
 protected:
     void update();

@@ -5,6 +5,7 @@ set(net_SRCS
     CurrentThread.cpp
     EventLoop.cpp
     EventLoopThread.cpp
+    EventLoopThreadPool.cpp
     InetAddress.cpp
     Poller.cpp
     Socket.cpp

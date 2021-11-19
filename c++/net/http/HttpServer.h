@@ -4,6 +4,7 @@
 #include "base/nonecopyable.h"
 #include "net/EventLoop.h"
 #include "net/InetAddress.h"
+#include "net/TcpConnection.h"
 #include "net/TcpServer.h"
 #include <functional>
 
@@ -21,6 +22,9 @@ public:
 
 public:
     void setRequestCallBack(CallBack cb);
+    void onConnect(const TcpConnectionPtr &conn);
+    void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp recvTime);
+    void onRequest(const TcpConnectionPtr &conn, const HttpRequest &req);
     void setThreadNum(int num);
     void start();
 

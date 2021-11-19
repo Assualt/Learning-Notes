@@ -2,7 +2,7 @@
 #include "base/Logging.h"
 #include "net/EventLoop.h"
 #include "net/InetAddress.h"
-#include "net/SocketsOP.h"
+#include "net/SocketsOp.h"
 #include <stdio.h>
 using namespace muduo::base;
 using namespace muduo::net;
@@ -19,8 +19,8 @@ Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddr, bool reusepor
 }
 
 Acceptor::~Acceptor() {
-    // m_cAcceptChannel.disableAll();
-    // m_cAcceptChannel.remove();
+    m_cAcceptChannel.disableAll();
+    m_cAcceptChannel.remove();
     ::close(m_nIdleFd);
 }
 

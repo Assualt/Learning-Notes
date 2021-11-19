@@ -1,4 +1,4 @@
-#include "SocketsOP.h"
+#include "SocketsOp.h"
 #include "base/Format.h"
 #include "base/Logging.h"
 #include <sys/uio.h>
@@ -25,7 +25,41 @@ void sockets::listen(int sockfd) {
     }
 }
 int sockets::accept(int sockfd, struct sockaddr_in6 *addr) {
-    return 0;
+    socklen_t addrlen = static_cast<socklen_t>(sizeof(*addr));
+#if USE_ACCEPT4
+#else
+    int connfd = ::accept(sockfd, (sockaddr *)addr, &addrlen);
+#endif
+    if (connfd < 0) {
+        int saveError = errno;
+        logger.info("sockets::accept error. errno:%d", saveError);
+        switch (saveError) {
+            case EAGAIN:
+            case ECONNABORTED:
+            case EINTR:
+            case EPROTO:
+            case EPERM:
+            case EMFILE:
+                errno = saveError;
+                break;
+            case EBADF:
+            case EFAULT:
+            case EINVAL:
+            case ENFILE:
+            case ENOBUFS:
+            case ENOMEM:
+            case ENOTSOCK:
+            case EOPNOTSUPP:
+                // unexpected errors
+                logger.error("unexpected error of ::accept errno:%d", saveError);
+                break;
+            default:
+                logger.error("unknown error of ::accept errno:%d", saveError);
+                break;
+        }
+        return connfd;
+    }
+    return connfd;
 }
 ssize_t sockets::read(int sockfd, void *buf, size_t count) {
     return ::read(sockfd, buf, count);
@@ -71,6 +105,22 @@ int sockets::createNonblockingOrDie(const sa_family_t family) {
     }
 #endif
     return sockfd;
+}
+
+struct sockaddr_in6 sockets::getLocalAddr(int sockfd) {
+    struct sockaddr_in6 localaddr;
+    bzero(&localaddr, sizeof localaddr);
+    socklen_t addrlen = static_cast<socklen_t>(sizeof localaddr);
+    if (::getsockname(sockfd, (struct sockaddr *)(&localaddr), &addrlen) < 0) {
+        logger.warning("sockets::getLocalAddr");
+    }
+    return localaddr;
+}
+
+void sockets::shutdownWrite(int sockfd) {
+    if (::shutdown(sockfd, SHUT_WR) < 0) {
+        logger.error("shut down sockfd error :%d", sockfd);
+    }
 }
 
 } // namespace net

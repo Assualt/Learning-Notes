@@ -7,6 +7,7 @@
 #include <iostream>
 #include <map>
 #include <pwd.h>
+#include <sstream>
 #include <sys/time.h>
 #include <unistd.h>
 #include <vector>

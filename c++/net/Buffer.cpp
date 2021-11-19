@@ -86,7 +86,7 @@ std::string Buffer::retrieveAllAsString() {
     return retrieveAsString(readableBytes());
 }
 void Buffer::hasWritten(size_t len) {
-    assert(len <= writeableBytes());
+    // assert(len <= writeableBytes());
     m_nWriteIndex += len;
 }
 void Buffer::unwrite(size_t len) {
@@ -102,11 +102,17 @@ std::string Buffer::retrieveAsString(size_t len) {
 base::StringPiece Buffer::toStringPiece() const {
     return base::StringPiece(peek(), peek() + readableBytes());
 }
+void Buffer::append(const char *data) {
+    append(data, strlen(data));
+}
+void Buffer::append(const std::string &buffer) {
+    append(buffer.data(), buffer.size());
+}
 void Buffer::append(const base::StringPiece &piece) {
     append(piece.data(), piece.size());
 }
 void Buffer::append(const char *data, size_t len) {
-    ensureWritableBytes(len);
+    // ensureWritableBytes(len);
     std::copy(data, data + len, beginWrite());
     hasWritten(len);
 }
@@ -257,5 +263,10 @@ ssize_t Buffer::readFd(int fd, int *savedErrno) {
     // }
     return n;
 }
+void Buffer::retrieveUntil(const char *end) {
+    assert(peek() <= end);
+    assert(end <= beginWrite());
+    retrieve(end - peek());
+}
 } // namespace net
-} // namespace nas
+} // namespace muduo

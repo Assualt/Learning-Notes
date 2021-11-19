@@ -1,12 +1,15 @@
 #include "InetAddress.h"
 #include "Endian.h"
-#include "SocketsOP.h"
+#include "SocketsOp.h"
+#include "base/Format.h"
 #include <netinet/in.h>
 #include <strings.h>
 using namespace muduo::net;
+using namespace muduo::base;
 
 static const in_addr_t kInaddrAny      = INADDR_ANY;
 static const in_addr_t kInaddrLoopback = INADDR_LOOPBACK;
+
 InetAddress::InetAddress(uint16_t port, bool loopbackOnly, bool ipv6) {
     if (ipv6) {
         bzero(&addr6_, sizeof addr6_);
@@ -21,6 +24,18 @@ InetAddress::InetAddress(uint16_t port, bool loopbackOnly, bool ipv6) {
         m_uAddr.sin_addr.s_addr = sockets::hostToNetwork32(ip);
         m_uAddr.sin_port        = sockets::hostToNetwork16(port);
     }
+}
+
+InetAddress::InetAddress(const sockaddr_in &addr)
+    : m_uAddr(addr) {
+}
+
+InetAddress::InetAddress(const sockaddr_in6 &addr)
+    : addr6_(addr) {
+}
+
+std::string InetAddress::toIpPort() const {
+    return FmtString("%:%").arg(inet_ntoa(m_uAddr.sin_addr)).arg(m_uAddr.sin_port).str();
 }
 
 const struct sockaddr *InetAddress::getSockAddr() const {

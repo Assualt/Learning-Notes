@@ -34,7 +34,6 @@ const int kAdded   = 1;
 const int kDeleted = 2;
 } // namespace
 
-
 EPollPoller::EPollPoller(EventLoop *loop)
     : Poller(loop)
     , epollfd_(::epoll_create1(EPOLL_CLOEXEC))
@@ -49,18 +48,17 @@ EPollPoller::~EPollPoller() {
 }
 
 Timestamp EPollPoller::poll(int timeoutMs, ChannelList *activeChannels) {
-    logger.info("fd total count %d", m_mChannels.size());
     int       numEvents  = ::epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutMs);
     int       savedErrno = errno;
     Timestamp now(Timestamp::now());
     if (numEvents > 0) {
-        logger.info(" %d events happended", numEvents);
+        logger.debug("%d events happended", numEvents);
         fillActiveChannels(numEvents, activeChannels);
         if (static_cast<size_t>(numEvents) == events_.size()) {
             events_.resize(events_.size() * 2);
         }
     } else if (numEvents == 0) {
-        logger.info("nothing happend");
+        logger.debug("nothing happend");
     } else {
         // error happens, log uncommon ones
         if (savedErrno != EINTR) {
@@ -89,7 +87,7 @@ void EPollPoller::fillActiveChannels(int numEvents, ChannelList *activeChannels)
 void EPollPoller::updateChannel(Channel *channel) {
     Poller::assertInLoopThread();
     const int index = channel->index();
-    logger.info("fd=%d, events=%d index=%d", channel->fd(), channel->events(), index);
+    logger.debug("channel fd=%d, events=%d index=%d", channel->fd(), channel->events(), index);
     if (index == kNew || index == kDeleted) {
         // a new one, add with EPOLL_CTL_ADD
         int fd = channel->fd();
@@ -125,7 +123,7 @@ void EPollPoller::removeChannel(Channel *channel) {
     int fd = channel->fd();
     assert(m_mChannels.find(fd) != m_mChannels.end());
     assert(m_mChannels[ fd ] == channel);
-    assert(channel->isNoneEvent());
+    // assert(channel->isNoneEvent());
     int index = channel->index();
     assert(index == kAdded || index == kDeleted);
     size_t n = m_mChannels.erase(fd);
@@ -145,7 +143,7 @@ void EPollPoller::update(int operation, Channel *channel) {
     event.data.ptr = channel;
     int fd         = channel->fd();
     // LOG_TRACE << "epoll_ctl op = " << operationToString(operation) << " fd = " << fd << " event = { " << channel->eventsToString() << " }";
-
+    logger.setAppName("sys").info("epoll_ctl op:%s fd:%d event=%s", operationToString(operation), fd, channel->eventToString());
     if (::epoll_ctl(epollfd_, operation, fd, &event) < 0) {
         if (operation == EPOLL_CTL_DEL) {
             logger.setAppName("System").error("epoll_ctl op =, %s fd = %d", operationToString(operation), fd);

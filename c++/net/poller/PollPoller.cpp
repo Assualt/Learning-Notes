@@ -26,7 +26,7 @@ Timestamp PollPoller::poll(int timeoutMs, ChannelList *activeChannels) {
         logger.info("%d events happened", numEvents);
         fillActiveChannels(numEvents, activeChannels);
     } else if (numEvents == 0) {
-        logger.info(" nothing happened");
+        logger.debug(" nothing happened");
     } else {
         if (savedErrno != EINTR) {
             errno = savedErrno;

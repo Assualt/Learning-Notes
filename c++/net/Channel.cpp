@@ -2,6 +2,7 @@
 #include "EventLoop.h"
 #include <memory>
 #include <poll.h>
+#include <sstream>
 namespace muduo {
 namespace net {
 
@@ -35,6 +36,10 @@ void Channel::update() {
     m_pLoop->updateChannel(this);
 }
 
+void Channel::remove() {
+    m_pLoop->removeChannel(this);
+}
+
 void Channel::handleEvent(const base::Timestamp &recvTime) {
     std::shared_ptr<void> guard;
     if (m_bUseLock) {
@@ -65,6 +70,34 @@ void Channel::handleEventWithGuard(const base::Timestamp &recvTime) {
         if (m_FWriteCallback)
             m_FWriteCallback();
     }
+}
+
+std::string Channel::reventsToString() const {
+    return eventsToString(m_nFD, m_nrecv_events);
+}
+
+std::string Channel::eventToString() const {
+    return eventsToString(m_nFD, m_nEvents);
+}
+
+std::string Channel::eventsToString(int fd, int ev) const {
+    std::stringstream oss;
+    oss << fd << ": ";
+    if (ev & POLLIN)
+        oss << "IN ";
+    if (ev & POLLPRI)
+        oss << "PRI ";
+    if (ev & POLLOUT)
+        oss << "OUT ";
+    if (ev & POLLHUP)
+        oss << "HUP ";
+    if (ev & POLLRDHUP)
+        oss << "RDHUP ";
+    if (ev & POLLERR)
+        oss << "ERR ";
+    if (ev & POLLNVAL)
+        oss << "NVAL ";
+    return oss.str();
 }
 
 } // namespace net

@@ -74,6 +74,8 @@ public:
     void append(const base::StringPiece &piece);
     void append(const char *data, size_t len);
     void append(const void * /*restrict*/ data, size_t len);
+    void append(const std::string &buffer);
+    void append(const char *data);
     void appendInt64(int64_t x);
     void appendInt32(int32_t x);
     void appendInt16(int16_t x);
@@ -100,7 +102,7 @@ public:
     void    shrink(size_t reserve);
     size_t  internalCapacity() const;
     ssize_t readFd(int fd, int *savedErrno);
-
+    void retrieveUntil(const char *end);
 private:
     const char *begin() const;
     char *      begin();

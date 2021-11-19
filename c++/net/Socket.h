@@ -24,7 +24,7 @@ public:
     void bindAddress(const InetAddress &addr);
     void listen();
 
-    int accept(const InetAddress *remoteAddress);
+    int accept(InetAddress *remoteAddress);
 
     ///
     /// Enable/disable TCP_NODELAY (disable/enable Nagle's algorithm).
@@ -46,6 +46,7 @@ public:
     ///
     void setKeepAlive(bool on);
 
+    void shutdownWrite();
 private:
     int sockfd_{-1};
 };

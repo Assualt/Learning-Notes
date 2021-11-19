@@ -1,5 +1,5 @@
 #include "Socket.h"
-#include "SocketsOP.h"
+#include "SocketsOp.h"
 #include "base/Logging.h"
 #include "net/InetAddress.h"
 #include <netinet/in.h>
@@ -23,6 +23,11 @@ bool Socket::getTcpInfo(struct tcp_info *tcpinfo) const {
     socklen_t len = sizeof(*tcpinfo);
     memset(tcpinfo, 0, len);
     return ::getsockopt(sockfd_, SOL_TCP, TCP_INFO, tcpinfo, &len) == 0;
+}
+
+void Socket::setKeepAlive(bool on) {
+    int optval = on ? 1 : 0;
+    ::setsockopt(sockfd_, SOL_SOCKET, SO_KEEPALIVE, &optval, static_cast<socklen_t>(sizeof optval));
 }
 
 bool Socket::getTcpInfoString(std::string &infostring) const {
@@ -74,15 +79,19 @@ void Socket::setReusePort(bool on) {
 #endif
 }
 
-int Socket::accept(const InetAddress *remoteAddr) {
-    struct sockaddr_in addr;
-    socklen_t          len;
+int Socket::accept(InetAddress *remoteAddr) {
+    struct sockaddr_in6 addr;
+    socklen_t           len;
     bzero(&addr, sizeof addr);
-    int ConnectedFd = ::accept(sockfd_, (struct sockaddr *)&(remoteAddr->m_uAddr), &len);
-    if (ConnectedFd < 0) {
-        return -1;
+    int connfd = sockets::accept(sockfd_, &addr);
+    if (connfd >= 0) {
+        remoteAddr->setSockAddrInet6(addr);
     }
-    return ConnectedFd;
+    return connfd;
+}
+
+void Socket::shutdownWrite() {
+    sockets::shutdownWrite(sockfd_);
 }
 
 } // namespace net

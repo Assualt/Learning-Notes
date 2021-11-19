@@ -4,6 +4,8 @@
 namespace muduo {
 namespace base {
 
+static std::string g_detaultAppName = "main";
+
 string strip_filename(const std::string &filename) {
     if (filename.rfind("/") != std::string::npos) {
         return filename.substr(filename.rfind("/") + 1);
@@ -104,9 +106,14 @@ void Logger::getKeyString(const std::string &key, std::stringstream &ss, const s
         ss << m_FileAttribute.funcname;
     else if (key == "(threadname)")
         ss << "";
-    else if (key == "(appname)")
-        ss << m_strAppName;
-    else if (key == "(user)") {
+    else if (key == "(appname)") {
+        if (!m_strAppName.empty()) {
+            ss << m_strAppName;
+            m_strAppName.clear();
+        } else {
+            ss << g_detaultAppName;
+        }
+    } else if (key == "(user)") {
         uid_t          current_uid = getuid();
         struct passwd *pwd         = getpwuid(current_uid);
         ss << pwd->pw_name;
