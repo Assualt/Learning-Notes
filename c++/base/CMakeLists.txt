@@ -1,5 +1,6 @@
 set(base_SRCS
     Date.cpp
+    DirScanner.cpp
     File.cpp
     Format.cpp
     Logging.cpp
@@ -7,6 +8,7 @@ set(base_SRCS
     Thread.cpp
     ThreadPool.cpp
     Timestamp.cpp
+    stream/StreamBase.cpp
 )
 
 add_library(muduo_base ${base_SRCS})

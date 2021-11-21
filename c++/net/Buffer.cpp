@@ -16,6 +16,9 @@ size_t Buffer::readableBytes() const {
     return m_nWriteIndex - m_nReadIndex;
 }
 size_t Buffer::writeableBytes() const {
+    if (m_vBuffer.size() - m_nWriteIndex < 0) {
+        return 0;
+    }
     return m_vBuffer.size() - m_nWriteIndex;
 }
 
@@ -86,7 +89,7 @@ std::string Buffer::retrieveAllAsString() {
     return retrieveAsString(readableBytes());
 }
 void Buffer::hasWritten(size_t len) {
-    // assert(len <= writeableBytes());
+    assert(len <= writeableBytes());
     m_nWriteIndex += len;
 }
 void Buffer::unwrite(size_t len) {
@@ -112,7 +115,7 @@ void Buffer::append(const base::StringPiece &piece) {
     append(piece.data(), piece.size());
 }
 void Buffer::append(const char *data, size_t len) {
-    // ensureWritableBytes(len);
+    ensureWritableBytes(len);
     std::copy(data, data + len, beginWrite());
     hasWritten(len);
 }
@@ -206,7 +209,7 @@ void Buffer::prepend(const void * /*restrict*/ data, size_t len) {
 void Buffer::ensureWritableBytes(size_t len) {
     if (writeableBytes() < len)
         makeSpace(len);
-    assert(readableBytes() >= len);
+    // assert(readableBytes() >= len);
 }
 void Buffer::makeSpace(size_t len) {
     if (writeableBytes() + prependableBytes() < len + m_nCheapPrepend) {
@@ -238,29 +241,25 @@ size_t Buffer::internalCapacity() const {
 /// @return result of read(2), @c errno is saved
 ssize_t Buffer::readFd(int fd, int *savedErrno) {
     // saved an ioctl()/FIONREAD call to tell how much to read
-    char         extrabuf[ 65536 ];
+    char         extrabuf[ 65536 ] = {0};
     struct iovec vec[ 2 ];
-    const size_t writable = writeableBytes();
-    vec[ 0 ].iov_base     = begin() + m_nWriteIndex;
-    vec[ 0 ].iov_len      = writable;
-    vec[ 1 ].iov_base     = extrabuf;
-    vec[ 1 ].iov_len      = sizeof extrabuf;
+    const size_t writeable = writeableBytes();
+    vec[ 0 ].iov_base      = begin() + m_nWriteIndex;
+    vec[ 0 ].iov_len       = writeable;
+    vec[ 1 ].iov_base      = extrabuf;
+    vec[ 1 ].iov_len       = sizeof(extrabuf);
     // when there is enough space in this buffer, don't read into extrabuf.
     // when extrabuf is used, we read 128k-1 bytes at most.
-    const int     iovcnt = (writable < sizeof extrabuf) ? 2 : 1;
+    const int     iovcnt = (writeable < sizeof(extrabuf)) ? 2 : 1;
     const ssize_t n      = ::readv(fd, vec, iovcnt);
     if (n < 0) {
         *savedErrno = errno;
-    } else if (static_cast<size_t>(n) <= writable) {
+    } else if (static_cast<size_t>(n) <= writeable) {
         m_nWriteIndex += n;
     } else {
         m_nWriteIndex = m_vBuffer.size();
-        append(extrabuf, n - writable);
+        append(extrabuf, n - writeable);
     }
-    // if (n == writable + sizeof extrabuf)
-    // {
-    //   goto line_30;
-    // }
     return n;
 }
 void Buffer::retrieveUntil(const char *end) {

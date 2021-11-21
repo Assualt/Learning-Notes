@@ -22,33 +22,34 @@ public:
         else
             m_vReqestHeader.push_back(std::pair<std::string, std::string>(key, tmpVal));
     }
-    std::string toStringHeader();
+    std::string       toStringHeader();
     const std::string get(const std::string &key) const;
-    std::string getRequestType() const;
-    void        setRequestType(const std::string &strRequestType);
-    std::string getHttpVersion() const;
-    void        setHttpVersion(const std::string &strHttpVersion);
-    std::string getPostParams() const;
-    void        setPostParams(const std::string &strPostParams);
-    std::string getRequestPath() const;
-    void        setRequestPath(const std::string &strRequestPath);
-    std::string getRequestFilePath() const;
-    void        setRequestFilePath(const std::string &strRequestFilePath);
-    Timestamp   getRecvTime() const;
-    void        setRecvTime(const Timestamp &time);
-    std::string getQuery() const;
-    void        setQuery(const std::string &query);
-    std::string getPath() const;
-    void        setPath(const std::string &path);
-    void        addHeader(const char *start, const char *colon, const char *end);
+    std::string       getRequestType() const;
+    void              setRequestType(const std::string &strRequestType);
+    std::string       getHttpVersion() const;
+    void              setHttpVersion(const std::string &strHttpVersion);
+    std::string       getPostParams() const;
+    void              setPostParams(const std::string &strPostParams);
+    std::string       getRequestPath() const;
+    void              setRequestPath(const std::string &strRequestPath);
+    std::string       getRequestFilePath() const;
+    void              setRequestFilePath(const std::string &strRequestFilePath);
+    Timestamp         getRecvTime() const;
+    void              setRecvTime(const Timestamp &time);
+    std::string       getQuery() const;
+    void              setQuery(const std::string &query);
+    std::string       getPath() const;
+    void              setPath(const std::string &path);
+    void              addHeader(const char *start, const char *colon, const char *end);
 
-    friend std::ostream &operator<<(std::ostream &os, HttpRequest &obj) {
+    friend std::ostream &operator<<(std::ostream &os, const HttpRequest &obj) {
         os << "> " << obj.m_strRequestType << " " << obj.m_strRequestPath << " " << obj.m_strHttpVersion << CTRL;
         for (auto &item : obj.m_vReqestHeader)
             os << "> " << item.first << ": " << item.second << CTRL;
         if (!obj.m_strRangeBytes.empty())
             os << "Range: " << obj.m_strRangeBytes << CTRL;
         os << "> Host: " << obj.m_strRequestHost << CTRL;
+        os << CTRL;
         if (!obj.m_strPostParams.empty())
             os << obj.m_strPostParams << CTRL;
         return os;

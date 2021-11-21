@@ -1,45 +1,141 @@
 #include "HttpRequest.h"
 #include "HttpResponse.h"
 #include "HttpServer.h"
+#include "HttpUtils.h"
+#include "base/DirScanner.h"
+#include "base/Format.h"
 #include "base/Logging.h"
-
+#include <dirent.h>
 using std::string;
 extern char favicon[ 555 ];
 
-void handleRequest(const HttpRequest &req, HttpResponse &resp) {
-    std::cout << "Headers " << req.getRequestType() << " " << req.getPath() << std::endl;
-    if (true) {
-        const std::map<string, string> &headers = req.getAllParams();
-        for (const auto &header : headers) {
-            std::cout << header.first << ": " << header.second << std::endl;
-        }
-    }
+bool IndexPatter(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+    std::string resultString;
+    response.setStatusMessage(200, request.getRequestType(), "OK");
+    response.addHeader(ContentType, "text/html; charset=utf-8");
+    response.setBody(resultString);
+    return true;
+}
 
-    if (req.getPath() == "/") {
-        resp.setStatusCode(HttpResponse::k200Ok);
-        resp.setStatusMessage("OK");
-        resp.setContentType("text/html");
-        resp.addHeader("Server", "Muduo");
-        string now = Timestamp::now().toFormattedString();
-        resp.setBody("<html><head><title>This is title</title></head>"
-                     "<body><h1>Hello</h1>Now is " +
-                     now + "</body></html>");
-    } else if (req.getPath() == "/favicon.ico") {
-        resp.setStatusCode(HttpResponse::k200Ok);
-        resp.setStatusMessage("OK");
-        resp.setContentType("image/png");
-        resp.setBody(string(favicon, sizeof favicon));
-    } else if (req.getPath() == "/hello") {
-        resp.setStatusCode(HttpResponse::k200Ok);
-        resp.setStatusMessage("OK");
-        resp.setContentType("text/plain");
-        resp.addHeader("Server", "Muduo");
-        resp.setBody("hello, world!\n");
+bool NotFoundIndexPatter(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+    size_t nRead = 0;
+    response.setStatusMessage(404, request.getHttpVersion(), "not found");
+    response.addHeader(ContentType, "text/html; charset=utf8");
+    return true;
+}
+
+bool BadRequestIndexPattern(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+    response.setStatusMessage(400, request.getHttpVersion(), "Bad Request");
+    response.addHeader(ContentType, "text/html; charset=utf8");
+    response.setBody(BADREQUEST);
+    return true;
+}
+
+bool DefaultIndexPattern(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+    // handle File
+    std::string strRequestPath = FmtString("%/%").arg(config.getServerRoot()).arg(request.getRequestFilePath()).str();
+    if (!utils::FileIsBinary(strRequestPath)) {
+        std::string result = utils::loadFileString(strRequestPath);
+        response.setBody(result);
+        logger.info("load %s file bytes:%d, errno:%d", strRequestPath, result.size(), errno);
+
+        if (result.size() <= 0) {
+            response.setStatusMessage(404, request.getHttpVersion(), "not found");
+        } else {
+            response.setStatusMessage(200, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
+        }
     } else {
-        resp.setStatusCode(HttpResponse::k404NotFound);
-        resp.setStatusMessage("Not Found");
-        resp.setCloseConnection(true);
+        MyStringBuffer mybuf;
+        int            n = utils::loadBinaryStream(strRequestPath, mybuf);
+        logger.info("load %s file bytes:%d", strRequestPath, n);
+        response.setBodyStream(mybuf, HttpResponse::EncodingType::Type_Gzip);
+        response.setStatusMessage(200, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
     }
+    response.addHeader(ContentType, utils::FileMagicType(strRequestPath)); // config.getMimeType(strRequestPath));
+    struct stat st;
+    if (stat(strRequestPath.c_str(), &st) != -1)
+        response.addHeader("Last-Modified", utils::toResponseBasicDateString(st.st_mtime));
+
+    return true;
+}
+
+bool AuthRequiredIndexPattern(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+    response.setStatusMessage(401, "HTTP/1.1", "Unauthorized");
+    response.addHeader(ContentType, "text/html");
+    response.addHeader("WWW-Authenticate", config.getAuthName());
+    response.setBody(AUTHREQUIRED);
+    return true;
+}
+
+bool ListDirIndexPatter(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+    auto        tmplateHtml = config.getDirentTmplateHtml();
+    std::string currentDir  = config.getServerRoot();
+    if (currentDir.back() != '/')
+        currentDir += "/";
+    if (request.getRequestPath().front() == '/')
+        currentDir += request.getRequestPath().substr(1);
+    else
+        currentDir += request.getRequestPath();
+    tmplateHtml.append("<script>start(\"");
+    tmplateHtml.append(currentDir);
+    tmplateHtml.append("\");</script><script>onHasParentDirectory();</script>");
+
+    DirScanner scanner(currentDir.c_str());
+    FileAttr   attr;
+    while (scanner.fetch(attr)) {
+        std::stringstream out;
+        attr.setParentPath(currentDir);
+        out << "<script>addRow(\"" << attr.getName() << "\",\"" << attr.getName() << "\",";
+        if (attr.isDir()) {
+            out << "1," << attr.getSize() << ",\"4096 B\",";
+        } else {
+            out << "0," << attr.getSize() << ",\"" << utils::toSizeString(attr.getSize()) << "\",";
+        }
+        out << attr.getModifyTime().seconds() << ",\"" << attr.getModifyTime().toFormattedString("%Y/%m/%d %H:%M:%S") << "\");</script>\r\n";
+        tmplateHtml.append(out.str());
+    }
+    response.setStatusMessage(200, "HTTP/1.1", "OK");
+    response.setBody(tmplateHtml);
+    response.addHeader(ContentType, "text/html");
+    response.addHeader("Date", utils::toResponseBasicDateString());
+    return true;
+}
+/// login/{user}/{id}
+// bool AuthLoginIndexPattern(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+//     std::string        user = request.getParams("user");
+//     int                id   = atoi(request.getParams("id").c_str());
+//     json::Json::object obj;
+//     auto               kvalmap = request.getAllParams();
+//     for (auto &iter : kvalmap) {
+//         obj.insert(iter);
+//     }
+//     json::Json retJson({{"ret", 200}, {"errmsg", ""}, {"data", json::Json(obj)}, {"postdata", request.getPostParams()}});
+
+//     response.setStatusMessage(200, request.getHttpVersion(), "OK");
+//     response.addHeader(ContentType, "application/json");
+//     response.addHeader(ContentLength, retJson.dump().size());
+//     response.setBody(retJson.dump());
+//     return true;
+// }
+
+bool MethodAllowIndexPatterm(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+    response.setStatusMessage(405, request.getHttpVersion(), "Method Not Allowed");
+    response.addHeader(ContentType, "text/html");
+    std::string methodAllowString = METHODNOTALLOWED;
+    response.setBody(methodAllowString);
+    return true;
+}
+
+void registerIndexPattern(HttpServer &server) {
+    auto &mapper = server.getMapper();
+    mapper.addRequestMapping({"/index"}, std::move(IndexPatter));
+    mapper.addRequestMapping({"/404"}, std::move(NotFoundIndexPatter));
+    mapper.addRequestMapping({"/#/"}, std::move(DefaultIndexPattern));
+    mapper.addRequestMapping({"/#//"}, std::move(ListDirIndexPatter));
+    mapper.addRequestMapping({"/405"}, std::move(MethodAllowIndexPatterm));
+    mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
+    mapper.addRequestMapping({"/400"}, std::move(BadRequestIndexPattern));
+    // mapper.addRequestMapping({"/login/{user}/{id}", "POST", true}, std::move(AuthLoginIndexPattern));
 }
 
 int main(int argc, char const *argv[]) {
@@ -51,8 +147,8 @@ int main(int argc, char const *argv[]) {
 
     EventLoop  loop;
     HttpServer server(&loop, InetAddress(8000));
-    server.setRequestCallBack(handleRequest);
     server.setThreadNum(10);
+    registerIndexPattern(server);
     server.start();
     loop.loop();
 

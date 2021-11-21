@@ -1,5 +1,5 @@
 #include "HttpContext.h"
-
+#include "HttpUtils.h"
 using namespace muduo::base;
 using namespace muduo::net;
 
@@ -18,6 +18,8 @@ bool HttpContext::processRequestLine(const char *begin, const char *end) {
             } else {
                 m_request.setPath(std::string(start, space));
             }
+            m_request.setRequestPath(UrlUtils::UrlDecode(std::string(start, space)));
+            // m_request.setRequestPath(std::string(start, space));
             start   = space + 1;
             succeed = end - start == 8 && std::equal(start, end - 1, "HTTP/1.");
             if (succeed) {
@@ -62,8 +64,13 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime) {
                 } else {
                     // empty line, end of header
                     // FIXME:
-                    m_state  = kGotAll;
-                    hasMore = false;
+                    setContentLengthType();
+                    if ((m_lenType = kContentLength) && (m_contentLenth == 0)) {
+                        m_state = kGotAll;
+                        hasMore = false;
+                    } else {
+                        m_state = kExpectBody;
+                    }
                 }
                 buf->retrieveUntil(crlf + 2);
             } else {
@@ -71,7 +78,40 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime) {
             }
         } else if (m_state == kExpectBody) {
             // FIXME:
+            parseBodyPart(buf);
+            m_state = kGotAll;
+            hasMore = false;
         }
     }
+    buf->retrieveAll(); // 清空缓冲区
     return ok;
+}
+
+void HttpContext::setContentLengthType() {
+    auto contentStr = m_request.get(ContentLength);
+    if (!contentStr.empty()) {
+        m_contentLenth = atol(contentStr.c_str());
+        m_lenType      = kContentLength;
+    }
+    contentStr = m_request.get(TransferEncoding);
+    if (strcasecmp(contentStr.c_str(), "chunked") == 0) {
+        m_lenType = kContentChunked;
+    }
+}
+
+void HttpContext::parseBodyPart(Buffer *buf) {
+    if (buf == nullptr) {
+        return;
+    }
+    if (m_lenType == kContentLength) {
+        parseBodyByContentLength(buf);
+    } else if (m_lenType == kContentChunked) {
+        parseBodyByChunkedBuffer(buf);
+    }
+}
+
+void HttpContext::parseBodyByContentLength(Buffer *buf) {
+    m_request.setPostParams(std::string(buf->peek(), buf->peek() + buf->readableBytes()));
+}
+void HttpContext::parseBodyByChunkedBuffer(Buffer *buf) {
 }

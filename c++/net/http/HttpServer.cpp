@@ -1,13 +1,16 @@
 #include "HttpServer.h"
 #include "HttpContext.h"
+#include "HttpUtils.h"
 #include "base/Logging.h"
 #include <any>
+#include <backtrace.h>
 #include <functional>
 HttpServer::HttpServer(EventLoop *loop, const InetAddress &addr)
     : m_pLoop(loop)
     , m_pServer(new TcpServer(loop, addr, "tcpServer")) {
     m_pServer->setConnectionCallback(std::bind(&HttpServer::onConnect, this, std::placeholders::_1));
     m_pServer->setMessageCallback(std::bind(&HttpServer::onMessage, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    m_hConfig.Init("/home/xhou");
 }
 
 void HttpServer::setRequestCallBack(CallBack callback) {
@@ -39,11 +42,36 @@ void HttpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp 
     }
 }
 
-void HttpServer::onRequest(const TcpConnectionPtr &conn, const HttpRequest &req) {
-    const string &connection = req.get("Connection");
-    bool          close      = connection == "close" || (req.getHttpVersion() == "HTTP/1.0" && connection != "Keep-Alive");
-    HttpResponse  response(close);
-    m_RequestCallBack(req, response);
+void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
+    const string &connection = request.get("Connection");
+    bool          close      = true;
+    if (strcasecmp(connection.c_str(), "keep-alive") == 0) {
+        close = false;
+    }
+    HttpResponse response(close);
+    Func         func = m_mapper.find(request.getRequestPath(), request.getRequestType());
+    if (true) {
+        std::cout << request;
+    }
+    std::string basicRequestPath = m_hConfig.getServerRoot();
+    if (basicRequestPath.back() != '/')
+        basicRequestPath += "/";
+    if (request.getRequestFilePath().front() == '/')
+        basicRequestPath += request.getRequestFilePath().substr(1);
+    else
+        basicRequestPath += request.getRequestFilePath();
+
+    bool fileExists = utils::FileExists(basicRequestPath);
+    if (!fileExists) {
+        func(request, response, m_hConfig);
+    } else if (utils::IsDir(basicRequestPath)) {
+        func = m_mapper.find("/#//", request.getRequestType());
+        func(request, response, m_hConfig);
+    } else {
+        func = m_mapper.find("/#/", request.getRequestType());
+        func(request, response, m_hConfig);
+    }
+
     Buffer buf;
     response.appendToBuffer(&buf);
     conn->send(&buf);

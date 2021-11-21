@@ -9,6 +9,10 @@
 using namespace muduo::base;
 using namespace muduo::net;
 
+#define ContentLength "Content-Length"
+#define TransferEncoding "Transfer-Encoding"
+#define ContentEncoding "Content-Encoding"
+
 class HttpContext : public copyable {
 public:
     enum HttpRequestParseState {
@@ -18,8 +22,15 @@ public:
         kGotAll,
     };
 
+    enum HttpRequestBodyLenType { kContentLength, kContentChunked };
+
+    enum HttpRequestBodyEncoding { kEncodingGzip, kEncodingRaw, kEncodingBr, kEncodingZip };
+
     HttpContext()
-        : m_state(kExpectRequestLine) {
+        : m_state(kExpectRequestLine)
+        , m_lenType(kContentLength)
+        , m_encodingType(kEncodingRaw)
+        , m_contentLenth(-1) {
     }
 
     // default copy-ctor, dtor and assignment are fine
@@ -46,7 +57,16 @@ public:
 
 private:
     bool processRequestLine(const char *begin, const char *end);
+    void setContentLengthType();
 
-    HttpRequestParseState m_state;
-    HttpRequest           m_request;
+    void parseBodyPart(Buffer *buf);
+    void parseBodyByContentLength(Buffer *buf);
+    void parseBodyByChunkedBuffer(Buffer *buf);
+
+private:
+    HttpRequestParseState   m_state;
+    HttpRequestBodyLenType  m_lenType;
+    HttpRequestBodyEncoding m_encodingType;
+    HttpRequest             m_request;
+    long                    m_contentLenth;
 };
