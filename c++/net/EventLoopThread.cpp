@@ -9,6 +9,7 @@ EventLoopThread::EventLoopThread(const ThreadInitCallback &callback, const std::
     , m_bExited(false)
     , m_thread(std::bind(&EventLoopThread::threadFunc, this), name)
     , m_callback(callback) {
+    m_pCond.reset(new Condition(m_mutex));
 }
 
 EventLoopThread::~EventLoopThread() {
@@ -21,11 +22,9 @@ EventLoopThread::~EventLoopThread() {
 
 EventLoop *EventLoopThread::startLoop() {
     m_thread.start();
-    EventLoop *loop = nullptr;
-    {
-        while (m_pLoop == nullptr) {
-        }
-        loop = m_pLoop;
+    // 这个位置是要等线程起来之后,才能进行如下操作
+    while (m_pLoop == NULL) {
+        m_pCond->Wait();
     }
     return m_pLoop;
 }
@@ -36,6 +35,7 @@ void EventLoopThread::threadFunc() {
         m_callback(&loop);
     }
     m_pLoop = &loop;
+    m_pCond->Notify();
 
     loop.loop();
 

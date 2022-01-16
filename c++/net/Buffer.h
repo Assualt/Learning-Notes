@@ -102,7 +102,8 @@ public:
     void    shrink(size_t reserve);
     size_t  internalCapacity() const;
     ssize_t readFd(int fd, int *savedErrno);
-    void retrieveUntil(const char *end);
+    void    retrieveUntil(const char *end);
+
 private:
     const char *begin() const;
     char *      begin();
@@ -110,4 +111,4 @@ private:
 };
 
 } // namespace net
-} // namespace nas
+} // namespace muduo

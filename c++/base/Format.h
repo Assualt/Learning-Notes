@@ -2,20 +2,21 @@
 #include <sstream>
 #include <string.h>
 namespace muduo {
-namespace base{
-    
-template <class typeStream>
-class FormatStream : public typeStream {
-public:
-    FormatStream() : typeStream(), m_lpszFormat(&g_nEndFlags) {}
+namespace base {
 
-    FormatStream &format(const char *lpszFormat) {  // 此处不能使用lpszFormat为string类型,否则会出现错误
+template <class typeStream> class FormatStream : public typeStream {
+public:
+    FormatStream()
+        : typeStream()
+        , m_lpszFormat(&g_nEndFlags) {
+    }
+
+    FormatStream &format(const char *lpszFormat) { // 此处不能使用lpszFormat为string类型,否则会出现错误
         flushFormat();
         m_lpszFormat = lpszFormat;
         return outPrefix();
     }
-    template <typename typeArg>
-    FormatStream &arg(const typeArg &val) {
+    template <typename typeArg> FormatStream &arg(const typeArg &val) {
         getSelf() << val;
         return outPrefix();
     }
@@ -63,11 +64,9 @@ protected:
     const char *m_lpszFormat;
 };
 
-template <class typeStream>
-char FormatStream<typeStream>::g_nEndFlags = '\0';
+template <class typeStream> char FormatStream<typeStream>::g_nEndFlags = '\0';
 
-
-class FmtString : public FormatStream<std::stringstream>{
+class FmtString : public FormatStream<std::stringstream> {
 
 public:
     FmtString(const std::string &format) {
@@ -75,7 +74,5 @@ public:
     }
 };
 
-
-
-};
-} // namespace base
+}; // namespace base
+} // namespace muduo

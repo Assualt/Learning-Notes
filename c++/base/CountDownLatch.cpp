@@ -10,7 +10,6 @@ CountDownLatch::CountDownLatch(int count)
 void CountDownLatch::wait() {
     std::lock_guard<std::mutex> guard(m_mutex);
     while (m_nCount > 0) {
-        
     }
 }
 

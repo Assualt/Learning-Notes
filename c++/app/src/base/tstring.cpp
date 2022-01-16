@@ -118,7 +118,7 @@ tstring TStringHelper::capitalize(const tstring &str) {
     temp[0] = toupper(temp[0]);
     return temp;
 }
-size_t TStringHelper::count(const tstring &src, char ch){
+size_t TStringHelper::count(const tstring &src, char ch) {
     return std::count(src.begin(), src.end(), ch);
 }
 tstring TStringHelper::title(const tstring &str) {

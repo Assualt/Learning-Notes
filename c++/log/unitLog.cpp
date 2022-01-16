@@ -12,5 +12,5 @@ int main(int argc, char const *argv[]) {
 
     logger.
 
-    return 0;
+        return 0;
 }

@@ -73,7 +73,7 @@ public:
             return false;
         }
         leveldb::WriteBatch batch;
-        std::for_each(KeyMap.begin(), KeyMap.end(), [ &batch ](std::pair<std::string, std::string> item) { batch.Put(item.first, item.second); });
+        std::for_each(KeyMap.begin(), KeyMap.end(), [&batch](std::pair<std::string, std::string> item) { batch.Put(item.first, item.second); });
         leveldb::Status status = m_DB->Write(option, &batch);
         if (!status.ok()) {
             logger.info("write batch kvmap size %d from leveldb failed. errmsg:%s", KeyMap.size(), status.ToString());

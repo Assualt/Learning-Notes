@@ -36,7 +36,7 @@ void HttpRequest::setParams(const std::map<std::string, std::string> &headerMap)
             } else if (!bFindKey)
                 strKey.push_back(m_strRequestPath[ i ]);
         }
-        if(!strKey.empty())
+        if (!strKey.empty())
             m_HeaderMap.insert({strKey, strVal});
     }
 }

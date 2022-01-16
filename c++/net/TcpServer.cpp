@@ -3,7 +3,6 @@
 #include "Buffer.h"
 #include "EventLoop.h"
 #include "EventLoopThreadPool.h"
-#include "InetAddress.h"
 #include "SocketsOp.h"
 #include "TcpConnection.h"
 #include "base/Format.h"
@@ -32,13 +31,22 @@ TcpServer::TcpServer(EventLoop *loop, const InetAddress &addr, const std::string
     , connectionCallback(defaultConnectionCallback)
     , messageCallback(defaultMessageCallback)
     , m_threadPool(new EventLoopThreadPool(loop, serverName))
-    , m_nNexcConnId(1) {
+    , m_nNexcConnId(1)
+    , m_address(addr) {
     acceptor->setNewConnectionCallback(std::bind(&TcpServer::newConnection, this, std::placeholders::_1, std::placeholders::_2));
+}
+
+std::string TcpServer::ipPort() {
+    return m_address.toIpPort();
 }
 
 void TcpServer::newConnection(int sockfd, const InetAddress &peerAddress) {
     m_pLoop->assertLoopThread();
-    auto        ioLoop = m_threadPool->getNextLoop();
+    auto ioLoop = m_threadPool->getNextLoop();
+    if (ioLoop == nullptr) {
+        logger.alert("next eventloop is empty. error");
+        return;
+    }
     InetAddress locAddr(sockets::getLocalAddr(sockfd));
     char        buf[ 64 ];
     ++m_nNexcConnId;

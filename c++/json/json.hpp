@@ -1,6 +1,6 @@
 /**
  * A fork by https://github.com/dropbox/json11.git
-*/
+ */
 #pragma once
 
 #include <initializer_list>
@@ -191,4 +191,4 @@ protected:
     }
 };
 
-} // namespace json11
+} // namespace json

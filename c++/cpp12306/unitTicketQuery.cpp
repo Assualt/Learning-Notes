@@ -12,13 +12,13 @@ namespace tickets {
 
 static std::string _ltrim(const std::string &src, char ch = ' ') {
     std::string           temp = src;
-    std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [ &ch ](char c) { return ch != c; });
+    std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [&ch](char c) { return ch != c; });
     temp.erase(temp.begin(), p);
     return temp;
 }
 static std::string _rtrim(const std::string &src, char ch = ' ') {
     string                   temp = src;
-    string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [ &ch ](char c) { return ch != c; });
+    string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [&ch](char c) { return ch != c; });
     temp.erase(p.base(), temp.end());
     return temp;
 }
@@ -332,7 +332,7 @@ int main(int argc, char **argv) {
     // _jc_save_wfdc_flag=dc; RAIL_EXPIRATION=1607489144437;
     // RAIL_DEVICEID=d_mD28yaHf0FKmb-bVUbLO5AF6qKEqTx9CYV_Hi01SF6tnsApcW8PBludi7HDrLtx45gAK9jBny3qrfmvveansnIDbvxn75bPCPDRxm42McvQjG4S1SvfxpKuxaZrK-VovMVDuHzXAJJPQmWVnFetMx5Iv2XxXSZ;
     // BIGipServerpassport=1005060362.50215.0000; route=6f50b51faa11b987e576cdb301e545c4; BIGipServerotn=2263351562.24610.0000; _jc_save_fromDate=2020-12-06; _jc_save_toDate=2020-12-06");
-    mgr.QueryLeftTicket("天津","上海","2020-12-06");
+    mgr.QueryLeftTicket("天津", "上海", "2020-12-06");
 
     return 0;
 }

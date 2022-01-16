@@ -218,7 +218,6 @@ public:
      * @return: the count of char
      */
     static size_t count(const tstring &src, char ch);
-
 };
 template <class typeStream>
 class TFormatStream : public typeStream {

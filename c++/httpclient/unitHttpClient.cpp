@@ -6,7 +6,7 @@
 #define Accept_Default "*/*"
 #define UserAgent_Default "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
 int main(int argc, char **argv) {
-    logger.BasicConfig("%(thread)s %(levelname)s %(ctime)s %(message)s", tlog::detail::asctime.c_str());
+    logger.BasicConfig(" %(levelname)s %(ctime)s %(message)s", tlog::detail::asctime.c_str());
     cmdline::parser CommandParse;
     CommandParse.add("help", 'h', "This is a simple http client which support http/https");
     CommandParse.add("version", 'v', "show version of client cpp");

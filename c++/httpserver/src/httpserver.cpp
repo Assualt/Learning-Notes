@@ -86,7 +86,7 @@ http::Func RequestMapper::find(const std::string &RequestPath, const std::string
             return iter.second;
         }
     }
-    return [ = ](HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+    return [=](HttpRequest &request, HttpResponse &response, HttpConfig &config) {
         response.setStatusMessage(404, "HTTP/1.1", "404 not found");
         response.setBodyString(NOTFOUNDHTML);
         response.setHeader(ContentType, "text/html");
@@ -253,6 +253,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
     else
         basicRequest += request.getRequestFilePath();
 
+    basicRequest    = UrlUtils::UrlDecode(basicRequest);
     bool FileExists = utils::FileExists(basicRequest);
     if (FileExists) {
         // resource

@@ -14,6 +14,7 @@ using namespace muduo::net;
 
 class HttpRequest;
 class HttpResponse;
+class HttpLog;
 
 using CallBack = std::function<void(const HttpRequest &, HttpResponse &)>;
 
@@ -38,4 +39,5 @@ protected:
     CallBack                   m_RequestCallBack;
     std::shared_ptr<TcpServer> m_pServer{nullptr};
     RequestMapper              m_mapper;
+    std::shared_ptr<HttpLog>   m_httpLog {nullptr};
 };

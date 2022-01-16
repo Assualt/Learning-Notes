@@ -51,7 +51,7 @@ bool DefaultIndexPattern(const HttpRequest &request, HttpResponse &response, Htt
         response.setBodyStream(mybuf, HttpResponse::EncodingType::Type_Gzip);
         response.setStatusMessage(200, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
     }
-    response.addHeader(ContentType, utils::FileMagicType(strRequestPath)); // config.getMimeType(strRequestPath));
+    response.addHeader(ContentType, utils::FileMagicType(strRequestPath));
     struct stat st;
     if (stat(strRequestPath.c_str(), &st) != -1)
         response.addHeader("Last-Modified", utils::toResponseBasicDateString(st.st_mtime));
@@ -140,10 +140,12 @@ void registerIndexPattern(HttpServer &server) {
 
 int main(int argc, char const *argv[]) {
     auto &log = Logger::getLogger();
-    log.BasicConfig(Logger::Info, "T:%(process)[%(asctime):%(levelname):%(appname)][%(filename):%(lineno)] %(message)", "", "");
+    log.BasicConfig(Logger::Info, "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
     log.setAppName("app");
     std::shared_ptr<LogHandle> _au(new StdOutLogHandle);
+    std::shared_ptr<LogHandle> _au1(new RollingFileLogHandle("./", "http_server.log"));
     log.addLogHandle(_au.get());
+    log.addLogHandle(_au1.get());
 
     EventLoop  loop;
     HttpServer server(&loop, InetAddress(8000));

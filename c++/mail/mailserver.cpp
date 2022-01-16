@@ -1,8 +1,8 @@
-#include "mailserver.h"
 #include "base64.h"
 #include "hashutils.hpp"
 #include "log.h"
 #include "mailcontext.h"
+#include "mailserver.h"
 #include "mailutils.hpp"
 #include <arpa/inet.h>
 #include <errno.h>
@@ -270,7 +270,7 @@ void MailServer::HandleRequest(ConnectionInfo *info) {
                 logger.warning("recv from client fd:%d error. %s\\r\\n", info->m_nClientFd, strerror(errno));
                 break;
             }
-        } else if (nRead == 0) {    
+        } else if (nRead == 0) {
             continue;
         } else {
             logger.info("recv body buffer from client fd:%d, %s state:%d", info->m_nClientFd, std::string(buf, nRead - 2), state);

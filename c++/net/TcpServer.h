@@ -2,6 +2,7 @@
 #include "Callback.h"
 #include "base/Timestamp.h"
 #include "base/nonecopyable.h"
+#include "net/InetAddress.h"
 #include <functional>
 #include <map>
 #include <memory>
@@ -9,7 +10,6 @@ using namespace muduo::base;
 namespace muduo {
 namespace net {
 class EventLoop;
-class InetAddress;
 class TcpConnection;
 class TcpServer;
 class Buffer;
@@ -24,7 +24,7 @@ public:
     ~TcpServer();
 
 public:
-    const std::string &ipPort() const;
+    std::string ipPort();
     const std::string &name() const;
     EventLoop *        getLoop() const;
 
@@ -50,6 +50,7 @@ private:
     EventLoop *                             m_pLoop{nullptr};
     std::shared_ptr<EventLoopThreadPool>    m_threadPool;
     int                                     m_nNexcConnId;
+    InetAddress                             m_address;
 };
 
 } // namespace net

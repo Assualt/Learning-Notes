@@ -6,8 +6,6 @@ namespace base {
 class Date {
 
 public:
-    
-
 };
 
 } // namespace base

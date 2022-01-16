@@ -114,4 +114,22 @@ void HttpContext::parseBodyByContentLength(Buffer *buf) {
     m_request.setPostParams(std::string(buf->peek(), buf->peek() + buf->readableBytes()));
 }
 void HttpContext::parseBodyByChunkedBuffer(Buffer *buf) {
+    while (true) {
+        const char *crlf = buf->findCRLF();
+        if (crlf == nullptr) {
+            break;
+        }
+        size_t nBytes = utils::chunkSize(std::string(buf->peek(), crlf));
+        buf->retrieveUntil(crlf + 2);
+        if ((nBytes == 0) || (crlf == nullptr)) {
+            break;
+        }
+        crlf = buf->findCRLF();
+        if (crlf - buf->peek() == nBytes) {
+
+        } else {
+            logger.warning("wrong bytes chunked size:%#x, read size:%#x", nBytes, crlf - buf->peek());
+        }
+        buf->retrieveUntil(crlf + 2);
+    }
 }

@@ -1,6 +1,8 @@
-#include "Logging.h"
 #include "LogHandle.h"
+#include "Logging.h"
+#include "Os.h"
 #include <memory>
+#include <syscall.h>
 namespace muduo {
 namespace base {
 
@@ -83,18 +85,19 @@ std::string Logger::getCurrentHourTime(bool showMicroSeconds) {
 }
 
 void Logger::getKeyString(const std::string &key, std::stringstream &ss, const std::string &message, LogLevel nLevel) {
-    if (key == "(message)")
+    if (key == "(message)") {
         ss << message;
-    else if (key == "(thread)")
+    } else if (key == "(thread)")
         ss << std::hex << pthread_self();
-    // ss << std::this_thread::get_id();
-    else if (key == "(process)")
+    else if (key == "(tid)") {
+        ss << syscall(SYS_gettid);
+    } else if (key == "(process)") {
         ss << getpid();
-    else if (key == "(levelname)")
+    } else if (key == "(levelname)") {
         ss << getLevelName(nLevel);
-    else if (key == "(asctime)")
+    } else if (key == "(asctime)") {
         ss << getCurrentHourTime(true);
-    else if (key == "(ctime)") {
+    } else if (key == "(ctime)") {
         time_t t(time(nullptr));
         char * timeBuffer = ctime(&t);
         ss << std::string(timeBuffer, strlen(timeBuffer) - 1);
@@ -102,11 +105,11 @@ void Logger::getKeyString(const std::string &key, std::stringstream &ss, const s
         ss << std::dec << m_FileAttribute.lineno;
     else if (key == "(filename)") {
         ss << strip_filename(m_FileAttribute.filename);
-    } else if (key == "(funcname)")
+    } else if (key == "(funcname)") {
         ss << m_FileAttribute.funcname;
-    else if (key == "(threadname)")
-        ss << "";
-    else if (key == "(appname)") {
+    } else if (key == "(threadname)") {
+        ss << System::GetCurrentThreadName();
+    } else if (key == "(appname)") {
         if (!m_strAppName.empty()) {
             ss << m_strAppName;
             m_strAppName.clear();

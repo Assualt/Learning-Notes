@@ -1,3 +1,4 @@
+#pragma once
 #include <exception>
 #include <iostream>
 #define DECLARE_EXCEPTION(exp, expParent)               \
@@ -32,4 +33,4 @@ private:
     std::string m_strErrorMsg;
 };
 } // namespace base
-}
+} // namespace muduo

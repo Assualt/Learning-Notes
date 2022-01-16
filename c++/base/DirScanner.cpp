@@ -54,7 +54,7 @@ bool DirScanner::fetch(FileAttr &attr) {
         return false;
     }
     struct dirent *dp = readdir(m_nHandle);
-    if (dp==nullptr) {
+    if (dp == nullptr) {
         return false;
     }
     attr.setInfor(dp->d_name);

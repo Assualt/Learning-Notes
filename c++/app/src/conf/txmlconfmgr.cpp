@@ -27,11 +27,6 @@ bool TXmlConfigureManager::initIniFiles() {
 
     return true;
 }
-void TXmlConfigureManager::initSingerFile(TXmlNode &vNode, const tstring &confPath) {
-    
-
-
-
-}
+void TXmlConfigureManager::initSingerFile(TXmlNode &vNode, const tstring &confPath) {}
 
 NAMESPACE_END

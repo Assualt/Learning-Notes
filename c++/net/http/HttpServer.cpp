@@ -1,15 +1,22 @@
 #include "HttpServer.h"
 #include "HttpContext.h"
+#include "HttpLog.h"
 #include "HttpUtils.h"
 #include "base/Logging.h"
 #include <any>
 #include <backtrace.h>
 #include <functional>
+
 HttpServer::HttpServer(EventLoop *loop, const InetAddress &addr)
     : m_pLoop(loop)
     , m_pServer(new TcpServer(loop, addr, "tcpServer")) {
+    
+    auto &accessLogger = Logger::getLogger("AccessLogger");
+    accessLogger.BasicConfig(Logger::Debug, "%(message)", "access.log", "");
+    m_httpLog.reset(new HttpLog(accessLogger));
     m_pServer->setConnectionCallback(std::bind(&HttpServer::onConnect, this, std::placeholders::_1));
     m_pServer->setMessageCallback(std::bind(&HttpServer::onMessage, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    m_httpLog->Init();
     m_hConfig.Init("/home/xhou");
 }
 
@@ -50,9 +57,7 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
     }
     HttpResponse response(close);
     Func         func = m_mapper.find(request.getRequestPath(), request.getRequestType());
-    if (true) {
-        std::cout << request;
-    }
+    
     std::string basicRequestPath = m_hConfig.getServerRoot();
     if (basicRequestPath.back() != '/')
         basicRequestPath += "/";
@@ -75,12 +80,17 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
     Buffer buf;
     response.appendToBuffer(&buf);
     conn->send(&buf);
+
+    if (true) {
+        (*m_httpLog) << conn->localAddress().toIpPort() << " - [" << utils::requstTimeFmt() << "] \"" << request.getRequestType() << " " << request.getRequestPath() << " "
+                    << request.getHttpVersion() << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \"" << request.get(UserAgent) << "\"\n";
+    }
     if (response.closeConnection()) {
         conn->shutdown();
     }
 }
 
 void HttpServer::start() {
-    logger.info("HttpServer start ...");
+    logger.info("HttpServer start ... at:%s", m_pServer->ipPort());
     m_pServer->start();
 }

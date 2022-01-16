@@ -56,7 +56,7 @@ File File::temporary() {
     int fd = ::dup(fileno(tmpFile));
     return File(fd, true);
 }
-int File::release() noexcept{
+int File::release() noexcept {
     int released = fd_;
     fd_          = -1;
     ownsfd_      = false;

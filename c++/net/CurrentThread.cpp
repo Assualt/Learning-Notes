@@ -3,6 +3,8 @@
 #include <cxxabi.h>
 #include <execinfo.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <syscall.h>
 
 namespace muduo {
 namespace CurrentThread {
@@ -15,12 +17,12 @@ static_assert(std::is_same<int, pid_t>::value, "pid_t should be int");
 string stackTrace(bool demangle) {
     string    stack;
     const int max_frames = 200;
-    void *    frame[ max_frames ];
+    void     *frame[ max_frames ];
     int       nptrs   = ::backtrace(frame, max_frames);
-    char **   strings = ::backtrace_symbols(frame, nptrs);
+    char    **strings = ::backtrace_symbols(frame, nptrs);
     if (strings) {
         size_t len       = 256;
-        char * demangled = demangle ? static_cast<char *>(::malloc(len)) : nullptr;
+        char  *demangled = demangle ? static_cast<char *>(::malloc(len)) : nullptr;
         for (int i = 1; i < nptrs; ++i) // skipping the 0-th, which is this function
         {
             if (demangle) {
@@ -60,5 +62,11 @@ string stackTrace(bool demangle) {
     return stack;
 }
 
+void cacheTid() {
+    if (t_cachedTid == 0) {
+        t_cachedTid       = static_cast<pid_t>(syscall(SYS_gettid));
+        t_tidStringLength = snprintf(t_tidString, sizeof t_tidString, "%5d ", t_cachedTid);
+    }
+}
 } // namespace CurrentThread
 } // namespace muduo

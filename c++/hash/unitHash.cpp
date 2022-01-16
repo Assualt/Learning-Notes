@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
                 auto DecodeSize = HashUtils::ZlibDeCompress(buffer, out);
                 std::cout << "DeCompress: " << writeSize << " bytes. after Decompressed :" << DecodeSize << std::endl;
                 std::cout << "Decode String:\n" << out.str() << std::endl;
-            } else if (type == "db64"){
+            } else if (type == "db64") {
                 int ret = HashUtils::DecodeBase64(strInputString, resultString);
                 std::cout << "begin to encode base64 source:" << strInputString << std::endl;
                 std::cout << "after to encode base64 size:" << ret << std::endl;

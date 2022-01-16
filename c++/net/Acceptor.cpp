@@ -38,8 +38,8 @@ void Acceptor::handleRead() {
     // FIXME loop until no more
     int connfd = m_nAcceptSocket.accept(&peerAddr);
     if (connfd >= 0) {
-        // string hostport = peerAddr.toIpPort();
-        logger.info("accept connected fd:%d", connfd);
+        string hostPort = peerAddr.toIpPort();
+        logger.info("accept connected fd:%d, host:%s", connfd, hostPort);
         if (newConnectionCallback) {
             newConnectionCallback(connfd, peerAddr);
         } else {
@@ -47,7 +47,7 @@ void Acceptor::handleRead() {
             logger.info("no handle new connection callback. close it instead");
         }
     } else {
-        logger.info("in Acceptor::handleRead");
+        logger.info("error in Acceptor::handleRead");
         // Read the section named "The special problem of
         // accept()ing when you can't" in libev's doc.
         // By Marc Lehmann, author of libev.

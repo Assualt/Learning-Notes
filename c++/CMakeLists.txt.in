@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.1.0)
+
+project(googletest-download NONE)
+
+include(ExternalProject)
+ExternalProject_Add(googletest
+# URL               ${CMAKE_SOURCE_DIR}/thirdparty/gtest/googletest-release-1.8.0.zip
+  URL               https://github.com/google/googletest/archive/release-1.8.0.zip
+  URL_MD5           adfafc8512ab65fd3cf7955ef0100ff5
+  SOURCE_DIR        "${CMAKE_CURRENT_BINARY_DIR}/googletest-src"
+  BINARY_DIR        "${CMAKE_CURRENT_BINARY_DIR}/googletest-build"
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND     ""
+  INSTALL_COMMAND   ""
+  TEST_COMMAND      ""
+)

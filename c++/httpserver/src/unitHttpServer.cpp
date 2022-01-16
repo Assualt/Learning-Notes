@@ -168,7 +168,7 @@ bool MethodAllowIndexPatterm(http::HttpRequest &request, http::HttpResponse &res
 }
 
 int main(int argc, char **argv) {
-    //logger.BasicConfig("%(thread)s %(ctime)s %(levelname)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S", "server.log", "a");
+    // logger.BasicConfig("%(thread)s %(ctime)s %(levelname)s [%(filename)s-%(lineno)s-%(funcName)s] %(message)s", "%Y-%m-%d %H:%M:%S", "server.log", "a");
     logger.BasicConfig("%(thread)s %(ctime)s %(levelname)s %(message)s", "%Y-%m-%d %H:%M:%S", "server.log", "a");
 
     cmdline::parser CommandParse;
@@ -184,8 +184,8 @@ int main(int argc, char **argv) {
         std::cout << CommandParse.usage() << std::endl;
     } else {
         std::string strConfigPath = CommandParse.get<std::string>("config_path");
-        bool RunInDaemon = CommandParse.get<bool>("daemon");
-        auto nLevel = CommandParse.get<int>("logLevel");
+        bool        RunInDaemon   = CommandParse.get<bool>("daemon");
+        auto        nLevel        = CommandParse.get<int>("logLevel");
         logger.setLevel(static_cast<tlog::detail::Level>(nLevel));
 
         http::HttpServer server;
@@ -202,8 +202,8 @@ int main(int argc, char **argv) {
         mapper.addRequestMapping({"/login/{user}/{id}", "POST", true}, std::move(AuthLoginIndexPattern));
         server.StartThreads(CommandParse.get<int>("threads_count"));
 
-        if(RunInDaemon)
-            daemon(0,0);
+        if (RunInDaemon)
+            daemon(0, 0);
 
         server.ExecForever();
     }

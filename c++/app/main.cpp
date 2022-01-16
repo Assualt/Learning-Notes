@@ -138,12 +138,12 @@ int main(int argc, char** argv) {
 
     std::cout << "--- struct get ----" << std::endl;
     auto keys = t8.keys();
-    for(auto key : keys){
-        std::cout << key <<" in t8 is " <<t8[key] << std::endl;
+    for (auto key : keys) {
+        std::cout << key << " in t8 is " << t8[key] << std::endl;
     }
-    std::cout <<"t8 size " <<t8.size() << std::endl;
+    std::cout << "t8 size " << t8.size() << std::endl;
 
-    TVariant s("temp",-1);
+    TVariant s("temp", -1);
     std::cout << s.asString() << std::endl;
     return 0;
 }

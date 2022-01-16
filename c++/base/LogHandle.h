@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+
 #define MAX_FILENAME_BUF 256
 
 #define SECONDS_DAY(n) (24 * n * 3600)
@@ -24,9 +25,8 @@ namespace base {
 
 class LogHandle {
 public:
-    virtual void writeData(const char *pData, size_t nsize) {
-    }
-    virtual ~LogHandle() = default;
+    virtual void writeData(const char *pData, size_t nsize) {}
+    virtual ~LogHandle()                                    = default;
 };
 
 class StdOutLogHandle : public LogHandle {

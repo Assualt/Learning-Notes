@@ -1,5 +1,5 @@
-#include "httpresponse.h"
 #include "hashutils.hpp"
+#include "httpresponse.h"
 #include "logging.h"
 #include <string.h>
 #include <sys/socket.h>
@@ -10,7 +10,7 @@ void HttpResponse::setStatusMessage(int statusCode, const std::string &HttpVersi
     m_strHttpVersion   = HttpVersion;
     m_strMessage       = message;
     auto EncodingItems = utils::split(strAcceptEncoding, ',');
-    std::for_each(EncodingItems.begin(), EncodingItems.end(), [ this ](std::string &item) { this->m_AcceptEncodingSet.insert(item); });
+    std::for_each(EncodingItems.begin(), EncodingItems.end(), [this](std::string &item) { this->m_AcceptEncodingSet.insert(item); });
 }
 std::string HttpResponse::toResponseHeader() {
     stringstream ss;
@@ -155,7 +155,7 @@ int HttpResponse::WriteBytes(ConnectionInfo *info) {
         strncpy(temp + nHeaderSize, m_strBodyString.c_str(), m_nBodyStringSize);
         mybuf.seekReadPos(0);
         size_t nRead = mybuf.sgetn(temp + nHeaderSize + m_nBodyStringSize, m_nBodybytesSize);
-        int nWrite;
+        int    nWrite;
 #ifdef USE_OPENSSL
         if (info->ssl)
             nWrite = SSL_write(info->ssl, temp, nRead + nHeaderSize + m_nBodyStringSize);
@@ -189,12 +189,12 @@ int HttpResponse::WriteBytes(ConnectionInfo *info) {
 #else
         nWrite = send(info->m_nClientFd, temp, nSendBytes, 0);
 #endif
-        // for (int i = 0; i < nSendBytes; i++) {
-        //     if (temp[ i ] != '\n')
-        //         printf("%02x ", temp[ i ] & 0xFF);
-        //     else if (temp[ i - 1 ] == '\r' && temp[ i ] == '\n')
-        //         printf("%02x\n", temp[ i ] & 0xFF);
-        // }
+        for (int i = 0; i < nSendBytes; i++) {
+            if (temp[ i ] != '\n')
+                printf("%02x ", temp[ i ] & 0xFF);
+            else if (temp[ i - 1 ] == '\r' && temp[ i ] == '\n')
+                printf("%02x\n", temp[ i ] & 0xFF);
+        }
         delete[] temp;
         return nWrite;
     } else {

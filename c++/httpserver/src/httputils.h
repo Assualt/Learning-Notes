@@ -34,7 +34,6 @@ public:
     static std::string FileDirentTime(struct stat *st);
     static bool        ISDir(const std::string &filepath);
     static std::string toHexString(ssize_t nSize);
-
 };
 
 class UrlUtils {
@@ -42,5 +41,5 @@ public:
     static unsigned char ToHex(unsigned char x);
     static unsigned char FromHex(unsigned char x);
     static std::string   UrlEncode(const std::string &str);
-    static std::string UrlDecode(const std::string &str);
+    static std::string   UrlDecode(const std::string &str);
 };

@@ -10,7 +10,10 @@ using namespace muduo::net;
 
 class HttpResponse : public copyable {
 public:
-    enum HttpContentType { kContentRaw, kContentStream };
+    enum HttpContentType {
+        kContentRaw, /* Content-Type: length */
+        kContentStream
+    };
     enum EncodingType { Type_Gzip, Type_Br, Type_Deflate, Type_Raw };
     enum HttpStatusCode {
         kUnknown,
@@ -80,6 +83,10 @@ public:
     }
 
     void appendToBuffer(Buffer *output) const;
+
+    HttpStatusCode getStatusCode() const {
+        return statusCode_;
+    }
 
 private:
     std::map<std::string, std::string> headers_;

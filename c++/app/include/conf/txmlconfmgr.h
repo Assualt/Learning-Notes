@@ -52,6 +52,7 @@ public:
 
 private:
     TFilesListMap m_mKVMap;
+
 private:
     bool initIniFiles();
     void initSingerFile(TXmlNode &vNode, const tstring &confPath);

@@ -2,13 +2,14 @@
 
 namespace muduo {
 namespace base {
-class nonecopyable{
+class nonecopyable {
 public:
-    nonecopyable(const nonecopyable&) = delete;
-    void operator=(const nonecopyable&) = delete;
-protected:    
-    nonecopyable() = default;
+    nonecopyable(const nonecopyable &) = delete;
+    void operator=(const nonecopyable &) = delete;
+
+protected:
+    nonecopyable()  = default;
     ~nonecopyable() = default;
 };
-}
-}
+} // namespace base
+} // namespace muduo

@@ -3,7 +3,8 @@
 NAMESPACE_BEGIN
 
 TConfigureManagerBase::TConfigureManagerBase(const tstring &strConfDir, CONF_TYPE nType) :
-        m_strConfigureDir(strConfDir), m_nConfType(nType) {
+        m_strConfigureDir(strConfDir),
+        m_nConfType(nType) {
     ScanFilePath(m_strConfigureDir);
 }
 

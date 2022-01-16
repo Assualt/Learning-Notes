@@ -8,13 +8,12 @@ NAMESPACE_BEGIN
 std::map<std::string, Logger *> logImpl::g_LoggerMap;
 
 namespace detail {
-std::map<std::string, int> levelMap = {
-        {"Debug", 0},  // NOLINT
-        {"Info", 1},
-        {"Warning", 2},
-        {"Error", 3},
-        {"Alert", 4},
-        {"Emergency", 5}};
+std::map<std::string, int> levelMap = {{"Debug", 0},  // NOLINT
+                                       {"Info", 1},
+                                       {"Warning", 2},
+                                       {"Error", 3},
+                                       {"Alert", 4},
+                                       {"Emergency", 5}};
 void FormatTimeString(
         struct tm *t,
         struct timeval *tv,

@@ -40,7 +40,7 @@ void HttpRequest::setParams(const std::map<std::string, std::string> &headerMap)
     }
 }
 
-const std::string HttpRequest::get(const std::string &key) const{
+const std::string HttpRequest::get(const std::string &key) const {
     for (auto item : m_vReqestHeader) {
         if (strcasecmp(item.first.c_str(), key.c_str()) == 0)
             return item.second;

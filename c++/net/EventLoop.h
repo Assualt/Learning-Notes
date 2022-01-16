@@ -42,7 +42,7 @@ public:
     void wakeup();
     void handleRead();
 
-    bool isInLoopThread() const ;
+    bool isInLoopThread() const;
     void printActiveChannels() const;
 
 protected:
@@ -61,7 +61,7 @@ protected:
     std::unique_ptr<Poller>  m_Poller;
     std::vector<Functor>     m_vPendingFunctors;
     bool                     m_bCallFuncs;
-    const pid_t              m_nThreadId;
+    pid_t                    m_nThreadId;
     std::unique_ptr<Channel> m_wakeupChannel;
 };
 } // namespace net

@@ -20,7 +20,6 @@ int main(int argc, char const *argv[]) {
     ThreadPool myPool;
     myPool.setMaxQueueSize(20);
     myPool.start(10);
-    
 
     return 0;
 }

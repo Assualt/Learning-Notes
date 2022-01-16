@@ -55,19 +55,18 @@ const std::set<char> timeOperator = {
         'u', /* the useconds */
 };
 const std::vector<std::string> WeekDayEngList = {"Sun", "Mon", "Tues", "Wed", "Thur", "Fri", "Sat"};  // NOLINT
-const std::vector<std::string> MonthEngList = {
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",  // NOLINT
-        "Sept",
-        "Oct",
-        "Nov",
-        "Dec"};  // NOLINT
+const std::vector<std::string> MonthEngList = {"Jan",
+                                               "Feb",
+                                               "Mar",
+                                               "Apr",
+                                               "May",
+                                               "Jun",
+                                               "Jul",
+                                               "Aug",  // NOLINT
+                                               "Sept",
+                                               "Oct",
+                                               "Nov",
+                                               "Dec"};  // NOLINT
 
 const std::set<char> basicMsgFmt = {'f', 's', 'd', 'l'};  // NOLINT
 

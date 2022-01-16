@@ -2,6 +2,7 @@
 
 #include "Format.h"
 #include "LogHandle.h"
+#include "Mutex.h"
 #include "Range.h"
 #include <iomanip>
 #include <iostream>
@@ -14,6 +15,7 @@
 #ifndef APP
 #define APP "app"
 #endif
+
 namespace muduo {
 namespace base {
 
@@ -27,34 +29,38 @@ public:
         std::string filename;
     };
 
+    void SetAppendLF(bool val) {
+        m_MessageAppendCRLF = val;
+    }
+
     Logger &BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix, const char *fileFormat, const char *fileMode = "a+");
 
     template <class... Args> void debug(const char *messagefmt, Args &&...arg) {
-        this->logMessage(Debug, messagefmt, arg...);
+        this->LogMessage(Debug, messagefmt, arg...);
     }
 
     template <class... Args> void info(const char *messagefmt, Args &&...arg) {
-        this->logMessage(Info, messagefmt, arg...);
+        this->LogMessage(Info, messagefmt, arg...);
     }
 
     template <class... Args> void warning(const char *messagefmt, Args &&...arg) {
-        this->logMessage(Warn, messagefmt, arg...);
+        this->LogMessage(Warn, messagefmt, arg...);
     }
 
     template <class... Args> void error(const char *messagefmt, Args &&...arg) {
-        this->logMessage(Error, messagefmt, arg...);
+        this->LogMessage(Error, messagefmt, arg...);
     }
 
     template <class... Args> void fatal(const char *messagefmt, Args &&...arg) {
-        this->logMessage(Fatal, messagefmt, arg...);
+        this->LogMessage(Fatal, messagefmt, arg...);
     }
 
     template <class... Args> void alert(const char *messagefmt, Args &&...arg) {
-        this->logMessage(Alert, messagefmt, arg...);
+        this->LogMessage(Alert, messagefmt, arg...);
     }
 
     template <class... Args> void emergency(const char *messagefmt, Args &&...arg) {
-        this->logMessage(Emergency, messagefmt, arg...);
+        this->LogMessage(Emergency, messagefmt, arg...);
     }
 
     std::string getLevelName(LogLevel nLevel);
@@ -63,7 +69,9 @@ public:
     Logger &setAppName(const std::string &appname);
 
     void addLogHandle(LogHandle *au) {
+        m_mutexLock.Lock();
         m_vHandleList.push_back(au);
+        m_mutexLock.UnLock();
     }
 
 protected:
@@ -71,15 +79,19 @@ protected:
     void        getKeyString(const std::string &key, std::stringstream &ss, const std::string &message, LogLevel nLevel);
     std::string MessageFormat(const std::string &FormattedLogmessage, LogLevel nLevel);
 
-    template <class... Args> void logMessage(LogLevel nLevel, const char *messagefmt, Args &&...arg) {
+    template <class... Args> void LogMessage(LogLevel nLevel, const char *messagefmt, Args &&...arg) {
         if (nLevel < m_nLevel)
             return;
         std::string LogMessage = messagefmt;
         formatString(LogMessage, arg...);
         std::string message = MessageFormat(LogMessage, nLevel);
-        message.append("\n");
+        if (m_MessageAppendCRLF) {
+            message.append("\n");
+        }
         for (auto &handle : m_vHandleList) {
+            m_mutexLock.Lock();
             handle->writeData(message.c_str(), message.size());
+            m_mutexLock.UnLock();
         }
     }
 
@@ -168,6 +180,8 @@ protected:
     std::string              m_strAppName;
     FileAttribute            m_FileAttribute;
     std::vector<LogHandle *> m_vHandleList;
+    MutexLock                m_mutexLock;
+    bool                     m_MessageAppendCRLF{true};
 };
 
 } // namespace base

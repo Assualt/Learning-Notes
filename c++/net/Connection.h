@@ -8,13 +8,9 @@ namespace net {
 
 class Connection : nonecopyable {
 public:
-    enum CONNECTION_TYPE {
-        TYPE_TCP,
-        TYPE_UDP
-    };
+    enum CONNECTION_TYPE { TYPE_TCP, TYPE_UDP };
 
 public:
-    
 };
 
 } // namespace net

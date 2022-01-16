@@ -99,8 +99,6 @@ protected:
     // Buffer
     Buffer m_input;
     Buffer m_output;
-
-
 };
 
 } // namespace net

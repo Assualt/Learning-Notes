@@ -24,6 +24,7 @@ protected:                                                \
 #define Authorization "Authorization"
 #define AcceptLanguage "Accept-Language"
 #define UserAgent "User-Agent"
+
 #define ContentLength "Content-Length"
 #define TransferEncoding "Transfer-Encoding"
 #define AcceptRanges "Accept-Ranges"

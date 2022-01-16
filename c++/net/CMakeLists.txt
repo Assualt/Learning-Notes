@@ -20,16 +20,14 @@ set(net_SRCS
 
 add_library(muduo_net ${net_SRCS})
 target_link_libraries(muduo_net muduo_base pthread rt)
-
 install(TARGETS muduo_net DESTINATION lib)
 
-file(GLOB HEADERS 
+file(GLOB HEADERS_net
     "*.h"
-    "stream/*.h"
-    "http/*.h"
     "poller/*.h"
 )
-install(FILES ${HEADERS} DESTINATION include/net)
+install(FILES ${HEADERS_base} DESTINATION include/net)
+
 add_subdirectory(http)
 if(BUILD_TESTS)
   add_subdirectory(test)  

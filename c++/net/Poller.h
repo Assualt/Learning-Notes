@@ -25,7 +25,7 @@ public:
     virtual bool hasChannel(Channel *channel) const;
 
     static Poller *newDefaultPoller(EventLoop *loop);
-    void assertInLoopThread();
+    void           assertInLoopThread();
 
 protected:
     ChannelMap m_mChannels;

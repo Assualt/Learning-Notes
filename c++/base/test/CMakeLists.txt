@@ -23,3 +23,10 @@ target_link_libraries(test_file muduo_base)
 add_test(NAME test_file COMMAND test_file)
 
 
+install(TARGETS test_logging DESTINATION bin)
+install(TARGETS test_range DESTINATION bin)
+install(TARGETS test_thread DESTINATION bin)
+install(TARGETS test_timestamp DESTINATION bin)
+install(TARGETS test_threadpool DESTINATION bin)
+install(TARGETS test_file DESTINATION bin)
+

@@ -90,7 +90,7 @@ Func RequestMapper::find(const std::string &RequestPath, const std::string &reqT
             return iter.second;
         }
     }
-    return [ = ](const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+    return [=](const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
         response.setStatusMessage(404, "HTTP/1.1", "not found");
         response.addHeader("Content-Type", "text/html");
         response.addHeader("Content-Length", 0);

@@ -47,6 +47,7 @@ public:
     void setKeepAlive(bool on);
 
     void shutdownWrite();
+
 private:
     int sockfd_{-1};
 };
