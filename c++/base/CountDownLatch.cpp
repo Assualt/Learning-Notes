@@ -1,20 +1,29 @@
 #include "CountDownLatch.h"
 
-namespace muduo {
-namespace base {
+using namespace muduo;
+using namespace muduo::base;
 
 CountDownLatch::CountDownLatch(int count)
-    : m_nCount(count) {
+    : m_nCount(count)
+    , m_pCond(new Condition(m_mutex)) {
 }
 
-void CountDownLatch::wait() {
-    std::lock_guard<std::mutex> guard(m_mutex);
+void CountDownLatch::Wait() {
+    AutoLock myLock(m_mutex);
     while (m_nCount > 0) {
+        m_pCond->Wait();
     }
 }
 
-int CountDownLatch::getCount() {
+void CountDownLatch::CountDown() {
+    AutoLock myLock(m_mutex);
+    --m_nCount;
+    if (m_nCount == 0) {
+        m_pCond->NotifyAll();
+    }
 }
 
-} // namespace base
-} // namespace muduo
+int CountDownLatch::GetCount() const {
+    AutoLock myLock(m_mutex);
+    return m_nCount;
+}

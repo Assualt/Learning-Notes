@@ -1,12 +1,10 @@
-// Use of this source code is governed by a BSD-style license
-// that can be found in the License file.
-//
-// Author: Shuo Chen (chenshuo at chenshuo dot com)
-
 #pragma once
-#include "base/Mutex.h"
-#include "base/nonecopyable.h"
+#include "Condition.h"
+#include "Mutex.h"
+#include "nonecopyable.h"
+#include <memory>
 #include <pthread.h>
+
 namespace muduo {
 namespace base {
 
@@ -14,15 +12,16 @@ class CountDownLatch : nonecopyable {
 public:
     explicit CountDownLatch(int count);
 
-    void wait();
+    void Wait();
 
-    void countDown();
+    void CountDown();
 
-    int getCount() const;
+    int GetCount() const;
 
 private:
-    mutable std::mutex m_mutex;
-    int                m_nCount;
+    mutable MutexLock          m_mutex;
+    int                        m_nCount;
+    std::unique_ptr<Condition> m_pCond{nullptr};
 };
 } // namespace base
 } // namespace muduo

@@ -82,16 +82,16 @@ bool ListDirIndexPatter(const HttpRequest &request, HttpResponse &response, Http
 
     DirScanner scanner(currentDir.c_str());
     FileAttr   attr;
-    while (scanner.fetch(attr)) {
+    while (scanner.Fetch(attr)) {
         std::stringstream out;
-        attr.setParentPath(currentDir);
-        out << "<script>addRow(\"" << attr.getName() << "\",\"" << attr.getName() << "\",";
-        if (attr.isDir()) {
-            out << "1," << attr.getSize() << ",\"4096 B\",";
+        attr.SetParentPath(currentDir);
+        out << "<script>addRow(\"" << attr.GetName() << "\",\"" << attr.GetName() << "\",";
+        if (attr.IsDir()) {
+            out << "1," << attr.GetSize() << ",\"4096 B\",";
         } else {
-            out << "0," << attr.getSize() << ",\"" << utils::toSizeString(attr.getSize()) << "\",";
+            out << "0," << attr.GetSize() << ",\"" << utils::toSizeString(attr.GetSize()) << "\",";
         }
-        out << attr.getModifyTime().seconds() << ",\"" << attr.getModifyTime().toFormattedString("%Y/%m/%d %H:%M:%S") << "\");</script>\r\n";
+        out << attr.GetModifyTime().seconds() << ",\"" << attr.GetModifyTime().toFormattedString("%Y/%m/%d %H:%M:%S") << "\");</script>\r\n";
         tmplateHtml.append(out.str());
     }
     response.setStatusMessage(200, "HTTP/1.1", "OK");

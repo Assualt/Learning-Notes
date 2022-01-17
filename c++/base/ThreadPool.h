@@ -1,8 +1,9 @@
 #pragma once
 
+#include "Condition.h"
+#include "Mutex.h"
 #include "Thread.h"
 #include "nonecopyable.h"
-#include <condition_variable>
 #include <deque>
 #include <functional>
 #include <mutex>
@@ -42,9 +43,10 @@ private:
     std::vector<std::unique_ptr<Thread>> m_vThreads;
     Task                                 m_fThreadInitFunc;
     std::string                          m_strThreadPoolName;
-    static std::mutex                    g_ThreadMutex;
-    std::condition_variable              m_notFullCond;
-    std::condition_variable              m_notEmptyCond;
+    mutable MutexLock                    m_mutex;
+
+    std::unique_ptr<Condition> m_notFullCond;
+    std::unique_ptr<Condition> m_notEmptyCond;
 };
 
 } // namespace base

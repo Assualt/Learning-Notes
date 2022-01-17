@@ -1,15 +1,15 @@
+#include "ThreadPool.h"
 #include "Format.h"
 #include "Logging.h"
-#include "ThreadPool.h"
 namespace muduo {
 namespace base {
-
-std::mutex ThreadPool::g_ThreadMutex;
 
 ThreadPool::ThreadPool(const std::string &name)
     : m_strThreadPoolName(name)
     , m_bIsRunning(false)
-    , m_nMaxQueueSize(0) {
+    , m_nMaxQueueSize(0)
+    , m_notEmptyCond(new Condition(m_mutex))
+    , m_notFullCond(new Condition(m_mutex)) {
 }
 
 ThreadPool::~ThreadPool() {
@@ -45,10 +45,10 @@ void ThreadPool::start(int numThreads) {
 
 void ThreadPool::stop() {
     {
-        std::lock_guard<std::mutex> guard(g_ThreadMutex);
+        AutoLock myLock(m_mutex);
         m_bIsRunning = false;
-        m_notEmptyCond.notify_all();
-        m_notFullCond.notify_all();
+        m_notEmptyCond->NotifyAll();
+        m_notFullCond->NotifyAll();
     }
     {
         for (auto &thread : m_vThreads) {
@@ -58,37 +58,37 @@ void ThreadPool::stop() {
 }
 
 size_t ThreadPool::queueSize() const {
-    std::lock_guard<std::mutex> guard(g_ThreadMutex);
+    AutoLock myLock(m_mutex);
     return m_dQueue.size();
 }
 
 void ThreadPool::run(Task func) {
-    std::unique_lock<std::mutex> guard(g_ThreadMutex);
+    AutoLock myLock(m_mutex);
     if (m_vThreads.empty()) {
         func();
     } else {
         while (isFull() && m_bIsRunning) {
-            m_notFullCond.wait(guard);
+            m_notFullCond->Wait();
         }
         if (!m_bIsRunning) {
             return;
         }
         m_dQueue.push_back(std::move(func));
-        m_notEmptyCond.notify_one();
+        m_notEmptyCond->Notify();
     }
 }
 
 ThreadPool::Task ThreadPool::take() {
-    std::unique_lock<std::mutex> guard(g_ThreadMutex);
+    AutoLock myLock(m_mutex);
     while (m_dQueue.empty() && m_bIsRunning) {
-        m_notEmptyCond.wait(guard);
+        m_notEmptyCond->Wait();
     }
     Task t;
     while (!m_dQueue.empty()) {
         t = m_dQueue.front();
         m_dQueue.pop_front();
         if (m_nMaxQueueSize > 0) {
-            m_notEmptyCond.notify_one();
+            m_notEmptyCond->Notify();
         }
     }
     return t;

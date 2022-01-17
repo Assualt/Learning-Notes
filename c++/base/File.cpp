@@ -1,27 +1,28 @@
 #include "File.h"
 #include <sys/file.h>
 #include <unistd.h>
-namespace muduo {
-namespace base {
+using namespace muduo;
+using namespace muduo::base;
 
 File::File() noexcept
-    : fd_(-1)
-    , ownsfd_(false) {
+    : m_nFd(-1)
+    , m_nOwnFd(false) {
 }
 
 File::File(int fd, bool ownsFd) noexcept
-    : fd_(fd)
-    , ownsfd_(ownsFd) {
+    : m_nFd(fd)
+    , m_nOwnFd(ownsFd) {
 }
 
 File::File(const char *name, int flags, mode_t mode) {
-    fd_ = ::open(name, flags, mode);
-    if (fd_ == -1) {
+    m_nFd = ::open(name, flags, mode);
+    if (m_nFd == -1) {
         // throw exception
         throw FileException("open file error");
     }
-    ownsfd_ = true;
+    m_nOwnFd = true;
 }
+
 File::File(const std::string &name, int flags, mode_t mode)
     : File(name.c_str(), flags, mode) {
 }
@@ -31,22 +32,23 @@ File::File(StringPiece name, int flags, mode_t mode)
 }
 
 File::File(File &&rhs) noexcept
-    : fd_(rhs.fd_)
-    , ownsfd_(rhs.ownsfd_) {
-    rhs.release();
+    : m_nFd(rhs.m_nFd)
+    , m_nOwnFd(rhs.m_nOwnFd) {
+    rhs.Release();
 }
+
 File &File::operator=(File &&rhs) {
-    closeNoThrow();
-    swap(rhs);
+    CloseNoThrow();
+    Swap(rhs);
     return *this;
 }
 
 File::~File() {
-    auto fd = fd_;
-    closeNoThrow();
+    auto fd = m_nFd;
+    CloseNoThrow();
 }
 
-File File::temporary() {
+File File::Temporary() {
     FILE *tmpFile = tmpfile();
     if (tmpFile == nullptr) {
         // throw open file error
@@ -56,24 +58,27 @@ File File::temporary() {
     int fd = ::dup(fileno(tmpFile));
     return File(fd, true);
 }
-int File::release() noexcept {
-    int released = fd_;
-    fd_          = -1;
-    ownsfd_      = false;
+
+int File::Release() noexcept {
+    int released = m_nFd;
+    m_nFd          = -1;
+    m_nOwnFd      = false;
     return released;
 }
-void File::swap(File &other) noexcept {
+
+void File::Swap(File &other) noexcept {
     using std::swap;
-    swap(fd_, other.fd_);
-    swap(ownsfd_, other.ownsfd_);
-}
-void swap(File &a, File &b) noexcept {
-    a.swap(b);
+    swap(m_nFd, other.m_nFd);
+    swap(m_nOwnFd, other.m_nOwnFd);
 }
 
-File File::dup() const {
-    if (fd_ != -1) {
-        int fd = ::dup(fd_);
+void swap(File &a, File &b) noexcept {
+    a.Swap(b);
+}
+
+File File::Dup() const {
+    if (m_nFd != -1) {
+        int fd = ::dup(m_nFd);
         if (fd == -1) {
             // throw error
             throw FileException("dup file error");
@@ -82,40 +87,44 @@ File File::dup() const {
     }
     return File();
 }
-void File::close() {
-    if (!closeNoThrow()) {
+
+void File::Close() {
+    if (!CloseNoThrow()) {
         // throwSystemError("close() failed");
         throw std::runtime_error("close() failed");
     }
 }
 
-bool File::closeNoThrow() {
-    int r = ownsfd_ ? ::close(fd_) : 0;
-    release();
+bool File::CloseNoThrow() {
+    int r = m_nOwnFd ? ::close(m_nFd) : 0;
+    Release();
     return r == 0;
 }
 
-void File::lock() {
-    doLock(LOCK_EX);
-}
-bool File::try_lock() {
-    return doTryLock(LOCK_EX);
-}
-void File::lock_shared() {
-    doLock(LOCK_SH);
-}
-bool File::try_lock_shared() {
-    return doTryLock(LOCK_SH);
+void File::Lock() {
+    DoLock(LOCK_EX);
 }
 
-void File::doLock(int op) {
-    int ret = flock(fd_, op);
+bool File::TryLock() {
+    return DoTryLock(LOCK_EX);
+}
+
+void File::LockShared() {
+    DoLock(LOCK_SH);
+}
+
+bool File::TryLockShared() {
+    return DoTryLock(LOCK_SH);
+}
+
+void File::DoLock(int op) {
+    int ret = flock(m_nFd, op);
     if (ret != 0)
         throw std::runtime_error("flock() failed lock");
 }
 
-bool File::doTryLock(int op) {
-    int r = flock(fd_, op | LOCK_NB);
+bool File::DoTryLock(int op) {
+    int r = flock(m_nFd, op | LOCK_NB);
     // flock returns EWOULDBLOCK if already locked
     if (r == -1 && errno == EWOULDBLOCK) {
         return false;
@@ -125,13 +134,14 @@ bool File::doTryLock(int op) {
     return true;
 }
 
-void File::unlock() {
-    int ret = flock(fd_, LOCK_UN);
+void File::UnLock() {
+    int ret = flock(m_nFd, LOCK_UN);
     if (ret != 0)
         throw std::runtime_error("flock() failed try_lock");
 }
-void File::unlock_shared() {
-    unlock();
+
+void File::UnLockShared() {
+    UnLock();
 }
 
 // Read
@@ -140,7 +150,7 @@ std::string File::ReadLineByChar(char ch) {
     std::string lineString;
     ssize_t     nRead;
     while (1) {
-        nRead = read(fd_, temp, 1);
+        nRead = read(m_nFd, temp, 1);
         if (nRead == -1)
             break;
         if (ch == temp[ 0 ]) {
@@ -154,7 +164,5 @@ std::string File::ReadLineByChar(char ch) {
 }
 
 size_t File::ReadBytes(void *temp, size_t nBytes) {
-    return read(fd_, temp, nBytes);
+    return read(m_nFd, temp, nBytes);
 }
-} // namespace base
-} // namespace muduo

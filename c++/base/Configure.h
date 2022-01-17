@@ -13,7 +13,7 @@ namespace muduo {
 namespace base {
 using cstring = const std::string &;
 using vstring = std::vector<std::string>;
-using section = std::map<std::string, std::string>;
+using Section = std::map<std::string, std::string>;
 
 namespace detail {
 template <class typeString> static typeString trimRight(const typeString &strVal, const typeString &strSpace) {
@@ -105,7 +105,7 @@ public:
         : m_Suffix(suffix) {
         GetAllFiles(confPath, suffix);
     }
-    void init();
+    void Init();
 
 public:
     void changeAccessPath(cstring confpath);
@@ -116,7 +116,7 @@ public:
     float       getFloat(float fdefault, cstring prefix) const;
     double      getDouble(double ddefault, cstring prefix) const;
     long        getLong(long ldefault, cstring prefix) const;
-    section     getSection(cstring prefix) const;
+    Section     getSection(cstring prefix) const;
 
 protected:
     void GetAllFiles(cstring path, cstring suffix);
@@ -124,7 +124,7 @@ protected:
 
 protected:
     vstring                            m_vAllConfFiles;
-    std::map<std::string, std::string> m_ConfigKeyValMapper;
+    std::map<std::string, std::string> m_mConfigKeyValMapper;
     std::string                        m_strPrefix;
     std::string                        m_Suffix;
 };

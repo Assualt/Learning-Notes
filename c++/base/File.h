@@ -14,8 +14,8 @@ namespace base {
 DECLARE_EXCEPTION(FileException, Exception);
 class File {
 private:
-    int  fd_;
-    bool ownsfd_;
+    int  m_nFd{-1};
+    bool m_nOwnFd;
 
 public:
     /**
@@ -44,7 +44,7 @@ public:
      * to something else you want to do with the open fd.
      */
 
-    template <typename... Args> static std::shared_ptr<File> makeFile(Args &&... arg) noexcept {
+    template <typename... Args> static std::shared_ptr<File> makeFile(Args &&...arg) noexcept {
         return std::make_shared<File>(new File(std::forward<Args>(arg)...));
     }
 
@@ -53,43 +53,43 @@ public:
     /**
      * Create and return a temporary, owned file (uses tmpfile()).
      */
-    static File temporary();
+    static File Temporary();
 
     /**
      * Return the file descriptor, or -1 if the file was closed.
      */
-    int      fd() const;
+    int      Fd() const;
     explicit operator bool() const {
-        return fd_ != -1;
+        return m_nFd != -1;
     }
 
     /**
      * Duplicate file descriptor and return File that owns it.
      */
-    File dup() const;
+    File Dup() const;
 
     /**
      * If we own the file descriptor, close the file and throw on error.
      * Otherwise, do nothing.
      */
-    void close();
+    void Close();
 
     /**
      * Closes the file (if owned).  Returns true on success, false (and sets
      * errno) on error.
      */
-    bool closeNoThrow();
+    bool CloseNoThrow();
 
     /**
      * Returns and releases the file descriptor; no longer owned by this File.
      * Returns -1 if the File object didn't wrap a file.
      */
-    int release() noexcept;
+    int Release() noexcept;
 
     /**
      * Swap this File with another.
      */
-    void swap(File &other) noexcept;
+    void Swap(File &other) noexcept;
 
     // movable
     File(File &&) noexcept;
@@ -103,26 +103,26 @@ public:
     // to acquire a second lock on a different file descriptor for the same file
     // should fail, but some systems might implement flock() using fcntl() locks,
     // in which case it will succeed.
-    void lock();
-    bool try_lock();
-    void unlock();
+    void Lock();
+    bool TryLock();
+    void UnLock();
 
-    void lock_shared();
-    bool try_lock_shared();
-    void unlock_shared();
+    void LockShared();
+    bool TryLockShared();
+    void UnLockShared();
 
     // Read Line
     std::string ReadLineByChar(char ch = '\n');
     size_t      ReadBytes(void *temp, size_t nBytes);
 
 private:
-    void doLock(int op);
-    bool doTryLock(int op);
+    void DoLock(int op);
+    bool DoTryLock(int op);
 
     //
     File(const File &) = delete;
     File &operator=(const File &) = delete;
 };
-void swap(File &a, File &b) noexcept;
+void Swap(File &a, File &b) noexcept;
 } // namespace base
 } // namespace muduo

@@ -35,5 +35,5 @@ bool Condition::WaitForTimeOut(double seconds) {
     abstime.tv_sec += static_cast<time_t>((abstime.tv_nsec + nanoseconds) / kNanoSecondsPerSecond);
     abstime.tv_nsec = static_cast<long>((abstime.tv_nsec + nanoseconds) % kNanoSecondsPerSecond);
 
-    return ETIMEDOUT == pthread_cond_timedwait(&m_cond, m_lock.GetLock(), &abstime);
+    return (ETIMEDOUT == pthread_cond_timedwait(&m_cond, m_lock.GetLock(), &abstime));
 }

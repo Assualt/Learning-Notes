@@ -25,8 +25,9 @@ namespace base {
 
 class LogHandle {
 public:
-    virtual void writeData(const char *pData, size_t nsize) {}
-    virtual ~LogHandle()                                    = default;
+    virtual void writeData(const char *pData, size_t nsize) {
+    }
+    virtual ~LogHandle() = default;
 };
 
 class StdOutLogHandle : public LogHandle {
@@ -63,10 +64,12 @@ protected:
 
     bool changeAccessFile() {
         string currentFile = CurrentFileName();
-        if (currentFile == m_strCurrentFile)
+        if (currentFile == m_strCurrentFile) {
             return false;
-        if (foutputStream.is_open())
+        }
+        if (foutputStream.is_open()) {
             foutputStream.close();
+        }
         string FullFileName = FmtString("%/%").arg(m_strFilePathDir).arg(currentFile).str();
         foutputStream.open(FullFileName, std::ios::app | std::ios::out);
         m_strCurrentFile = currentFile;

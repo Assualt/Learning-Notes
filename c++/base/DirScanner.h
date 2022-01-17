@@ -31,6 +31,7 @@ public:
         , m_tModify(rt.m_tModify)
         , m_tRead(rt.m_tRead) {
     }
+
     //! destrcutor
     ~FileAttr(void) = default;
 
@@ -38,12 +39,12 @@ public:
     FileAttr &operator=(const FileAttr &rt) {
         if (&rt != this) {
             FileAttr tempVal(rt);
-            swap(tempVal);
+            Swap(tempVal);
         }
         return *this;
     }
 
-    void setInfor(const std::string &strName) {
+    void SetInfor(const std::string &strName) {
         m_strName = strName;
     }
 
@@ -51,63 +52,74 @@ public:
     bool operator==(const FileAttr &rt) const {
         return m_strParent == rt.m_strParent && m_strName == rt.m_strName;
     }
+
     //! compare tow file name
     template <class typeFileAttr> bool operator==(const typeFileAttr &rt) const {
-        return getFullName() == rt.getFullName();
+        return GetFullName() == rt.GetFullName();
     }
+
     //! set the parent directory path name
     //! \param boExpandAllInfo	if boExpandAllInfo is true, expand all attribute information, such as create time, last access time, etc.
-    void setParentPath(const std::string &strParent, bool boExpandAllInfo = true);
+    void SetParentPath(const std::string &strParent, bool boExpandAllInfo = true);
 
 public:
     //! return the file/directory name
-    const std::string &getName(void) const {
+    const std::string &GetName(void) const {
         return m_strName;
     }
+
     //! return the parent directory name
-    const std::string &getPath(void) const {
+    const std::string &SetPath(void) const {
         return m_strParent;
     }
+
     //! return the file/directory full name
-    std::string getFullName(void) const {
+    std::string GetFullName(void) const {
         return std::string(m_strParent) += m_strName;
     }
 
     //! return the file/directory type.
-    TFileFlags getType(void) const {
+    TFileFlags GetType(void) const {
         return m_nFlags;
     }
+
     //! return true when this is a file.
-    bool isFile(void) const {
+    bool IsFile(void) const {
         return (m_nFlags & type_FILE) != 0;
     }
+
     //! return true when this is a link.
-    bool isLink(void) const {
+    bool IsLink(void) const {
         return (m_nFlags & type_Link) != 0;
     }
+
     //! return true when this is a directory.
-    bool isDir(void) const {
+    bool IsDir(void) const {
         return (m_nFlags & type_DIR) != 0;
     }
+
     //! return the create time.
-    Timestamp getCreateTime(void) const {
+    Timestamp GetCreateTime(void) const {
         return m_tCreate;
     }
+
     //! return the last modify time.
-    Timestamp getModifyTime(void) const {
+    Timestamp GetModifyTime(void) const {
         return m_tModify;
     }
+
     //! return the last access time.
-    Timestamp getReadTime(void) const {
+    Timestamp GetReadTime(void) const {
         return m_tRead;
     }
+
     //! return the file size.
-    size_t getSize(void) const {
+    size_t GetSize(void) const {
         return m_nSize;
     }
 
     //! swap tow TFileAttr
-    void swap(FileAttr &attr) {
+    void Swap(FileAttr &attr) {
         std::swap(m_strParent, attr.m_strParent);
         std::swap(m_strName, attr.m_strName);
         std::swap(m_nFlags, attr.m_nFlags);
@@ -133,9 +145,9 @@ public:
     ~DirScanner();
 
 public:
-    void closeHandle(void);
-    bool fetch(FileAttr &attr);
-    void startSearch(const std::string &strPath);
+    void CloseHandle(void);
+    bool Fetch(FileAttr &attr);
+    void StartSearch(const std::string &strPath);
 
 protected:
     DIR *m_nHandle;

@@ -1,12 +1,14 @@
-#include "LogHandle.h"
 #include "Logging.h"
-#include "Os.h"
+#include "LogHandle.h"
+#include "System.h"
 #include <memory>
 #include <syscall.h>
-namespace muduo {
-namespace base {
 
-static std::string g_detaultAppName = "main";
+using namespace muduo;
+using namespace muduo::base;
+
+static std::string            g_detaultAppName = "main";
+std::map<std::string, Logger> Logger::_MapLogger;
 
 string strip_filename(const std::string &filename) {
     if (filename.rfind("/") != std::string::npos) {
@@ -14,8 +16,6 @@ string strip_filename(const std::string &filename) {
     }
     return filename;
 }
-
-std::map<std::string, Logger> Logger::_MapLogger;
 
 Logger &Logger::BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix, const char *fileFormat, const char *fileMode) {
     m_strMessageFormat = messageFormat;
@@ -73,7 +73,7 @@ std::string Logger::getLevelName(LogLevel nLevel) {
 
 std::string Logger::getCurrentHourTime(bool showMicroSeconds) {
     time_t            tNow(time(nullptr));
-    struct tm *       t = localtime(&tNow);
+    struct tm        *t = localtime(&tNow);
     std::stringstream ss;
     ss << std::setfill('0') << std::setw(2) << t->tm_hour << ":" << std::setfill('0') << std::setw(2) << t->tm_min << ":" << std::setfill('0') << std::setw(2) << t->tm_sec;
     if (showMicroSeconds) {
@@ -99,7 +99,7 @@ void Logger::getKeyString(const std::string &key, std::stringstream &ss, const s
         ss << getCurrentHourTime(true);
     } else if (key == "(ctime)") {
         time_t t(time(nullptr));
-        char * timeBuffer = ctime(&t);
+        char  *timeBuffer = ctime(&t);
         ss << std::string(timeBuffer, strlen(timeBuffer) - 1);
     } else if (key == "(lineno)")
         ss << std::dec << m_FileAttribute.lineno;
@@ -134,6 +134,3 @@ Logger &Logger::setAppName(const std::string &appname) {
     m_strAppName = appname;
     return *this;
 }
-
-} // namespace base
-} // namespace muduo

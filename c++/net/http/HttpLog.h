@@ -14,35 +14,27 @@ using muduo::base::Thread;
 class HttpLog : muduo::base::nonecopyable {
 public:
     HttpLog(Logger &log);
-    ~HttpLog() {
-        m_Thread->join();
-    }
-
+    ~HttpLog();
     bool Init();
 
 public:
-    HttpLog &operator<<(short);
-    HttpLog &operator<<(unsigned short);
-    HttpLog &operator<<(int);
-    HttpLog &operator<<(unsigned int);
-    HttpLog &operator<<(long);
-    HttpLog &operator<<(unsigned long);
-    HttpLog &operator<<(long long);
-    HttpLog &operator<<(unsigned long long);
-    HttpLog &operator<<(const char *val);
-    HttpLog &operator<<(const std::string &);
-    HttpLog &Write(const std::string &);
+    template<class T>
+    HttpLog &operator<<(const T &val) {
+        m_sCmdInStream << val;
+        CheckLogBufferOverFlow();
+        return *this;
+    }
 
-    void DoTaskObj();
-    void CheckBufOverFilled();
+    void LogTaskThread();
+    void CheckLogBufferOverFlow();
 
 private:
-    Logger                    &m_Logger;
-    std::stringstream          m_CmdInStream;
+    Logger                    &m_pLogger;
+    std::stringstream          m_sCmdInStream;
     MutexLock                  m_mutex;
-    std::unique_ptr<Condition> m_Cond{nullptr};
-    std::unique_ptr<Thread>    m_Thread{nullptr};
+    std::unique_ptr<Condition> m_pCond{nullptr};
+    std::unique_ptr<Thread>    m_pThread{nullptr};
     MutexLock                  m_mutexWrite;
-    std::unique_ptr<Condition> m_CondWrite{nullptr};
+    std::unique_ptr<Condition> m_pCondWrite{nullptr};
     bool                       m_bExit{false};
 };

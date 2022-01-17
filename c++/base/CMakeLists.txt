@@ -1,9 +1,10 @@
 set(base_SRCS
     Condition.cpp
+    Configure.cpp
+    CountDownLatch.cpp
     Date.cpp
     DirScanner.cpp
     File.cpp
-    Format.cpp
     Logging.cpp
     Mutex.cpp
     Thread.cpp

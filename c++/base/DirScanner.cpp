@@ -1,8 +1,10 @@
 #include "DirScanner.h"
 #include "Logging.h"
+
+using namespace muduo;
 using namespace muduo::base;
 
-void FileAttr::setParentPath(const std::string &strParent, bool boExtendAllInfo) {
+void FileAttr::SetParentPath(const std::string &strParent, bool boExtendAllInfo) {
     m_strParent = strParent;
     if (strParent.back() != '/') {
         m_strParent.append("/");
@@ -26,22 +28,22 @@ void FileAttr::setParentPath(const std::string &strParent, bool boExtendAllInfo)
 DirScanner::DirScanner(const char *pathName)
     : m_nHandle(nullptr) {
     if (pathName != nullptr) {
-        startSearch(pathName);
+        StartSearch(pathName);
     }
 }
 
 DirScanner::~DirScanner() {
-    closeHandle();
+    CloseHandle();
 }
 
-void DirScanner::closeHandle() {
+void DirScanner::CloseHandle() {
     if (m_nHandle) {
         closedir(m_nHandle);
     }
 }
 
-void DirScanner::startSearch(const std::string &path) {
-    closeHandle();
+void DirScanner::StartSearch(const std::string &path) {
+    CloseHandle();
     m_nHandle = opendir(path.c_str());
     if (m_nHandle == nullptr) {
         logger.warning("open %s dir failed", path);
@@ -49,7 +51,7 @@ void DirScanner::startSearch(const std::string &path) {
     }
 }
 
-bool DirScanner::fetch(FileAttr &attr) {
+bool DirScanner::Fetch(FileAttr &attr) {
     if (m_nHandle == nullptr) {
         return false;
     }
@@ -57,6 +59,6 @@ bool DirScanner::fetch(FileAttr &attr) {
     if (dp == nullptr) {
         return false;
     }
-    attr.setInfor(dp->d_name);
+    attr.SetInfor(dp->d_name);
     return true;
 }

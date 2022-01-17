@@ -1,20 +1,27 @@
-// #pragma once
-// #include <iostream>
-// #include <stdio.h>
-// #include <sys/stat.h>
-// using std::string;
-// namespace muduo {
-// namespace base {
-// namespace System {
+#pragma once
+#include <iostream>
+#include <stdio.h>
+#include <sys/prctl.h>
+#include <sys/stat.h>
 
-// int mkdir(const string &path, int mode) {
-//     return ::mkdir(path.c_str(), mode);
-// }
+namespace muduo {
+namespace base {
+namespace System {
 
-// int rename(const string &srcFilePath, const string &dstFileName) {
-//     return ::rename(srcFilePath.c_str(), dstFileName.c_str());
-// }
+int mkdir(const std::string &path, int mode) {
+    return ::mkdir(path.c_str(), mode);
+}
 
-// } // namespace System
-// } // namespace base
-// } // namespace muduo
+int rename(const std::string &srcFilePath, const std::string &dstFileName) {
+    return ::rename(srcFilePath.c_str(), dstFileName.c_str());
+}
+
+std::string GetCurrentThreadName() {
+    char tempName[ 256 ] = {0};
+    (void)prctl(PR_GET_NAME, tempName);
+    return tempName;
+}
+
+} // namespace System
+} // namespace base
+} // namespace muduo
