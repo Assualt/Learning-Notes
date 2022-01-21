@@ -16,12 +16,12 @@ EventLoopThread::~EventLoopThread() {
     m_bExited = true;
     if (m_pLoop != nullptr) {
         m_pLoop->quit();
-        m_thread.join();
+        m_thread.Join();
     }
 }
 
 EventLoop *EventLoopThread::startLoop() {
-    m_thread.start();
+    m_thread.Start();
     // 这个位置是要等线程起来之后,才能进行如下操作
     while (m_pLoop == NULL) {
         m_pCond->Wait();

@@ -15,14 +15,14 @@ HttpLog::HttpLog(Logger &log)
 
 HttpLog::~HttpLog() {
     m_pLogger.debug(m_sCmdInStream.str().c_str());
-    m_pThread->join();
+    m_pThread->Join();
 }
 
 bool HttpLog::Init() {
     m_pLogger.addLogHandle(RollFileHandler.get());
     m_pLogger.SetAppendLF(false);
     m_pThread.reset(new Thread(std::bind(&HttpLog::LogTaskThread, this), "AsyncTask"));
-    m_pThread->start();
+    m_pThread->Start();
     return true;
 }
 

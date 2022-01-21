@@ -20,21 +20,22 @@ public:
     ~ThreadPool();
 
 public:
-    void setMaxQueueSize(int maxSize);
-    void setThreadInitCallBack(const Task &callback);
+    void SetMaxQueueSize(int maxSize);
+    void SetThreadInitCallBack(const Task &callback);
 
-    void start(int numThreads);
-    void stop();
+    void Start(int numThreads);
+    void Stop();
 
-    const std::string &getThreadName() const;
-    size_t             queueSize() const;
+    const std::string &GetThreadName() const;
+    size_t             QueueSize() const;
 
-    void run(Task func);
+    void Run(Task func);
 
 private:
-    bool isFull();
-    void runInThread();
-    Task take();
+    void WaitQueueForever();
+    bool IsFull();
+    void RunInThread();
+    Task Take();
 
 private:
     std::deque<Task>                     m_dQueue;

@@ -1,8 +1,8 @@
 #include "ThreadPool.h"
 #include "Format.h"
 #include "Logging.h"
-namespace muduo {
-namespace base {
+using namespace muduo;
+using namespace muduo::base;
 
 ThreadPool::ThreadPool(const std::string &name)
     : m_strThreadPoolName(name)
@@ -14,37 +14,38 @@ ThreadPool::ThreadPool(const std::string &name)
 
 ThreadPool::~ThreadPool() {
     if (m_bIsRunning) {
-        stop();
+        Stop();
     }
 }
 
-const std::string &ThreadPool::getThreadName() const {
+const std::string &ThreadPool::GetThreadName() const {
     return m_strThreadPoolName;
 }
 
-void ThreadPool::setThreadInitCallBack(const Task &callback) {
+void ThreadPool::SetThreadInitCallBack(const Task &callback) {
     m_fThreadInitFunc = callback;
 }
 
-void ThreadPool::setMaxQueueSize(int maxSize) {
+void ThreadPool::SetMaxQueueSize(int maxSize) {
     m_nMaxQueueSize = maxSize;
 }
 
-void ThreadPool::start(int numThreads) {
+void ThreadPool::Start(int numThreads) {
     m_vThreads.reserve(numThreads);
     m_bIsRunning = true;
     for (int i = 0; i < numThreads; ++i) {
         std::string threadName = FmtString("Thread%").arg(i).str();
-        m_vThreads.emplace_back(new Thread(std::bind(&ThreadPool::runInThread, this), threadName));
-        m_vThreads[ i ]->start();
+        m_vThreads.emplace_back(new Thread(std::bind(&ThreadPool::RunInThread, this), threadName));
+        m_vThreads[ i ]->Start();
     }
     if (numThreads == 0 && m_fThreadInitFunc) {
         m_fThreadInitFunc();
     }
 }
 
-void ThreadPool::stop() {
+void ThreadPool::Stop() {
     {
+        WaitQueueForever();
         AutoLock myLock(m_mutex);
         m_bIsRunning = false;
         m_notEmptyCond->NotifyAll();
@@ -52,22 +53,22 @@ void ThreadPool::stop() {
     }
     {
         for (auto &thread : m_vThreads) {
-            thread->join();
+            thread->Join();
         }
     }
 }
 
-size_t ThreadPool::queueSize() const {
+size_t ThreadPool::QueueSize() const {
     AutoLock myLock(m_mutex);
     return m_dQueue.size();
 }
 
-void ThreadPool::run(Task func) {
-    AutoLock myLock(m_mutex);
+void ThreadPool::Run(Task func) {
     if (m_vThreads.empty()) {
         func();
     } else {
-        while (isFull() && m_bIsRunning) {
+        AutoLock myLock(m_mutex);
+        while (IsFull() && m_bIsRunning) {
             m_notFullCond->Wait();
         }
         if (!m_bIsRunning) {
@@ -78,33 +79,48 @@ void ThreadPool::run(Task func) {
     }
 }
 
-ThreadPool::Task ThreadPool::take() {
+ThreadPool::Task ThreadPool::Take() {
     AutoLock myLock(m_mutex);
     while (m_dQueue.empty() && m_bIsRunning) {
         m_notEmptyCond->Wait();
     }
     Task t;
-    while (!m_dQueue.empty()) {
+    if (!m_dQueue.empty()) {
         t = m_dQueue.front();
         m_dQueue.pop_front();
         if (m_nMaxQueueSize > 0) {
-            m_notEmptyCond->Notify();
+            m_notFullCond->Notify();
         }
     }
     return t;
 }
 
-bool ThreadPool::isFull() {
+void ThreadPool::WaitQueueForever() {
+    while (m_bIsRunning) {
+        int size = 0;
+        {
+            AutoLock lock(m_mutex);
+            size = m_dQueue.size();
+        }
+        if (size > 0) {
+            m_notEmptyCond->Notify();
+        } else {
+            break;
+        }
+    }
+}
+
+bool ThreadPool::IsFull() {
     return m_nMaxQueueSize > 0 && m_dQueue.size() >= m_nMaxQueueSize;
 }
 
-void ThreadPool::runInThread() {
+void ThreadPool::RunInThread() {
     try {
         if (m_fThreadInitFunc) {
             m_fThreadInitFunc();
         }
         while (m_bIsRunning) {
-            Task task(take());
+            Task task(Take());
             if (task) {
                 task();
             }
@@ -117,6 +133,3 @@ void ThreadPool::runInThread() {
         throw;
     }
 }
-
-} // namespace base
-} // namespace muduo

@@ -18,8 +18,14 @@ string strip_filename(const std::string &filename) {
 }
 
 Logger &Logger::BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix, const char *fileFormat, const char *fileMode) {
+    if (messageFormat == nullptr) {
+        throw LogException("invalid message format");
+    }
+    m_nLevel = defaultLevel;
     m_strMessageFormat = messageFormat;
-    m_nLevel           = defaultLevel;
+    if ((filePrefix == nullptr) || (fileFormat == nullptr)) {
+        return *this;
+    }
     return *this;
 }
 

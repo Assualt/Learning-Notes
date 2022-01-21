@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Exception.h"
 #include "Format.h"
 #include "LogHandle.h"
 #include "Mutex.h"
@@ -18,6 +19,8 @@
 
 namespace muduo {
 namespace base {
+
+DECLARE_EXCEPTION(LogException, Exception);
 
 class Logger {
 public:

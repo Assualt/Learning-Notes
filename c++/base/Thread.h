@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Exception.h"
 #include "nonecopyable.h"
 #include <atomic>
 #include <functional>
@@ -9,30 +10,46 @@ using muduo::base::nonecopyable;
 
 namespace muduo {
 namespace base {
+using ThreadFunc = std::function<void()>;
+namespace detail {
+DECLARE_EXCEPTION(ThreadException, Exception);
+
+struct ThreadContext {
+public:
+    ThreadFunc  m_func{nullptr};
+    std::string m_strThreadName;
+    pid_t      *m_nPid{nullptr};
+
+public:
+    ThreadContext(ThreadFunc func, const std::string &name, pid_t *pid);
+    void Run();
+};
+} // namespace detail
 
 class Thread : nonecopyable {
 public:
-    using ThreadFunc = std::function<void()>;
     explicit Thread(ThreadFunc, const std::string &name = "");
     ~Thread();
 
 public:
-    void               start();
-    int                join();
-    bool               isStarted();
-    pid_t              tid() const;
-    const std::string &name() const;
+    void               Start();
+    int                Join();
+    bool               IsStarted();
+    pid_t              Tid() const;
+    const std::string &Name() const;
 
-    static int numCreated();
+public:
+    static int   NumCreated();
+    static void *StartThread(void *arg);
 
 private:
-    void setDefaultName();
+    void SetDefaultName();
 
-    bool        m_IsStarted;
-    bool        m_IsJoined;
-    pthread_t   m_nThreadId;
-    pid_t       m_nTid;
-    ThreadFunc  m_threadFunc;
+    bool        m_isStarted{false};
+    bool        m_isJoined{false};
+    pthread_t   m_nThreadId{0};
+    pid_t       m_nTid{0};
+    ThreadFunc  m_threadFunc{nullptr};
     std::string m_strFunName;
 
     static std::atomic<int32_t> m_nThreadCnt;

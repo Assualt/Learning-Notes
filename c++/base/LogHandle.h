@@ -59,7 +59,7 @@ protected:
     string CurrentFileName() {
         Timestamp tNow             = Timestamp::fromUnixTime(time(nullptr));
         auto      formatTimeString = tNow.toFormattedString(m_strTimePostfix.c_str());
-        return FmtString("%_%").arg(m_strFilePrefix).arg(formatTimeString).str();
+        return FmtString("%.%").arg(m_strFilePrefix).arg(formatTimeString).str();
     }
 
     bool changeAccessFile() {

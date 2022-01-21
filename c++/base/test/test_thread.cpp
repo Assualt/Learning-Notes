@@ -15,8 +15,8 @@ void myFunc() {
 
 int main(int argc, char const *argv[]) {
 
-    Thread c(myFunc, "OK");
-    c.start();
-    c.join();
+    Thread myThread(myFunc, "OK");
+    myThread.Start();
+    myThread.Join();
     return 0;
 }

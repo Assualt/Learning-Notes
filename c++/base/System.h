@@ -8,18 +8,22 @@ namespace muduo {
 namespace base {
 namespace System {
 
-int mkdir(const std::string &path, int mode) {
+inline int mkdir(const std::string &path, int mode) {
     return ::mkdir(path.c_str(), mode);
 }
 
-int rename(const std::string &srcFilePath, const std::string &dstFileName) {
+inline int rename(const std::string &srcFilePath, const std::string &dstFileName) {
     return ::rename(srcFilePath.c_str(), dstFileName.c_str());
 }
 
-std::string GetCurrentThreadName() {
+inline std::string GetCurrentThreadName() {
     char tempName[ 256 ] = {0};
     (void)prctl(PR_GET_NAME, tempName);
     return tempName;
+}
+
+inline void SetThreadName(const std::string &threadName) {
+    (void)::prctl(PR_SET_NAME, threadName.c_str());
 }
 
 } // namespace System

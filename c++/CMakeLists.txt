@@ -52,5 +52,11 @@ if (CMAKE_VERSION VERSION_LESS 2.8.11)
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR})
-add_subdirectory(base)
-add_subdirectory(net)
+
+if (CMAKE_COMPILER_IS_GNUCC) 
+  add_compile_options(-std=c++14)
+  message(STATUS "optional: -std=c++14")
+endif(CMAKE_COMPILER_IS_GNUCC)
+
+add_subdirectory(base bin)
+add_subdirectory(net bin)
