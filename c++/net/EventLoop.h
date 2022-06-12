@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include "base/Mutex.h"
 #include "base/Timestamp.h"
 #include "base/nonecopyable.h"
 #include <atomic>
@@ -11,6 +12,7 @@
 
 #include "Poller.h"
 #include <memory>
+using muduo::base::MutexLock;
 using muduo::base::nonecopyable;
 using muduo::base::Timestamp;
 namespace muduo {

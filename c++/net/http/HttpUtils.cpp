@@ -91,7 +91,7 @@ std::string utils::toResponseBasicDateString(time_t t) {
     return std::string(temp, nSize);
 }
 
-std::string utils::requstTimeFmt() {
+std::string utils::requestTimeFmt() {
     time_t     t    = time(nullptr);
     struct tm *info = localtime(&t);
     char       temp[ 1024 ];

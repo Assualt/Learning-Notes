@@ -17,9 +17,9 @@ namespace muduo {
 namespace net {
 using muduo::net::Channel;
 
-__thread muduo::net::EventLoop *t_loopInThisThread = 0;
-const int                       kPollTimeMs        = 10000;
-int                             createEventfd() {
+__thread EventLoop *t_loopInThisThread = 0;
+constexpr int       kPollTimeMs        = 10000;
+int                 createEventfd() {
     int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if (evtfd < 0) {
         abort();
@@ -83,7 +83,6 @@ void EventLoop::loop() {
         m_vActiveChannels.clear();
         m_tRecvTimeStamp = m_Poller->poll(kPollTimeMs, &m_vActiveChannels);
         m_bEventHanding  = true;
-        // printActiveChannels();
         for (Channel *channel : m_vActiveChannels) {
             m_pCurrentChannel = channel;
             m_pCurrentChannel->handleEvent(m_tRecvTimeStamp);

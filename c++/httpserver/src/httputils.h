@@ -26,7 +26,7 @@ public:
 
     static std::string loadFileString(const std::string &filePath);
     static std::string toResponseBasicDateString(time_t t = time(nullptr));
-    static std::string requstTimeFmt();
+    static std::string requestTimeFmt();
     static bool        FileIsBinary(const std::string &filePath);
     static bool        FileExists(const std::string &filePath);
     static std::string FileMagicType(const std::string &filePath);

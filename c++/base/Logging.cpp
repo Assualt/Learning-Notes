@@ -1,5 +1,5 @@
-#include "Logging.h"
 #include "LogHandle.h"
+#include "Logging.h"
 #include "System.h"
 #include <memory>
 #include <syscall.h>
@@ -21,7 +21,7 @@ Logger &Logger::BasicConfig(LogLevel defaultLevel, const char *messageFormat, co
     if (messageFormat == nullptr) {
         throw LogException("invalid message format");
     }
-    m_nLevel = defaultLevel;
+    m_nLevel           = defaultLevel;
     m_strMessageFormat = messageFormat;
     if ((filePrefix == nullptr) || (fileFormat == nullptr)) {
         return *this;
@@ -79,13 +79,13 @@ std::string Logger::getLevelName(LogLevel nLevel) {
 
 std::string Logger::getCurrentHourTime(bool showMicroSeconds) {
     time_t            tNow(time(nullptr));
-    struct tm        *t = localtime(&tNow);
+    struct tm *       t = localtime(&tNow);
     std::stringstream ss;
     ss << std::setfill('0') << std::setw(2) << t->tm_hour << ":" << std::setfill('0') << std::setw(2) << t->tm_min << ":" << std::setfill('0') << std::setw(2) << t->tm_sec;
     if (showMicroSeconds) {
         struct timeval tv;
         gettimeofday(&tv, nullptr);
-        ss << "." << std::setfill('0') << std::setw(5) << tv.tv_usec;
+        ss << "." << std::setw(5) << std::setfill('0') << tv.tv_usec;
     }
     return ss.str();
 }
@@ -105,7 +105,7 @@ void Logger::getKeyString(const std::string &key, std::stringstream &ss, const s
         ss << getCurrentHourTime(true);
     } else if (key == "(ctime)") {
         time_t t(time(nullptr));
-        char  *timeBuffer = ctime(&t);
+        char * timeBuffer = ctime(&t);
         ss << std::string(timeBuffer, strlen(timeBuffer) - 1);
     } else if (key == "(lineno)")
         ss << std::dec << m_FileAttribute.lineno;

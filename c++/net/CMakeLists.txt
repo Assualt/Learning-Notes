@@ -29,6 +29,4 @@ file(GLOB HEADERS_net
 install(FILES ${HEADERS_base} DESTINATION include/net)
 
 add_subdirectory(http)
-if(BUILD_TESTS)
-  add_subdirectory(test)  
-endif()
+add_subdirectory(rpc)

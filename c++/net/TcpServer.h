@@ -24,20 +24,21 @@ public:
     ~TcpServer();
 
 public:
-    std::string ipPort();
-    const std::string &name() const;
+    std::string        IpPort();
+    const std::string &Name() const;
     EventLoop *        getLoop() const;
 
-    void setThreadNum(int threadNum);
-    void setThreadInitCallback(const ThreadInitCallback &cb);
-    void setConnectionCallback(const ConnectionCallback &cb);
-    void setMessageCallback(const MessageCallback &cb);
+    void SetThreadNum(int threadNum);
+    void SetThreadInitCallback(const ThreadInitCallback &cb);
+    void SetConnectionCallback(const ConnectionCallback &cb);
+    void SetMessageCallback(const MessageCallback &cb);
 
-    void start();
+    void Start();
+    void Stop();
 
-    void newConnection(int sockfd, const InetAddress &peerAddress);
-    void removeConnection(const TcpConnectionPtr &conn);
-    void removeConnectionInLoop(const TcpConnectionPtr &conn);
+    void NewConnection(int sockfd, const InetAddress &peerAddress);
+    void RemoveConnection(const TcpConnectionPtr &conn);
+    void RemoveConnectionInLoop(const TcpConnectionPtr &conn);
 
 private:
     int                                     m_nThreadNum;

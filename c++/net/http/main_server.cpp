@@ -2,11 +2,14 @@
 #include "HttpResponse.h"
 #include "HttpServer.h"
 #include "HttpUtils.h"
+#include "base/Backtrace.h"
 #include "base/DirScanner.h"
 #include "base/Format.h"
 #include "base/Logging.h"
 #include <dirent.h>
+#include <signal.h>
 using std::string;
+using namespace muduo;
 extern char favicon[ 555 ];
 
 bool IndexPatter(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
@@ -126,8 +129,17 @@ bool MethodAllowIndexPatterm(const HttpRequest &request, HttpResponse &response,
     return true;
 }
 
+bool IndexFaviconPattern(const HttpRequest &req, HttpResponse &resp, HttpConfig &config) {
+    resp.setStatusMessage(200, req.getHttpVersion(), "OK");
+    resp.addHeader(ContentType, "image/x-icon");
+    resp.addHeader("Accept-Ranges", "bytes");
+    resp.setBody(favicon);
+    return true;
+}
+
 void registerIndexPattern(HttpServer &server) {
     auto &mapper = server.getMapper();
+    mapper.addRequestMapping({"/favicon.ico"}, std::move(IndexFaviconPattern));
     mapper.addRequestMapping({"/index"}, std::move(IndexPatter));
     mapper.addRequestMapping({"/404"}, std::move(NotFoundIndexPatter));
     mapper.addRequestMapping({"/#/"}, std::move(DefaultIndexPattern));
@@ -138,20 +150,34 @@ void registerIndexPattern(HttpServer &server) {
     // mapper.addRequestMapping({"/login/{user}/{id}", "POST", true}, std::move(AuthLoginIndexPattern));
 }
 
+void RegisterSignalHandle(HttpServer &server) {
+    auto handle = [](int sig, uintptr_t param) {
+        if (sig == SIGSEGV) {
+            auto callstack = GetBackCallStack();
+            logger.info("callstack is:\n%s", callstack.c_str());
+        }
+        auto server = reinterpret_cast<HttpServer *>(param);
+        // server->Exit();
+        exit(0);
+    };
+    server.RegSignalCallback(SIGINT, reinterpret_cast<uintptr_t>(&server), handle);
+    server.RegSignalCallback(SIGHUP, reinterpret_cast<uintptr_t>(&server), handle);
+    server.RegSignalCallback(SIGSEGV, reinterpret_cast<uintptr_t>(&server), handle);
+}
+
 int main(int argc, char const *argv[]) {
     auto &log = Logger::getLogger();
     log.BasicConfig(Logger::Info, "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
     log.setAppName("app");
-    std::shared_ptr<LogHandle> _au(new StdOutLogHandle);
-    std::shared_ptr<LogHandle> _au1(new RollingFileLogHandle("./", "http_server.log"));
-    log.addLogHandle(_au.get());
-    log.addLogHandle(_au1.get());
+    log.addLogHandle(new StdOutLogHandle);
+    log.addLogHandle(new RollingFileLogHandle("./", "http_server.log"));
 
     EventLoop  loop;
-    HttpServer server(&loop, InetAddress(8000));
-    server.setThreadNum(10);
+    HttpServer server(&loop, InetAddress(8100));
+    RegisterSignalHandle(server);
+    server.SetThreadNum(10);
     registerIndexPattern(server);
-    server.start();
+    server.Start();
     loop.loop();
 
     return 0;

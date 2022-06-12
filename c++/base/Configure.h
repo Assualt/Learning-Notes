@@ -27,7 +27,7 @@ template <class typeString> static typeString trim(const typeString &strVal, con
     return trimLeft(trimRight(strVal, strSpace), strSpace);
 }
 static int count(const std::string &strVal, char ch) {
-    return std::count_if(strVal.begin(), strVal.end(), [ ch ](char c) { return ch == c; });
+    return std::count_if(strVal.begin(), strVal.end(), [ch](char c) { return ch == c; });
 }
 
 enum FILE_TYPE { Type_Unknown, Type_File, Type_Dir, Type_Other };

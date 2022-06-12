@@ -225,7 +225,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
         iter(request, response, *config);
         int nWrite = response.WriteBytes(info);
         info->disconnect();
-        logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
+        logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requestTimeFmt(), request.getRequestType(),
                     request.getRequestPath(), request.getHttpVersion(), response.getStatusCode(), nWrite, request.get(UserAgent), request.get("Connection"));
         return;
     }
@@ -236,7 +236,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
             http::Func iter = handlerMapping->find("/401", "GET");
             iter(request, response, *config);
             int nWrite = response.WriteBytes(info);
-            logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
+            logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requestTimeFmt(), request.getRequestType(),
                         request.getRequestPath(), request.getHttpVersion(), response.getStatusCode(), nWrite, request.get(UserAgent), request.get("Connection"));
             info->disconnect();
             return;
@@ -290,7 +290,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
         iter(request, response, *config);
         nWrite = response.WriteBytes(info);
     }
-    logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requstTimeFmt(), request.getRequestType(),
+    logger.info("%d %s:%d -- [%s] \"%s %s %s\" %d %d \"-\" \"%s\" \"-\" %s", info->m_nClientFd, info->m_strConnectIP, info->m_nPort, utils::requestTimeFmt(), request.getRequestType(),
                 request.getRequestPath(), request.getHttpVersion(), response.getStatusCode(), nWrite, request.get(UserAgent), request.get("Connection"));
     info->disconnect();
 }

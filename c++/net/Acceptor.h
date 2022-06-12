@@ -26,6 +26,8 @@ public:
         return m_bListening;
     }
 
+    void closeSocket();
+
     // Deprecated, use the correct spelling one above.
     // Leave the wrong spelling here in case one needs to grep it for error messages.
     // bool listenning() const { return listening(); }
@@ -38,7 +40,7 @@ private:
     Channel               m_cAcceptChannel;
     NewConnectionCallback newConnectionCallback;
     bool                  m_bListening;
-    int                   m_nIdleFd;
+    int                   m_nIdleFd{-1};
 };
 } // namespace net
 } // namespace muduo

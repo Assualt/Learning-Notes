@@ -1,27 +1,29 @@
-#include "HttpServer.h"
 #include "HttpContext.h"
 #include "HttpLog.h"
+#include "HttpServer.h"
 #include "HttpUtils.h"
 #include "base/Logging.h"
+#include "signal.h"
 #include <any>
 #include <backtrace.h>
 #include <functional>
 
+SigHandleMap HttpServer::sigCallbackMap;
 HttpServer::HttpServer(EventLoop *loop, const InetAddress &addr)
     : m_pLoop(loop)
     , m_pServer(new TcpServer(loop, addr, "tcpServer")) {
-    
+
     auto &accessLogger = Logger::getLogger("AccessLogger");
     accessLogger.BasicConfig(Logger::Debug, "%(message)", "access.log", "");
     m_httpLog.reset(new HttpLog(accessLogger));
-    m_pServer->setConnectionCallback(std::bind(&HttpServer::onConnect, this, std::placeholders::_1));
-    m_pServer->setMessageCallback(std::bind(&HttpServer::onMessage, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    m_pServer->SetConnectionCallback([this](TcpConnectionPtr conn) { onConnect(conn); });
+    m_pServer->SetMessageCallback([this](const TcpConnectionPtr conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
     m_httpLog->Init();
     m_hConfig.Init("/home/xhou");
 }
 
-void HttpServer::setRequestCallBack(CallBack callback) {
-    m_RequestCallBack = callback;
+void HttpServer::SetRequestCallBack(CallBack callback) {
+    m_requestCallBack = callback;
 }
 
 void HttpServer::onConnect(const TcpConnectionPtr &conn) {
@@ -29,18 +31,18 @@ void HttpServer::onConnect(const TcpConnectionPtr &conn) {
     }
 }
 
-void HttpServer::setThreadNum(int num) {
+void HttpServer::SetThreadNum(int num) {
     if (num <= 0) {
         logger.alert("threadnum(<=0) is not allowed ");
         return;
     }
-    m_pServer->setThreadNum(num);
+    m_pServer->SetThreadNum(num);
 }
 
 void HttpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp recvTime) {
     HttpContext context;
     if (!context.parseRequest(buf, recvTime)) {
-        conn->send("HTTP/1.1 400 Bad Request\r\n\r\n", 32);
+        conn->send("HTTP/1.1 400 Bad Request\r\n\r\n", 29);
         conn->shutdown();
     }
     if (context.gotAll()) {
@@ -57,7 +59,7 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
     }
     HttpResponse response(close);
     Func         func = m_mapper.find(request.getRequestPath(), request.getRequestType());
-    
+
     std::string basicRequestPath = m_hConfig.getServerRoot();
     if (basicRequestPath.back() != '/')
         basicRequestPath += "/";
@@ -82,15 +84,45 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
     conn->send(&buf);
 
     if (true) {
-        (*m_httpLog) << conn->localAddress().toIpPort() << " - [" << utils::requstTimeFmt() << "] \"" << request.getRequestType() << " " << request.getRequestPath() << " "
-                    << request.getHttpVersion() << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \"" << request.get(UserAgent) << "\"\n";
+        (*m_httpLog) << conn->localAddress().toIpPort() << " - [" << utils::requestTimeFmt() << "] \"" << request.getRequestType() << " " << request.getRequestPath() << " " << request.getHttpVersion()
+                     << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \"" << request.get(UserAgent) << CTRL;
     }
     if (response.closeConnection()) {
         conn->shutdown();
     }
 }
 
-void HttpServer::start() {
-    logger.info("HttpServer start ... at:%s", m_pServer->ipPort());
-    m_pServer->start();
+void HttpServer::Start() {
+    logger.info("HttpServer start ... at:%s", m_pServer->IpPort());
+    m_pServer->Start();
+}
+
+void HttpServer::Exit() {
+    logger.info("HttpServer stop ... at:%s", m_pServer->IpPort());
+    m_pServer->Stop();
+}
+
+void HttpServer::RegSignalCallback(int sig, uintptr_t param, SignalCallback cb) {
+    if (cb == nullptr) {
+        logger.warning("cb for sig %d is null, skip to add signal", sig);
+        return;
+    }
+
+    if (sigCallbackMap.count(sig) != 0) {
+        logger.warning("repeated to reg sig %d cb.", sig);
+        return;
+    }
+
+    sigCallbackMap[ sig ] = {cb, param};
+    signal(sig, HttpServer::SignalHandler);
+}
+
+void HttpServer::SignalHandler(int sig) {
+    if (sigCallbackMap.count(sig) == 0) {
+        logger.info("no sig handle register for sig:%d", sig);
+        return;
+    }
+
+    LOG_SYSTEM.warning("begin to execute sig %d handler..", sig);
+    sigCallbackMap[ sig ].first(sig, sigCallbackMap[ sig ].second);
 }

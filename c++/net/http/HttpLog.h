@@ -18,8 +18,7 @@ public:
     bool Init();
 
 public:
-    template<class T>
-    HttpLog &operator<<(const T &val) {
+    template <class T> HttpLog &operator<<(const T &val) {
         m_sCmdInStream << val;
         CheckLogBufferOverFlow();
         return *this;
@@ -29,7 +28,7 @@ public:
     void CheckLogBufferOverFlow();
 
 private:
-    Logger                    &m_pLogger;
+    Logger &                   m_pLogger;
     std::stringstream          m_sCmdInStream;
     MutexLock                  m_mutex;
     std::unique_ptr<Condition> m_pCond{nullptr};

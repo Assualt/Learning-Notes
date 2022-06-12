@@ -16,7 +16,7 @@ public:
 
     EventLoopThreadPool(EventLoop *baseLoop, const std::string &arg);
     ~EventLoopThreadPool();
-    void setThreadNum(int numThreads) {
+    void SetThreadNum(int numThreads) {
         m_nThreadNum = numThreads;
     }
     void start(const ThreadInitFunc &func = ThreadInitFunc());

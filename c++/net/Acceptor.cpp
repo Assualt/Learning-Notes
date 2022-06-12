@@ -19,9 +19,17 @@ Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddr, bool reusepor
 }
 
 Acceptor::~Acceptor() {
+    closeSocket();
+}
+
+void Acceptor::closeSocket() {
+    if (m_nIdleFd == -1) {
+        return;
+    }
     m_cAcceptChannel.disableAll();
     m_cAcceptChannel.remove();
     ::close(m_nIdleFd);
+    m_nIdleFd = -1;
 }
 
 void Acceptor::listen() {

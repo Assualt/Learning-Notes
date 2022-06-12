@@ -61,8 +61,8 @@ File File::Temporary() {
 
 int File::Release() noexcept {
     int released = m_nFd;
-    m_nFd          = -1;
-    m_nOwnFd      = false;
+    m_nFd        = -1;
+    m_nOwnFd     = false;
     return released;
 }
 

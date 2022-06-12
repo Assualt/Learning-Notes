@@ -19,7 +19,7 @@ void printString(const std::string &str) {
 
 int main(int argc, char const *argv[]) {
     std::shared_ptr<LogHandle> _au(new StdOutLogHandle);
-    auto                      &Log = Logger::getLogger();
+    auto &                     Log = Logger::getLogger();
     Log.BasicConfig(Logger::Debug, "%(levelname) %(asctime)[%(tid)-%(threadname)] %(message)", nullptr, nullptr);
     Log.addLogHandle(_au.get());
 
@@ -27,11 +27,11 @@ int main(int argc, char const *argv[]) {
     myPool.SetMaxQueueSize(20);
     myPool.Start(10);
 
-    myPool.Run(print);  
+    myPool.Run(print);
     myPool.Run(print);
 
-    for (int i = 0; i < 10000; ++i) {
-        myPool.Run(std::bind(printString, FmtString("Task%").arg(i).str()));
+    for (int i = 0; i < 100; ++i) {
+        myPool.Run(std::bind(printString, FmtString("Task_%").arg(i).str()));
     }
     return 0;
 }

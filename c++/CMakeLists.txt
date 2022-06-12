@@ -18,6 +18,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif(NOT CMAKE_CXX_STANDARD)
 
 option(BUILD_TESTS "Enable GoogleTesting " ON)
+option(BUILD_ASAN "Enable Asan memory detector" ON)
 
 configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
@@ -47,16 +48,26 @@ add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
 # dependencies automatically when using CMake 2.8.11 or
 # later. Otherwise we have to add them here ourselves.
 add_definitions("-g")
-if (CMAKE_VERSION VERSION_LESS 2.8.11)
-  include_directories("${gtest_SOURCE_DIR}/include")
-endif()
+include_directories("${gtest_SOURCE_DIR}/include")
 
 include_directories(${PROJECT_SOURCE_DIR})
+if (BUILD_ASAN)
+  add_definitions("-fsanitize=address -fno-omit-frame-pointer -lasan")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -lasan")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fno-omit-frame-pointer -lasan")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -fno-omit-frame-pointer -lasan")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fsanitize=address -fno-omit-frame-pointer -lasan")
+  message(STATUS "optional: asan option is on")
+endif(BUILD_ASAN)
 
 if (CMAKE_COMPILER_IS_GNUCC) 
   add_compile_options(-std=c++14)
   message(STATUS "optional: -std=c++14")
 endif(CMAKE_COMPILER_IS_GNUCC)
 
-add_subdirectory(base bin)
-add_subdirectory(net bin)
+enable_testing()
+if(BUILD_TESTS)
+  add_subdirectory(test)
+endif()
+add_subdirectory(base)
+add_subdirectory(net)

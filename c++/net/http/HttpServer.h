@@ -16,28 +16,37 @@ class HttpRequest;
 class HttpResponse;
 class HttpLog;
 
-using CallBack = std::function<void(const HttpRequest &, HttpResponse &)>;
+using CallBack       = std::function<void(const HttpRequest &, HttpResponse &)>;
+using SignalCallback = std::function<void(int, uintptr_t)>;
+using SigHandleMap   = std::map<int, std::pair<SignalCallback, uintptr_t>>;
 
 class HttpServer : nonecopyable {
 public:
     HttpServer(EventLoop *loop, const InetAddress &addr);
 
 public:
-    void                  setRequestCallBack(CallBack cb);
-    void                  onConnect(const TcpConnectionPtr &conn);
-    void                  onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp recvTime);
-    void                  onRequest(const TcpConnectionPtr &conn, HttpRequest &req);
-    void                  setThreadNum(int num);
-    void                  start();
-    inline RequestMapper &getMapper() {
+    void           SetRequestCallBack(CallBack cb);
+    void           onConnect(const TcpConnectionPtr &conn);
+    void           onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp recvTime);
+    void           onRequest(const TcpConnectionPtr &conn, HttpRequest &req);
+    void           SetThreadNum(int num);
+    void           Start();
+    void           Exit();
+    RequestMapper &getMapper() {
         return m_mapper;
     }
+
+    void RegSignalCallback(int sig, uintptr_t param, SignalCallback cb);
+
+private:
+    static void SignalHandler(int sig);
 
 protected:
     EventLoop *                m_pLoop{nullptr};
     HttpConfig                 m_hConfig;
-    CallBack                   m_RequestCallBack;
+    CallBack                   m_requestCallBack;
     std::shared_ptr<TcpServer> m_pServer{nullptr};
     RequestMapper              m_mapper;
-    std::shared_ptr<HttpLog>   m_httpLog {nullptr};
+    std::shared_ptr<HttpLog>   m_httpLog{nullptr};
+    static SigHandleMap        sigCallbackMap;
 };

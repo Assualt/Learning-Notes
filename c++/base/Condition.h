@@ -1,6 +1,6 @@
 #pragma once
-#include "nonecopyable.h"
 #include "Mutex.h"
+#include "nonecopyable.h"
 
 namespace muduo {
 namespace base {
@@ -21,8 +21,7 @@ public:
 
 private:
     pthread_cond_t m_cond;
-    MutexLock & m_lock;
-
+    MutexLock &    m_lock;
 };
 } // namespace base
 } // namespace muduo

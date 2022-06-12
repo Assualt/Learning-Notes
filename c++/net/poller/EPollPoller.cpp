@@ -63,7 +63,7 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList *activeChannels) {
         // error happens, log uncommon ones
         if (savedErrno != EINTR) {
             errno = savedErrno;
-            logger.info("EPollPoller::poll() errno:%d", errno);
+            logger.warning("EPollPoller::poll() errno:%d, events:%d", errno, numEvents);
         }
     }
     return now;
@@ -142,12 +142,12 @@ void EPollPoller::update(int operation, Channel *channel) {
     event.events   = channel->events();
     event.data.ptr = channel;
     int fd         = channel->fd();
-    logger.setAppName("System.Process").info("epoll_ctl op:%s fd:%d event=%s", operationToString(operation), fd, channel->eventToString());
+    LOG_SYSTEM.info("epoll_ctl op:%s fd:%d event=%s", operationToString(operation), fd, channel->eventToString());
     if (::epoll_ctl(epollfd_, operation, fd, &event) < 0) {
         if (operation == EPOLL_CTL_DEL) {
-            logger.setAppName("System").error("epoll_ctl op =, %s fd = %d", operationToString(operation), fd);
+            LOG_SYSTEM.error("epoll_ctl op =, %s fd = %d", operationToString(operation), fd);
         } else {
-            logger.setAppName("System").error("epoll_ctl op =, %s fd = %d", operationToString(operation), fd);
+            LOG_SYSTEM.error("epoll_ctl op =, %s fd = %d", operationToString(operation), fd);
         }
     }
 }
@@ -164,4 +164,5 @@ const char *EPollPoller::operationToString(int op) {
             assert(false && "ERROR op");
             return "Unknown Operation";
     }
+    return "Unknown Operation";
 }
