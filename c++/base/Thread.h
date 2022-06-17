@@ -34,6 +34,7 @@ public:
 public:
     void               Start();
     int                Join();
+    void               Detached();
     bool               IsStarted();
     pid_t              Tid() const;
     const std::string &Name() const;

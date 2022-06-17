@@ -22,9 +22,9 @@ namespace base {
 
 DECLARE_EXCEPTION(LogException, Exception);
 
+enum LogLevel { Debug, Info, Warn, Error, Fatal, Alert, Emergency };
 class Logger {
 public:
-    enum LogLevel { Debug, Info, Warn, Error, Fatal, Alert, Emergency };
 
     struct FileAttribute {
         int         lineno;
@@ -38,31 +38,31 @@ public:
 
     Logger &BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix, const char *fileFormat, const char *fileMode = "a+");
 
-    template <class... Args> void debug(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void debug(const char *messagefmt, Args &&...arg) {
         this->LogMessage(Debug, messagefmt, arg...);
     }
 
-    template <class... Args> void info(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void info(const char *messagefmt, Args &&...arg) {
         this->LogMessage(Info, messagefmt, arg...);
     }
 
-    template <class... Args> void warning(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void warning(const char *messagefmt, Args &&...arg) {
         this->LogMessage(Warn, messagefmt, arg...);
     }
 
-    template <class... Args> void error(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void error(const char *messagefmt, Args &&...arg) {
         this->LogMessage(Error, messagefmt, arg...);
     }
 
-    template <class... Args> void fatal(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void fatal(const char *messagefmt, Args &&...arg) {
         this->LogMessage(Fatal, messagefmt, arg...);
     }
 
-    template <class... Args> void alert(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void alert(const char *messagefmt, Args &&...arg) {
         this->LogMessage(Alert, messagefmt, arg...);
     }
 
-    template <class... Args> void emergency(const char *messagefmt, Args &&... arg) {
+    template <class... Args> void emergency(const char *messagefmt, Args &&...arg) {
         this->LogMessage(Emergency, messagefmt, arg...);
     }
 
@@ -82,7 +82,7 @@ protected:
     void        getKeyString(const std::string &key, std::stringstream &ss, const std::string &message, LogLevel nLevel);
     std::string MessageFormat(const std::string &FormattedLogmessage, LogLevel nLevel);
 
-    template <class... Args> void LogMessage(LogLevel nLevel, const char *messagefmt, Args &&... arg) {
+    template <class... Args> void LogMessage(LogLevel nLevel, const char *messagefmt, Args &&...arg) {
         if (nLevel < m_nLevel)
             return;
         std::string LogMessage = messagefmt;
@@ -98,7 +98,7 @@ protected:
         }
     }
 
-    template <class T, class... Args> void formatString(std::string &result, T &val, Args &&... arg) {
+    template <class T, class... Args> void formatString(std::string &result, T &val, Args &&...arg) {
         size_t      index    = 0;
         bool        finished = false;
         std::string keyPrefix;
@@ -194,3 +194,5 @@ protected:
 
 #define logger LOG(APP)
 #define LOG_SYSTEM LOG(APP).setAppName("system")
+#define LOG_IF(func) \
+    if (func) LOG(APP)

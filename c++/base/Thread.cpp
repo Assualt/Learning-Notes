@@ -1,7 +1,7 @@
+#include "Thread.h"
 #include "Format.h"
 #include "Logging.h"
 #include "System.h"
-#include "Thread.h"
 #include <assert.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
@@ -36,7 +36,6 @@ void *Thread::StartThread(void *arg) {
     }
     ThreadContext *_au = static_cast<ThreadContext *>(arg);
     _au->Run();
-    delete _au;
     return nullptr;
 }
 
@@ -64,13 +63,22 @@ void Thread::SetDefaultName() {
     }
 }
 
+void Thread::Detached() {
+    if (!m_isStarted) {
+        throw ThreadException("thread isnot started!");
+    }
+
+    auto ret = pthread_detach(m_nThreadId);
+    LOG_IF(ret != 0).info("pthread_detached failed. ret:%s", ret);
+}
+
 void Thread::Start() {
     if (m_isStarted) {
         throw Exception("thread is started! Run Failed");
     }
-    m_isStarted         = true;
-    ThreadContext *data = new ThreadContext(m_threadFunc, m_strFunName, &m_nTid);
-    auto           ret  = pthread_create(&m_nThreadId, nullptr, &Thread::StartThread, data);
+    m_isStarted  = true;
+    auto context = std::make_unique<ThreadContext>(m_threadFunc, m_strFunName, &m_nTid);
+    auto ret     = pthread_create(&m_nThreadId, nullptr, &Thread::StartThread, context.get());
     if (ret != 0) {
         logger.alert("pthread_create error ret:%d", ret);
         throw ThreadException("pthread create error");

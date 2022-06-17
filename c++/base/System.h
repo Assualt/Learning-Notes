@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <sys/prctl.h>
 #include <sys/stat.h>
+#include <syscall.h>
 
 namespace muduo {
 namespace base {
@@ -24,6 +25,14 @@ inline std::string GetCurrentThreadName() {
 
 inline void SetThreadName(const std::string &threadName) {
     (void)::prctl(PR_SET_NAME, threadName.c_str());
+}
+
+inline long Tid() {
+    return syscall(SYS_gettid);
+}
+
+inline long Pid() {
+    return getpid();
 }
 
 } // namespace System

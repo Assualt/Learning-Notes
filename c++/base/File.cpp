@@ -77,21 +77,19 @@ void swap(File &a, File &b) noexcept {
 }
 
 File File::Dup() const {
-    if (m_nFd != -1) {
-        int fd = ::dup(m_nFd);
-        if (fd == -1) {
-            // throw error
-            throw FileException("dup file error");
-        }
-        return File(fd, true);
+    if (m_nFd == -1) {
+        return File();
     }
-    return File();
+    int fd = ::dup(m_nFd);
+    if (fd == -1) {
+        throw FileException("dup file error");
+    }
+    return File(fd, true);
 }
 
 void File::Close() {
     if (!CloseNoThrow()) {
-        // throwSystemError("close() failed");
-        throw std::runtime_error("close() failed");
+        throw FileException("close() failed");
     }
 }
 
@@ -119,8 +117,9 @@ bool File::TryLockShared() {
 
 void File::DoLock(int op) {
     int ret = flock(m_nFd, op);
-    if (ret != 0)
-        throw std::runtime_error("flock() failed lock");
+    if (ret != 0) {
+        throw FileException("flock() failed lock");
+    }
 }
 
 bool File::DoTryLock(int op) {
@@ -130,14 +129,14 @@ bool File::DoTryLock(int op) {
         return false;
     }
     if (r != 0)
-        throw std::runtime_error("flock() failed try_lock");
+        throw FileException("flock() failed try_lock");
     return true;
 }
 
 void File::UnLock() {
     int ret = flock(m_nFd, LOCK_UN);
     if (ret != 0)
-        throw std::runtime_error("flock() failed try_lock");
+        throw FileException("flock() failed try_lock");
 }
 
 void File::UnLockShared() {
@@ -149,7 +148,7 @@ std::string File::ReadLineByChar(char ch) {
     char        temp[ 2 ];
     std::string lineString;
     ssize_t     nRead;
-    while (1) {
+    while (true) {
         nRead = read(m_nFd, temp, 1);
         if (nRead == -1)
             break;
