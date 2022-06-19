@@ -36,6 +36,7 @@ void *Thread::StartThread(void *arg) {
     }
     ThreadContext *_au = static_cast<ThreadContext *>(arg);
     _au->Run();
+    delete _au;
     return nullptr;
 }
 
@@ -77,8 +78,8 @@ void Thread::Start() {
         throw Exception("thread is started! Run Failed");
     }
     m_isStarted  = true;
-    auto context = std::make_unique<ThreadContext>(m_threadFunc, m_strFunName, &m_nTid);
-    auto ret     = pthread_create(&m_nThreadId, nullptr, &Thread::StartThread, context.get());
+    ThreadContext *context = new ThreadContext(m_threadFunc, m_strFunName, &m_nTid);
+    auto ret     = pthread_create(&m_nThreadId, nullptr, &Thread::StartThread, context);
     if (ret != 0) {
         logger.alert("pthread_create error ret:%d", ret);
         throw ThreadException("pthread create error");

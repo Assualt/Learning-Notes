@@ -19,7 +19,7 @@
  * THE SOFTWARE.
  */
 
-#include "json.hpp"
+#include "json.h"
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -465,9 +465,9 @@ struct JsonParser final {
 
     /* State
      */
-    const string &  str;
+    const string   &str;
     size_t          i;
-    string &        err;
+    string         &err;
     bool            failed;
     const JsonParse strategy;
 

@@ -38,6 +38,9 @@ protected:                                                \
 #define SERVER "Server"
 #define SERVERVal "HttpServer/0.1 Linux/GNU gcc/c++"
 
+#define FilePattern    "/#*#/"
+#define DefaultPattern "/#@#/"
+
 #define AUTHREQUIRED                                                                                                                         \
     "<html>\r\n<head>\r\n<title>401 Authorization Required</title>\r\n</head>\r\n<body bgcolor=\"white\">\r\n<center><h1>401 Authorization " \
     "Required</h1></center>\r\n<hr>\r\n<center>httpserver</center>\r\n</body>\r\n</html>\r\n"

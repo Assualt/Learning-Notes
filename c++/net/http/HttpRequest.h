@@ -14,8 +14,8 @@ public:
     }
     typedef std::vector<std::pair<std::string, std::string>> ResourceMap;
     template <class T> void                                  setHeader(const std::string &key, const T &val) {
-        std::string tmpVal = std::stringstream(val).str();
-        if (key == "Host")
+                                         std::string tmpVal = std::stringstream(val).str();
+                                         if (key == "Host")
             m_strRequestHost = tmpVal;
         else if (key == "Range")
             m_strRangeBytes = tmpVal;
@@ -42,6 +42,10 @@ public:
     void              setPath(const std::string &path);
     void              addHeader(const char *start, const char *colon, const char *end);
 
+    std::map<std::string, std::string> &GetHeaderMap() {
+        return m_HeaderMap;
+    }
+
     friend std::ostream &operator<<(std::ostream &os, const HttpRequest &obj) {
         os << "> " << obj.m_strRequestType << " " << obj.m_strRequestPath << " " << obj.m_strHttpVersion << CTRL;
         for (auto &item : obj.m_vReqestHeader)
@@ -56,7 +60,7 @@ public:
     }
     void setParams(const std::map<std::string, std::string> &headerMap);
 
-    std::string                        getParams(const std::string &key);
+    std::string                        getParams(const std::string &key) const;
     std::map<std::string, std::string> getAllParams() const;
 
     bool setMethod(const char *start, const char *end);

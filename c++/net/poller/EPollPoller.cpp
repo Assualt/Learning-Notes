@@ -142,7 +142,7 @@ void EPollPoller::update(int operation, Channel *channel) {
     event.events   = channel->events();
     event.data.ptr = channel;
     int fd         = channel->fd();
-    LOG_SYSTEM.info("epoll_ctl op:%s fd:%d event=%s", operationToString(operation), fd, channel->eventToString());
+    LOG_SYSTEM.debug("epoll_ctl op:%s fd:%d event=%s", operationToString(operation), fd, channel->eventToString());
     if (::epoll_ctl(epollfd_, operation, fd, &event) < 0) {
         if (operation == EPOLL_CTL_DEL) {
             LOG_SYSTEM.error("epoll_ctl op =, %s fd = %d", operationToString(operation), fd);

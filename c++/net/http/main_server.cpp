@@ -6,6 +6,7 @@
 #include "base/DirScanner.h"
 #include "base/Format.h"
 #include "base/Logging.h"
+#include "base/json/json.h"
 #include <dirent.h>
 #include <signal.h>
 using std::string;
@@ -21,9 +22,9 @@ bool IndexPatter(const HttpRequest &request, HttpResponse &response, HttpConfig 
 }
 
 bool NotFoundIndexPatter(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
-    size_t nRead = 0;
     response.setStatusMessage(404, request.getHttpVersion(), "not found");
     response.addHeader(ContentType, "text/html; charset=utf8");
+    response.setBody("");
     return true;
 }
 
@@ -41,7 +42,6 @@ bool DefaultIndexPattern(const HttpRequest &request, HttpResponse &response, Htt
         std::string result = utils::loadFileString(strRequestPath);
         response.setBody(result);
         logger.info("load %s file bytes:%d, errno:%d", strRequestPath, result.size(), errno);
-
         if (result.size() <= 0) {
             response.setStatusMessage(404, request.getHttpVersion(), "not found");
         } else {
@@ -51,7 +51,9 @@ bool DefaultIndexPattern(const HttpRequest &request, HttpResponse &response, Htt
         MyStringBuffer mybuf;
         int            n = utils::loadBinaryStream(strRequestPath, mybuf);
         logger.info("load %s file bytes:%d", strRequestPath, n);
-        response.setBodyStream(mybuf, HttpResponse::EncodingType::Type_Gzip);
+        auto buf = std::make_unique<char[]>(n);
+        mybuf.sgetn(buf.get(), n);
+        response.setBodyStream(buf.get(), n, HttpResponse::EncodingType::Type_Gzip);
         response.setStatusMessage(200, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
     }
     response.addHeader(ContentType, utils::FileMagicType(strRequestPath));
@@ -104,28 +106,25 @@ bool ListDirIndexPatter(const HttpRequest &request, HttpResponse &response, Http
     return true;
 }
 /// login/{user}/{id}
-// bool AuthLoginIndexPattern(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
-//     std::string        user = request.getParams("user");
-//     int                id   = atoi(request.getParams("id").c_str());
-//     json::Json::object obj;
-//     auto               kvalmap = request.getAllParams();
-//     for (auto &iter : kvalmap) {
-//         obj.insert(iter);
-//     }
-//     json::Json retJson({{"ret", 200}, {"errmsg", ""}, {"data", json::Json(obj)}, {"postdata", request.getPostParams()}});
-
-//     response.setStatusMessage(200, request.getHttpVersion(), "OK");
-//     response.addHeader(ContentType, "application/json");
-//     response.addHeader(ContentLength, retJson.dump().size());
-//     response.setBody(retJson.dump());
-//     return true;
-// }
+bool AuthLoginIndexPattern(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+    std::string        user = request.getParams("user");
+    int                id   = atoi(request.getParams("id").c_str());
+    json::Json::object obj;
+    auto               kvalmap = request.getAllParams();
+    for (auto &iter : kvalmap) {
+        obj.insert(iter);
+    }
+    json::Json retJson({{"ret", 200}, {"errmsg", ""}, {"data", json::Json(obj)}, {"postdata", request.getPostParams()}});
+    response.setStatusMessage(200, request.getHttpVersion(), "OK");
+    response.addHeader(ContentType, "application/json");
+    response.setBody(retJson.dump());
+    return true;
+}
 
 bool MethodAllowIndexPatterm(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
     response.setStatusMessage(405, request.getHttpVersion(), "Method Not Allowed");
     response.addHeader(ContentType, "text/html");
-    std::string methodAllowString = METHODNOTALLOWED;
-    response.setBody(methodAllowString);
+    response.setBody(METHODNOTALLOWED);
     return true;
 }
 
@@ -133,50 +132,53 @@ bool IndexFaviconPattern(const HttpRequest &req, HttpResponse &resp, HttpConfig 
     resp.setStatusMessage(200, req.getHttpVersion(), "OK");
     resp.addHeader(ContentType, "image/x-icon");
     resp.addHeader("Accept-Ranges", "bytes");
-    resp.setBody(favicon);
+    resp.setBodyStream(favicon, sizeof(favicon), HttpResponse::EncodingType::Type_Gzip);
     return true;
 }
 
-void registerIndexPattern(HttpServer &server) {
-    auto &mapper = server.getMapper();
+void registerIndexPattern() {
+    auto &mapper = HttpServer::getMapper();
     mapper.addRequestMapping({"/favicon.ico"}, std::move(IndexFaviconPattern));
     mapper.addRequestMapping({"/index"}, std::move(IndexPatter));
-    mapper.addRequestMapping({"/404"}, std::move(NotFoundIndexPatter));
-    mapper.addRequestMapping({"/#/"}, std::move(DefaultIndexPattern));
-    mapper.addRequestMapping({"/#//"}, std::move(ListDirIndexPatter));
+    mapper.addRequestMapping({NOTFOUND}, std::move(NotFoundIndexPatter));
+    mapper.addRequestMapping({FilePattern}, std::move(DefaultIndexPattern));
+    mapper.addRequestMapping({DefaultPattern}, std::move(ListDirIndexPatter));
     mapper.addRequestMapping({"/405"}, std::move(MethodAllowIndexPatterm));
     mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
     mapper.addRequestMapping({"/400"}, std::move(BadRequestIndexPattern));
-    // mapper.addRequestMapping({"/login/{user}/{id}", "POST", true}, std::move(AuthLoginIndexPattern));
+    mapper.addRequestMapping({"/login/{user}/{id}", "POST", true}, std::move(AuthLoginIndexPattern));
 }
 
 void RegisterSignalHandle(HttpServer &server) {
     auto handle = [](int sig, uintptr_t param) {
-        if (sig == SIGSEGV) {
+        if ((sig == SIGSEGV) || (sig == SIGABRT)) {
             auto callstack = GetBackCallStack();
-            logger.info("callstack is:\n%s", callstack.c_str());
+            logger.info("callstack is:\n%s", callstack);
         }
         auto server = reinterpret_cast<HttpServer *>(param);
-        // server->Exit();
-        exit(0);
+        server->Exit();
+        _exit(0);
     };
     server.RegSignalCallback(SIGINT, reinterpret_cast<uintptr_t>(&server), handle);
     server.RegSignalCallback(SIGHUP, reinterpret_cast<uintptr_t>(&server), handle);
     server.RegSignalCallback(SIGSEGV, reinterpret_cast<uintptr_t>(&server), handle);
+    server.RegSignalCallback(SIGABRT, reinterpret_cast<uintptr_t>(&server), handle);
 }
 
 int main(int argc, char const *argv[]) {
     auto &log = Logger::getLogger();
-    log.BasicConfig(Logger::Info, "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
+    log.BasicConfig(LogLevel::Info, "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
     log.setAppName("app");
-    log.addLogHandle(new StdOutLogHandle);
-    log.addLogHandle(new RollingFileLogHandle("./", "http_server.log"));
+    auto stdHandle  = std::make_shared<StdOutLogHandle>();
+    auto fileHandle = std::make_shared<RollingFileLogHandle>(".", "http_server.log");
+    log.addLogHandle(stdHandle.get());
+    log.addLogHandle(fileHandle.get());
 
     EventLoop  loop;
     HttpServer server(&loop, InetAddress(8100));
     RegisterSignalHandle(server);
-    server.SetThreadNum(10);
-    registerIndexPattern(server);
+    server.SetThreadNum(30);
+    registerIndexPattern();
     server.Start();
     loop.loop();
 

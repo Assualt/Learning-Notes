@@ -35,7 +35,7 @@ InetAddress::InetAddress(const sockaddr_in6 &addr)
 }
 
 std::string InetAddress::toIpPort() const {
-    return FmtString("%:%").arg(inet_ntoa(m_uAddr.sin_addr)).arg(m_uAddr.sin_port).str();
+    return FmtString("%:%").arg(inet_ntoa(m_uAddr.sin_addr)).arg(be16toh(m_uAddr.sin_port)).str();
 }
 
 const struct sockaddr *InetAddress::getSockAddr() const {

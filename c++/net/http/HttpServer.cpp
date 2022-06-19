@@ -1,6 +1,6 @@
+#include "HttpServer.h"
 #include "HttpContext.h"
 #include "HttpLog.h"
-#include "HttpServer.h"
 #include "HttpUtils.h"
 #include "base/Logging.h"
 #include "signal.h"
@@ -8,16 +8,16 @@
 #include <backtrace.h>
 #include <functional>
 
-SigHandleMap HttpServer::sigCallbackMap;
+SigHandleMap  HttpServer::sigCallbackMap;
+RequestMapper HttpServer::m_mapper;
 HttpServer::HttpServer(EventLoop *loop, const InetAddress &addr)
     : m_pLoop(loop)
     , m_pServer(new TcpServer(loop, addr, "tcpServer")) {
-
     auto &accessLogger = Logger::getLogger("AccessLogger");
-    accessLogger.BasicConfig(Logger::Debug, "%(message)", "access.log", "");
+    accessLogger.BasicConfig(LogLevel::Debug, "%(message)", "access.log", "");
     m_httpLog.reset(new HttpLog(accessLogger));
-    m_pServer->SetConnectionCallback([this](TcpConnectionPtr conn) { onConnect(conn); });
-    m_pServer->SetMessageCallback([this](const TcpConnectionPtr conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
+    m_pServer->SetConnectionCallback([ this ](TcpConnectionPtr conn) { onConnect(conn); });
+    m_pServer->SetMessageCallback([ this ](const TcpConnectionPtr conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
     m_httpLog->Init();
     m_hConfig.Init("/home/xhou");
 }
@@ -28,6 +28,7 @@ void HttpServer::SetRequestCallBack(CallBack callback) {
 
 void HttpServer::onConnect(const TcpConnectionPtr &conn) {
     if (conn->isConnected()) {
+        logger.info("connection is ready. %s", conn->peerAddress().toIpPort());
     }
 }
 
@@ -58,34 +59,37 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
         close = false;
     }
     HttpResponse response(close);
-    Func         func = m_mapper.find(request.getRequestPath(), request.getRequestType());
+    Func         func = m_mapper.find(request.getRequestPath(), request.getRequestType(), request.GetHeaderMap());
 
     std::string basicRequestPath = m_hConfig.getServerRoot();
-    if (basicRequestPath.back() != '/')
+    if (basicRequestPath.back() != '/') {
         basicRequestPath += "/";
-    if (request.getRequestFilePath().front() == '/')
+    }
+
+    if (request.getRequestFilePath().front() == '/') {
         basicRequestPath += request.getRequestFilePath().substr(1);
-    else
+    } else {
         basicRequestPath += request.getRequestFilePath();
+    }
 
     bool fileExists = utils::FileExists(basicRequestPath);
     if (!fileExists) {
         func(request, response, m_hConfig);
-    } else if (utils::IsDir(basicRequestPath)) {
-        func = m_mapper.find("/#//", request.getRequestType());
+    } else if (utils::IsDir(basicRequestPath)) { // 展示目录
+        func = m_mapper.find(DefaultPattern, request.getRequestType());
         func(request, response, m_hConfig);
     } else {
-        func = m_mapper.find("/#/", request.getRequestType());
+        func = m_mapper.find(FilePattern, request.getRequestType());
         func(request, response, m_hConfig);
     }
 
     Buffer buf;
-    response.appendToBuffer(&buf);
+    response.appendToBuffer(buf);
     conn->send(&buf);
 
     if (true) {
         (*m_httpLog) << conn->localAddress().toIpPort() << " - [" << utils::requestTimeFmt() << "] \"" << request.getRequestType() << " " << request.getRequestPath() << " " << request.getHttpVersion()
-                     << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \"" << request.get(UserAgent) << CTRL;
+                     << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \"" << request.get(UserAgent) << "\"" <<CTRL;
     }
     if (response.closeConnection()) {
         conn->shutdown();

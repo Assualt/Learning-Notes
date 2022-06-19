@@ -11,6 +11,7 @@ set(base_SRCS
     Thread.cpp
     ThreadPool.cpp
     Timestamp.cpp
+    json/json.cpp
     stream/StreamBase.cpp
 )
 

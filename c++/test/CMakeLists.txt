@@ -5,8 +5,8 @@ set(src_app
     unitmain.cpp
     main.cpp
 )
-add_executable(${PROJECT_NAME} ${src_app})
-target_link_libraries(${PROJECT_NAME} gtest)
-add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
+add_executable(unitmain ${src_app})
+target_link_libraries(unitmain gtest)
+add_test(NAME unitmain COMMAND ${PROJECT_NAME})
 add_subdirectory(base)
 add_subdirectory(net)

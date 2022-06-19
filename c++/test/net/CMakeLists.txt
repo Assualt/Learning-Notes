@@ -1,2 +1,2 @@
 add_executable(test_poller test_poller.cpp)
-target_link_libraries(test_poller muduo_base muduo_net pthread)
+target_link_libraries(test_poller gtest muduo_base muduo_net pthread z)

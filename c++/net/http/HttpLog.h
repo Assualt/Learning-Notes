@@ -5,6 +5,7 @@
 #include "base/Mutex.h"
 #include "base/Thread.h"
 #include "base/nonecopyable.h"
+#include <queue>
 #include <sstream>
 
 using muduo::base::Condition;
@@ -28,12 +29,11 @@ public:
     void CheckLogBufferOverFlow();
 
 private:
-    Logger &                   m_pLogger;
-    std::stringstream          m_sCmdInStream;
-    MutexLock                  m_mutex;
-    std::unique_ptr<Condition> m_pCond{nullptr};
-    std::unique_ptr<Thread>    m_pThread{nullptr};
-    MutexLock                  m_mutexWrite;
-    std::unique_ptr<Condition> m_pCondWrite{nullptr};
-    bool                       m_bExit{false};
+    Logger                 &m_pLogger;
+    std::stringstream       m_sCmdInStream;
+    MutexLock               m_mutex;
+    std::unique_ptr<Thread> m_pThread{nullptr};
+    MutexLock               m_mutexWrite;
+    bool                    m_bExit{false};
+    std::queue<std::string> m_logQueue;
 };

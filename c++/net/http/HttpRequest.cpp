@@ -120,7 +120,7 @@ bool HttpRequest::setMethod(const char *start, const char *end) {
     return true;
 }
 
-std::string HttpRequest::getParams(const std::string &key) {
+std::string HttpRequest::getParams(const std::string &key) const {
     if (!m_HeaderMap.count(key))
         return "";
     return m_HeaderMap.at(key);

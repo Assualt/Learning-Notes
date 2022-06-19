@@ -33,7 +33,7 @@ public:
 class StdOutLogHandle : public LogHandle {
 public:
     virtual void writeData(const char *pData, size_t nsize) {
-        std::cout.write(pData, nsize) << std::flush;
+        std::cout.write(pData, nsize).flush();
     }
 };
 
@@ -56,14 +56,14 @@ public:
     }
 
 protected:
-    string CurrentFileName() {
+    string getCurrentFileName() {
         Timestamp tNow             = Timestamp::fromUnixTime(time(nullptr));
         auto      formatTimeString = tNow.toFormattedString(m_strTimePostfix.c_str());
         return FmtString("%.%").arg(m_strFilePrefix).arg(formatTimeString).str();
     }
 
     bool changeAccessFile() {
-        string currentFile = CurrentFileName();
+        string currentFile = getCurrentFileName();
         if (currentFile == m_strCurrentFile) {
             return false;
         }

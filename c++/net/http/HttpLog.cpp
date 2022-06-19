@@ -9,8 +9,6 @@ static std::shared_ptr<LogHandle> RollFileHandler(new RollingFileLogHandle("./",
 
 HttpLog::HttpLog(Logger &log)
     : m_pLogger(log) {
-    m_pCond.reset(new Condition(m_mutex));
-    m_pCondWrite.reset(new Condition(m_mutexWrite));
 }
 
 HttpLog::~HttpLog() {
@@ -28,20 +26,26 @@ bool HttpLog::Init() {
 
 void HttpLog::LogTaskThread() {
     while (!m_bExit) {
-        m_pCond->Wait();
-        auto str = m_sCmdInStream.str();
-        m_pLogger.debug(str.c_str());
-        m_sCmdInStream.str("");
-        m_pCondWrite->Notify();
+        if (m_logQueue.empty()) {
+            continue;
+        }
+        m_mutex.Lock();
+        auto itr = m_logQueue.front();
+        m_logQueue.pop();
+        m_mutex.UnLock();
+        m_pLogger.debug(itr.c_str());
     }
 }
 
 void HttpLog::CheckLogBufferOverFlow() {
     // check last log contains \n
     std::string str = m_sCmdInStream.str();
-    if (str.size() < MAX_BUF_SIZE) {
+    if (str.back() == '\n') {
         return;
     }
-    m_pCond->Notify();
-    m_pCondWrite->Wait();
+
+    m_mutex.Lock();
+    m_logQueue.push(str);
+    m_sCmdInStream.str("");
+    m_mutex.UnLock();
 }

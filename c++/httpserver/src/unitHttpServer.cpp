@@ -1,5 +1,5 @@
 #include "httpserver.h"
-#include "json.hpp"
+#include "json.h"
 #include <cmdline.hpp>
 #include <dirent.h>
 #include <fstream>
@@ -17,7 +17,6 @@ bool IndexPatter(http::HttpRequest &request, http::HttpResponse &response, HttpC
 }
 
 bool NotFoundIndexPatter(http::HttpRequest &request, http::HttpResponse &response, HttpConfig &config) {
-    //  logger.info("do 404 function");
     size_t nRead = response.loadFileString("html/40x.html");
     response.setStatusMessage(404, request.getHttpVersion(), "not found");
     response.setHeader(ContentLength, nRead);
@@ -195,7 +194,7 @@ int main(int argc, char **argv) {
         mapper.addRequestMapping({"/index"}, std::move(IndexPatter));
         mapper.addRequestMapping({"/404"}, std::move(NotFoundIndexPatter));
         mapper.addRequestMapping({"/#/"}, std::move(DefaultIndexPattern));
-        mapper.addRequestMapping({"/#//"}, std::move(ListDirIndexPatter));
+        mapper.addRequestMapping({"/DefaultPattern"}, std::move(ListDirIndexPatter));
         mapper.addRequestMapping({"/405"}, std::move(MethodAllowIndexPatterm));
         mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
         mapper.addRequestMapping({"/400"}, std::move(BadRequestIndexPattern));

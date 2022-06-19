@@ -177,7 +177,7 @@ int16_t Buffer::readInt16() {
     return result;
 }
 int8_t Buffer::readInt8() {
-    int8_t result = peekInt8();
+    int8_t result = (peekInt8() & 0xFF);
     retrieveInt8();
     return result;
 }

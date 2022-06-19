@@ -8,11 +8,13 @@
 using namespace muduo::base;
 using namespace muduo::net;
 
+#define CHUNK_SIGNLE_SIZE 1024
+
 class HttpResponse : public copyable {
 public:
     enum HttpContentType {
-        kContentRaw, /* Content-Type: length */
-        kContentStream
+        kContentRaw,   /* Content-Type: length */
+        kContentStream /* Content-Bytes: bytes*/
     };
     enum EncodingType { Type_Gzip, Type_Br, Type_Deflate, Type_Raw };
     enum HttpStatusCode {
@@ -51,6 +53,10 @@ public:
         addHeader("Content-Type", contentType);
     }
 
+    void printBodyBuffer() const;
+
+    void chunkedBuffer(MyStringBuffer &buffer);
+
     // FIXME: replace std::string with std::stringPiece
     template <class T> void addHeader(const std::string &key, const T &val) {
         std::stringstream ss;
@@ -63,26 +69,9 @@ public:
         body_         = body;
     }
 
-    void setBodyStream(MyStringBuffer &buf, EncodingType type) {
-        encodingType_ = kContentStream;
-        buf.seekReadPos(0);
-        std::unique_ptr<char[]> bodyBuffer(new char[ buf.size() ]);
-        buf.sgetn(bodyBuffer.get(), buf.size());
-        size_t compress_length = 0;
-        if (type == Type_Gzip) {
-            compress_length = ZlibStream::GzipCompress(bodyBuffer.get(), buf.size(), bodyBuffer_);
-            addHeader("Content-Encoding", "gzip");
-        } else if (type == Type_Deflate) {
-            compress_length = ZlibStream::DeflateCompress(bodyBuffer.get(), buf.size(), bodyBuffer_);
-            addHeader("Content-Encoding", "defalte");
-        } else if (type == Type_Raw) {
-            compress_length = ZlibStream::ZlibCompress(bodyBuffer.get(), buf.size(), bodyBuffer_);
-            addHeader("Content-Encoding", "raw");
-        }
-        logger.info("compress data with type:%d, compress data:%d, after:%d", type, buf.size(), compress_length);
-    }
+    void setBodyStream(void *buf, size_t size, EncodingType type);
 
-    void appendToBuffer(Buffer *output) const;
+    void appendToBuffer(Buffer &output) const;
 
     HttpStatusCode getStatusCode() const {
         return statusCode_;
@@ -91,10 +80,9 @@ public:
 private:
     std::map<std::string, std::string> headers_;
     HttpStatusCode                     statusCode_;
-    // FIXME: add http version
-    std::string     statusMessage_;
-    bool            closeConnection_;
-    std::string     body_;
-    HttpContentType encodingType_;
-    Buffer          bodyBuffer_;
+    std::string                        statusMessage_;
+    bool                               closeConnection_;
+    std::string                        body_;
+    HttpContentType                    encodingType_;
+    Buffer                             bodyBuffer_;
 };

@@ -87,7 +87,7 @@ void Logger::getKeyString(const std::string &key, std::stringstream &ss, const s
         {"(thread)", [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << std::hex << pthread_self(); }},
         {"(tid)", [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << System::Tid(); }},
         {"(process)", [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << System::Pid(); }},
-        {"(levelname)", [ this ](std::stringstream &ss, auto, LogLevel level) { ss << getLevelName(level); }},
+        {"(levelname)", [ this ](std::stringstream &ss, const std::string &, LogLevel level) { ss << getLevelName(level); }},
         {"(asctime)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << getCurrentHourTime(true); }},
         {"(ctime)",
          [ this ](std::stringstream &ss, const std::string &msg, LogLevel) {

@@ -23,9 +23,13 @@ namespace base {
 DECLARE_EXCEPTION(LogException, Exception);
 
 enum LogLevel { Debug, Info, Warn, Error, Fatal, Alert, Emergency };
-class Logger {
+class Logger final {
 public:
+    ~Logger() {
+        m_vHandleList.clear();
+    }
 
+public:
     struct FileAttribute {
         int         lineno;
         std::string funcname;
@@ -195,4 +199,5 @@ protected:
 #define logger LOG(APP)
 #define LOG_SYSTEM LOG(APP).setAppName("system")
 #define LOG_IF(func) \
-    if (func) LOG(APP)
+    if (func)        \
+    LOG(APP)

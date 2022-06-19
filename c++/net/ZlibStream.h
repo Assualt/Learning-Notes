@@ -33,13 +33,14 @@ public:
         while (this->snextc() != EOF) {
             ret += 1;
         }
+        seekReadPos(0);
         return ret;
     }
 };
 
 class ZlibStream {
 public:
-    static uLongf DecompressWithZlib(MyStringBuffer &in, Buffer &out, int nLevel) {
+    static uLongf DecompressWithZlib(MyStringBuffer &in, MyStringBuffer &out, int nLevel) {
         z_stream strm;
         strm.zalloc   = Z_NULL;
         strm.zfree    = Z_NULL;
@@ -85,12 +86,12 @@ public:
                     case Z_MEM_ERROR:
                         (void)inflateEnd(&strm);
                         return -1;
-                    default:
+                    ult:
                         break;
                 }
                 left = MAX_BUF_SIZE - strm.avail_out;
                 if (left != 0) {
-                    out.append(outBuf, left);
+                    out.sputn(outBuf, left);
                     size += left;
                 }
             } while (strm.avail_out == 0);
@@ -98,7 +99,7 @@ public:
         return size;
     }
 
-    static uLongf CompressWithZlib(void *buffer, ssize_t size, Buffer &out, int nLevel) {
+    static uLongf CompressWithZlib(void *buffer, ssize_t size, MyStringBuffer &out, int nLevel) {
         if (buffer == nullptr || size == 0)
             return 0;
         z_stream strm;
@@ -132,7 +133,7 @@ public:
             }
             left = MAX_BUF_SIZE - strm.avail_out;
             if (left != 0) {
-                out.append(outBuf, left);
+                out.sputn(outBuf, left);
                 nTotalSize += left;
             }
         } while (strm.avail_out == 0);
@@ -140,27 +141,27 @@ public:
         return nTotalSize;
     }
 
-    static uLongf GzipCompress(void *buffer, ssize_t size, Buffer &out) { // gzip
+    static uLongf GzipCompress(void *buffer, ssize_t size, MyStringBuffer &out) { // gzip
         return CompressWithZlib(buffer, size, out, 1);
     }
 
-    static uLongf DeflateCompress(void *buffer, ssize_t size, Buffer &out) { // raw -> deflate
+    static uLongf DeflateCompress(void *buffer, ssize_t size, MyStringBuffer &out) { // raw -> deflate
         return CompressWithZlib(buffer, size, out, 2);
     }
 
-    static uLongf ZlibCompress(void *buffer, ssize_t size, Buffer &out) { // zlib
+    static uLongf ZlibCompress(void *buffer, ssize_t size, MyStringBuffer &out) { // zlib
         return CompressWithZlib(buffer, size, out, 3);
     }
 
-    static uLongf GzipDecompress(MyStringBuffer &in, Buffer &out) {
+    static uLongf GzipDecompress(MyStringBuffer &in, MyStringBuffer &out) {
         return DecompressWithZlib(in, out, 1);
     }
 
-    static uLongf DeflateDecompress(MyStringBuffer &in, Buffer &out) {
+    static uLongf DeflateDecompress(MyStringBuffer &in, MyStringBuffer &out) {
         return DecompressWithZlib(in, out, 2);
     }
 
-    static uLongf ZlibDeCompress(MyStringBuffer &in, Buffer &out) { // zlib
+    static uLongf ZlibDeCompress(MyStringBuffer &in, MyStringBuffer &out) { // zlib
         return DecompressWithZlib(in, out, 3);
     }
 };

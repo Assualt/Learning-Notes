@@ -20,7 +20,7 @@ void printString(const std::string &str) {
 int main(int argc, char const *argv[]) {
     std::shared_ptr<LogHandle> _au(new StdOutLogHandle);
     auto &                     Log = Logger::getLogger();
-    Log.BasicConfig(Logger::Debug, "%(levelname) %(asctime)[%(tid)-%(threadname)] %(message)", nullptr, nullptr);
+    Log.BasicConfig(LogLevel::Debug, "%(levelname) %(asctime)[%(tid)-%(threadname)] %(message)", nullptr, nullptr);
     Log.addLogHandle(_au.get());
 
     ThreadPool myPool;

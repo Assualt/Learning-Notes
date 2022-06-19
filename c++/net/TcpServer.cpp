@@ -50,7 +50,7 @@ void TcpServer::NewConnection(int sockfd, const InetAddress &peerAddress) {
     InetAddress locAddr(sockets::getLocalAddr(sockfd));
     ++m_nNexcConnId;
     std::string connName = FmtString("%-%#%").arg(m_strServerName).arg(locAddr.toIpPort()).arg(m_nNexcConnId).str();
-    logger.info("TcpServer::newConnection [%s] - new co nnection [ %s ] from [%s]", m_strServerName, connName, peerAddress.toIpPort());
+    logger.info("TcpServer::newConnection [%s] - new co nnection [%s] from [%s]", m_strServerName, connName, peerAddress.toIpPort());
     TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockfd, locAddr, peerAddress));
     conn->setConnectionCallBack(connectionCallback);
     conn->setMessageCallBack(messageCallback);
@@ -65,7 +65,7 @@ void TcpServer::RemoveConnection(const TcpConnectionPtr &conn) {
 
 void TcpServer::RemoveConnectionInLoop(const TcpConnectionPtr &conn) {
     m_pLoop->assertLoopThread();
-    logger.info("TcpServer::remoteConnectionInLoop name:%s - connection Name:%s", m_strServerName, conn->name());
+    logger.info("TcpServer::RemoveConnectionInLoop name:%s - connection Name:%s", m_strServerName, conn->name());
     size_t     n    = connectionMap.erase(conn->name());
     EventLoop *loop = conn->getLoop();
     loop->queueInLoop(std::bind(&TcpConnection::connectDestory, conn));
@@ -86,6 +86,7 @@ void TcpServer::SetThreadInitCallback(const ThreadInitCallback &callback) {
 void TcpServer::Start() {
     m_threadPool->start(threadInitCallback);
     m_pLoop->runInLoop(std::bind(&Acceptor::listen, acceptor.get()));
+    logger.info("All is ok........");
 }
 
 void TcpServer::Stop() {

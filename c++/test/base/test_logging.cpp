@@ -10,7 +10,7 @@ TEST(Logging, TestSuit1) {
     std::shared_ptr<LogHandle> _FileSizeLogger(new RollingFileSizeLogHandle("./", "server.log", 300));
     std::shared_ptr<LogHandle> _File2Logger(new RollingFile2LogHandle("./", "serverlog_", "da_"));
     auto &                     mainLog = Logger::getLogger();
-    mainLog.BasicConfig(Logger::Debug, "T:%(process)[%(asctime):%(levelname)][%(filename)-%(funcname)-%(lineno)] %(message)", "filename", "%Y-%m-%d");
+    mainLog.BasicConfig(LogLevel::Debug, "T:%(process)[%(asctime):%(levelname)][%(filename)-%(funcname)-%(lineno)] %(message)", "filename", "%Y-%m-%d");
     mainLog.addLogHandle(_au.get());
     mainLog.addLogHandle(_FileLogger.get());
 

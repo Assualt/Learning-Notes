@@ -277,7 +277,7 @@ void ClientThread::handleRequest(RequestMapper *handlerMapping, HttpConfig *conf
                 }
             }
             if (!redirectFile) {
-                http::Func iter = handlerMapping->find("/#//", request.getRequestType());
+                http::Func iter = handlerMapping->find("/DefaultPattern", request.getRequestType());
                 iter(request, response, *config);
                 nWrite = response.WriteBytes(info);
             }

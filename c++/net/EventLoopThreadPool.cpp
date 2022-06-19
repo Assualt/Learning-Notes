@@ -1,6 +1,7 @@
+#include "EventLoopThreadPool.h"
 #include "EventLoop.h"
 #include "EventLoopThread.h"
-#include "EventLoopThreadPool.h"
+#include "base/Format.h"
 
 using namespace muduo::net;
 using namespace muduo::base;
@@ -14,6 +15,10 @@ EventLoopThreadPool::EventLoopThreadPool(EventLoop *baseLoop, const std::string 
 }
 
 EventLoopThreadPool::~EventLoopThreadPool() {
+    for (auto &loop : m_vLoops) {
+        loop->quit();
+    }
+    m_vLoops.clear();
 }
 
 void EventLoopThreadPool::start(const ThreadInitFunc &cb) {
@@ -21,11 +26,10 @@ void EventLoopThreadPool::start(const ThreadInitFunc &cb) {
 
     m_bIsStarted = true;
     for (int i = 0; i < m_nThreadNum; ++i) {
-        char buf[ m_strName.size() + 32 ];
-        snprintf(buf, sizeof buf, "%s%d", m_strName.c_str(), i);
-        EventLoopThread *tmp = new EventLoopThread(cb, buf);
-        m_vThreads.push_back(std::unique_ptr<EventLoopThread>(tmp));
+        auto threadName = FmtString("%s/%d").arg(m_strName).arg(i).str();
+        auto tmp        = std::make_unique<EventLoopThread>(cb, threadName);
         m_vLoops.push_back(tmp->startLoop());
+        m_vThreads.push_back(std::move(tmp));
     }
     if (m_nThreadNum == 0 && cb) {
         cb(m_pBaseLoop);

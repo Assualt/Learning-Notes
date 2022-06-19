@@ -3,13 +3,13 @@
 namespace muduo {
 namespace base {
 class nonecopyable {
-public:
-    nonecopyable(const nonecopyable &) = delete;
-    void operator=(const nonecopyable &) = delete;
-
 protected:
-    nonecopyable()  = default;
-    ~nonecopyable() = default;
+    nonecopyable()                                 = default;
+    ~nonecopyable()                                = default;
+    nonecopyable(const nonecopyable &)             = delete;
+    nonecopyable(const nonecopyable &&)            = delete;
+    nonecopyable &operator=(const nonecopyable &&) = delete;
+    nonecopyable &operator=(const nonecopyable &)  = delete;
 };
 } // namespace base
 } // namespace muduo
