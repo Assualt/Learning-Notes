@@ -122,7 +122,7 @@ protected:
                 bool bFindPointer = false;
                 bool FirstInteger = false;
                 for (size_t i = index + 1; i < result.size(); ++i) {
-                    if (result[ i ] == 's' || result[ i ] == 'd' || result[ i ] == 'f' || result[ i ] == 'c' || result[ i ] == 'x' || result[ i ] == 'o') {
+                    if (result[ i ] == 's' || result[ i ] == 'd' || result[ i ] == 'f' || result[ i ] == 'c' || result[ i ] == 'x' || result[ i ] == 'o' || result[i] == 'b') {
                         keyPrefix.push_back(result[ i ]);
                         finished = true;
                     } else if ((result[ i ] >= '0' && result[ i ] <= '9') || result[ i ] == '.') {
@@ -158,6 +158,8 @@ protected:
                 ss << std::hex;
             if (keyPrefix.back() == 'o')
                 ss << std::oct;
+            if (keyPrefix.back() == 'b')
+                ss << std::boolalpha;
             ss << val;
             ss << result.substr(index + 1);
             result = ss.str();

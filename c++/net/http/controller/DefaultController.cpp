@@ -1,9 +1,7 @@
 #include "DefaultController.h"
 #include "base/Logging.h"
-#include "net/http/HttpControllMng.h"
 
-REG_CONTROLLER(IController, DefaultController);
-
+REG_OBJECT(DefaultController)
 DefaultController::DefaultController()
     : IController("Default Controller") {
 }
@@ -16,5 +14,14 @@ bool DefaultController::onRequest(const HttpRequest &, HttpResponse &, const Htt
 void DefaultController::onDump(std::ostream &) {
 }
 
-void DefaultController::onInit() {
+bool DefaultController::InitSelf() {
+    return true;
+}
+
+bool DefaultController::InitOther() {
+    return true;
+}
+
+bool DefaultController::InitFinish() {
+    return true;
 }

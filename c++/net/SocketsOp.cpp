@@ -2,8 +2,10 @@
 #include "base/Exception.h"
 #include "base/Format.h"
 #include "base/Logging.h"
+#include "base/System.h"
 #include <sys/uio.h>
 #include <unistd.h>
+using namespace muduo::base;
 using muduo::base::FmtString;
 namespace muduo {
 namespace net {
@@ -78,23 +80,24 @@ ssize_t sockets::write(int sockfd, const void *buf, size_t nwrite) {
 }
 
 void sockets::close(int sockfd) {
-    if (::close(sockfd) < 0) {
-        throw SocketException(FmtString("close fd:%d failed.").arg(sockfd).str());
+    auto ret = ::close(sockfd);
+    if (ret < 0) {
+        throw SocketException(FmtString("close fd:% failed. ret:% errmsg:%").arg(sockfd).arg(ret).arg(System::GetErrMsg(errno)).str());
     }
 }
 
 void sockets::bindOrDie(int sockfd, const struct sockaddr *addr) {
     int ret = ::bind(sockfd, (const sockaddr *)addr, static_cast<socklen_t>(sizeof(struct sockaddr)));
     if (ret < 0) {
-        logger.error("sockets::bindOrDie. sockfd is:%d", sockfd);
-        throw SocketException(FmtString("close fd:%d failed.").arg(sockfd).str());
+        logger.error("sockets::bindOrDie. sockfd is:%d ret:%d errno:%d msg:%s", sockfd, ret, errno, System::GetErrMsg(errno));
+        throw SocketException(FmtString("close fd:% failed.").arg(sockfd).str());
     }
 }
 
 void sockets::listenOrDie(int sockfd) {
     int ret = ::listen(sockfd, SOMAXCONN);
     if (ret < 0) {
-        logger.error("sockets::listenOrdie. sockfd:%d", sockfd);
+        logger.error("sockets::listenOrdie. sockfd:%d errmsg:%s", sockfd, System::GetErrMsg(errno));
     }
 }
 
@@ -102,7 +105,7 @@ int sockets::createNonblockingOrDie(const sa_family_t family) {
 #if VALGRIND
     int sockfd = ::socket(family, SOCK_STREAM, IPPROTO_TCP);
     if (sockfd < 0) {
-        logger.error("sockets::createNonblockingOrDie");
+        logger.error("sockets::createNonblockingOrDie errmsg:%s", System::GetErrMsg(errno));
     }
 
     setNonBlockAndCloseOnExec(sockfd);

@@ -6,6 +6,8 @@
 #include "base/DirScanner.h"
 #include "base/Format.h"
 #include "base/Logging.h"
+#include "base/ObjPool.h"
+#include "controller/DefaultController.h"
 #include "base/json/json.h"
 #include <dirent.h>
 #include <signal.h>
@@ -165,6 +167,16 @@ void RegisterSignalHandle(HttpServer &server) {
     server.RegSignalCallback(SIGABRT, reinterpret_cast<uintptr_t>(&server), handle);
 }
 
+void InitObjPool() {
+    ObjPool::Instance().PreInit();
+    ObjPool::Instance().PostInit();
+
+    auto defaultHandler = ObjPool::Instance().Query<DefaultController>();
+    auto defaultHandler1 = ObjPool::Instance().Query<DefaultController>();
+    logger.info("is null of DefaultController: %b", defaultHandler == nullptr);
+    logger.info("defaultHandler equals defaultHandler1 :%b",(defaultHandler == defaultHandler1));
+}
+
 int main(int argc, char const *argv[]) {
     auto &log = Logger::getLogger();
     log.BasicConfig(LogLevel::Info, "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
@@ -174,6 +186,7 @@ int main(int argc, char const *argv[]) {
     log.addLogHandle(stdHandle.get());
     log.addLogHandle(fileHandle.get());
 
+    InitObjPool();
     EventLoop  loop;
     HttpServer server(&loop, InetAddress(8100));
     RegisterSignalHandle(server);

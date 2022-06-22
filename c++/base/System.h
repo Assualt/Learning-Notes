@@ -35,6 +35,10 @@ inline long Pid() {
     return getpid();
 }
 
+inline const char *GetErrMsg(int err) {
+    return strerror(err);
+}
+
 } // namespace System
 } // namespace base
 } // namespace muduo

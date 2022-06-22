@@ -7,6 +7,7 @@ set(http_SRCS
     HttpResponse.cpp
     HttpPattern.cpp
     HttpUtils.cpp
+    controller/DefaultController.cpp
     main_server.cpp
 )
 add_executable(httpserver ${http_SRCS})

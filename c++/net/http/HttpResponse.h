@@ -1,3 +1,4 @@
+#pragma once
 #include "HttpUtils.h"
 #include "base/Logging.h"
 #include "base/copyable.h"
