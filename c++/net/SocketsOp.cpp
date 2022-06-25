@@ -113,6 +113,7 @@ int sockets::createNonblockingOrDie(const sa_family_t family) {
     int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
     if (sockfd < 0) {
         logger.error("sockets::createNonblockingOrDie");
+        throw SocketException("sockets::createNonblockingOrDie failed");
     }
 #endif
     return sockfd;

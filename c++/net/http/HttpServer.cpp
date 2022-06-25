@@ -8,7 +8,7 @@
 #include <backtrace.h>
 #include <functional>
 
-SigHandleMap  HttpServer::sigCallbackMap;
+SigHandleMap  HttpServer::m_signalCallBack;
 RequestMapper HttpServer::m_mapper;
 HttpServer::HttpServer(EventLoop *loop, const InetAddress &addr)
     : m_pLoop(loop)
@@ -89,7 +89,7 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
 
     if (true) {
         (*m_httpLog) << conn->localAddress().toIpPort() << " - [" << utils::requestTimeFmt() << "] \"" << request.getRequestType() << " " << request.getRequestPath() << " " << request.getHttpVersion()
-                     << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \"" << request.get(UserAgent) << "\"" <<CTRL;
+                     << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \"" << request.get(UserAgent) << "\"" << CTRL;
     }
     if (response.closeConnection()) {
         conn->shutdown();
@@ -112,21 +112,21 @@ void HttpServer::RegSignalCallback(int sig, uintptr_t param, SignalCallback cb) 
         return;
     }
 
-    if (sigCallbackMap.count(sig) != 0) {
+    if (m_signalCallBack.count(sig) != 0) {
         logger.warning("repeated to reg sig %d cb.", sig);
         return;
     }
 
-    sigCallbackMap[ sig ] = {cb, param};
+    m_signalCallBack[ sig ] = {cb, param};
     signal(sig, HttpServer::SignalHandler);
 }
 
 void HttpServer::SignalHandler(int sig) {
-    if (sigCallbackMap.count(sig) == 0) {
+    if (m_signalCallBack.count(sig) == 0) {
         logger.info("no sig handle register for sig:%d", sig);
         return;
     }
 
     LOG_SYSTEM.warning("begin to execute sig %d handler..", sig);
-    sigCallbackMap[ sig ].first(sig, sigCallbackMap[ sig ].second);
+    m_signalCallBack[ sig ].first(sig, m_signalCallBack[ sig ].second);
 }

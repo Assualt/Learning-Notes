@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Backtrace.h"
 #include "Exception.h"
 #include "Format.h"
 #include "LogHandle.h"
@@ -22,7 +23,7 @@ namespace base {
 
 DECLARE_EXCEPTION(LogException, Exception);
 
-enum LogLevel { Debug, Info, Warn, Error, Fatal, Alert, Emergency };
+enum LogLevel { Debug, Info, Except, Warn, Error, Fatal, Alert, Emergency };
 class Logger final {
 public:
     ~Logger() {
@@ -67,7 +68,13 @@ public:
     }
 
     template <class... Args> void emergency(const char *messagefmt, Args &&...arg) {
-        this->LogMessage(Emergency, messagefmt, arg...);
+        this->LogMessage(LogLevel::Emergency, messagefmt, arg...);
+    }
+
+    template <class... Args> void exception(const char *messagefmt, Args &&...arg) {
+        this->LogMessage(Except, messagefmt, arg...);
+        auto callstack = GetBackCallStack();
+        this->LogMessage(Except, callstack.c_str());
     }
 
     std::string getLevelName(LogLevel nLevel);
@@ -122,7 +129,7 @@ protected:
                 bool bFindPointer = false;
                 bool FirstInteger = false;
                 for (size_t i = index + 1; i < result.size(); ++i) {
-                    if (result[ i ] == 's' || result[ i ] == 'd' || result[ i ] == 'f' || result[ i ] == 'c' || result[ i ] == 'x' || result[ i ] == 'o' || result[i] == 'b') {
+                    if (result[ i ] == 's' || result[ i ] == 'd' || result[ i ] == 'f' || result[ i ] == 'c' || result[ i ] == 'x' || result[ i ] == 'o' || result[ i ] == 'b') {
                         keyPrefix.push_back(result[ i ]);
                         finished = true;
                     } else if ((result[ i ] >= '0' && result[ i ] <= '9') || result[ i ] == '.') {

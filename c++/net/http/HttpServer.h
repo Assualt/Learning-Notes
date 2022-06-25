@@ -48,5 +48,5 @@ protected:
     std::shared_ptr<TcpServer> m_pServer{nullptr};
     static RequestMapper       m_mapper;
     std::shared_ptr<HttpLog>   m_httpLog{nullptr};
-    static SigHandleMap        sigCallbackMap;
+    static SigHandleMap        m_signalCallBack;
 };

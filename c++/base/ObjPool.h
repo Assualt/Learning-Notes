@@ -28,8 +28,8 @@ public:
     }
 
     void PreInit() {
-        std::map<size_t, std::shared_ptr<Object>> pool;
-        bool                                      failed = false;
+        decltype(m_objMap) pool;
+        bool               failed = false;
         std::for_each(m_creators.begin(), m_creators.end(), [ &failed, &pool ](auto item) {
             if (failed) {
                 return;
@@ -61,6 +61,10 @@ public:
         auto hash = typeid(ClassName).hash_code();
         auto iter = m_objMap.find(hash);
         return (iter != m_objMap.end()) ? iter->second : nullptr;
+    }
+
+    int size() {
+        return m_objMap.size();
     }
 
 private:

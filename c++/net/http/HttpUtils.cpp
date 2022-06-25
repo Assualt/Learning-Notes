@@ -4,14 +4,14 @@
 #include <unistd.h>
 std::string utils::_ltrim(const std::string &src, char ch) {
     std::string           temp = src;
-    std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [&ch](char c) { return ch != c; });
+    std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [ &ch ](char c) { return ch != c; });
     temp.erase(temp.begin(), p);
     return temp;
 }
 
 std::string utils::_rtrim(const std::string &src, char ch) {
     std::string                   temp = src;
-    std::string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [&ch](char c) { return ch != c; });
+    std::string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [ &ch ](char c) { return ch != c; });
     temp.erase(p.base(), temp.end());
     return temp;
 }
@@ -81,6 +81,12 @@ int utils::loadBinaryStream(const std::string &filePath, MyStringBuffer &buf) {
     }
     fclose(fp);
     return n;
+}
+
+std::string utils::toLower(const std::string &str) {
+    std::string res = str;
+    std::transform(res.begin(), res.end(), res.begin(), ::tolower);
+    return res;
 }
 
 std::string utils::toResponseBasicDateString(time_t t) {

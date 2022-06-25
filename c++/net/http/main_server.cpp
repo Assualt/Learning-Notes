@@ -7,108 +7,16 @@
 #include "base/Format.h"
 #include "base/Logging.h"
 #include "base/ObjPool.h"
-#include "controller/DefaultController.h"
 #include "base/json/json.h"
+#include "controller/DefaultController.h"
 #include <dirent.h>
 #include <signal.h>
 using std::string;
 using namespace muduo;
 extern char favicon[ 555 ];
 
-bool IndexPatter(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
-    std::string resultString;
-    response.setStatusMessage(200, request.getRequestType(), "OK");
-    response.addHeader(ContentType, "text/html; charset=utf-8");
-    response.setBody(resultString);
-    return true;
-}
-
-bool NotFoundIndexPatter(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
-    response.setStatusMessage(404, request.getHttpVersion(), "not found");
-    response.addHeader(ContentType, "text/html; charset=utf8");
-    response.setBody("");
-    return true;
-}
-
-bool BadRequestIndexPattern(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
-    response.setStatusMessage(400, request.getHttpVersion(), "Bad Request");
-    response.addHeader(ContentType, "text/html; charset=utf8");
-    response.setBody(BADREQUEST);
-    return true;
-}
-
-bool DefaultIndexPattern(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
-    // handle File
-    std::string strRequestPath = FmtString("%/%").arg(config.getServerRoot()).arg(request.getRequestFilePath()).str();
-    if (!utils::FileIsBinary(strRequestPath)) {
-        std::string result = utils::loadFileString(strRequestPath);
-        response.setBody(result);
-        logger.info("load %s file bytes:%d, errno:%d", strRequestPath, result.size(), errno);
-        if (result.size() <= 0) {
-            response.setStatusMessage(404, request.getHttpVersion(), "not found");
-        } else {
-            response.setStatusMessage(200, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
-        }
-    } else {
-        MyStringBuffer mybuf;
-        int            n = utils::loadBinaryStream(strRequestPath, mybuf);
-        logger.info("load %s file bytes:%d", strRequestPath, n);
-        auto buf = std::make_unique<char[]>(n);
-        mybuf.sgetn(buf.get(), n);
-        response.setBodyStream(buf.get(), n, HttpResponse::EncodingType::Type_Gzip);
-        response.setStatusMessage(200, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
-    }
-    response.addHeader(ContentType, utils::FileMagicType(strRequestPath));
-    struct stat st;
-    if (stat(strRequestPath.c_str(), &st) != -1)
-        response.addHeader("Last-Modified", utils::toResponseBasicDateString(st.st_mtime));
-
-    return true;
-}
-
-bool AuthRequiredIndexPattern(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
-    response.setStatusMessage(401, "HTTP/1.1", "Unauthorized");
-    response.addHeader(ContentType, "text/html");
-    response.addHeader("WWW-Authenticate", config.getAuthName());
-    response.setBody(AUTHREQUIRED);
-    return true;
-}
-
-bool ListDirIndexPatter(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
-    auto        tmplateHtml = config.getDirentTmplateHtml();
-    std::string currentDir  = config.getServerRoot();
-    if (currentDir.back() != '/')
-        currentDir += "/";
-    if (request.getRequestPath().front() == '/')
-        currentDir += request.getRequestPath().substr(1);
-    else
-        currentDir += request.getRequestPath();
-    tmplateHtml.append("<script>start(\"");
-    tmplateHtml.append(currentDir);
-    tmplateHtml.append("\");</script><script>onHasParentDirectory();</script>");
-
-    DirScanner scanner(currentDir.c_str());
-    FileAttr   attr;
-    while (scanner.Fetch(attr)) {
-        std::stringstream out;
-        attr.SetParentPath(currentDir);
-        out << "<script>addRow(\"" << attr.GetName() << "\",\"" << attr.GetName() << "\",";
-        if (attr.IsDir()) {
-            out << "1," << attr.GetSize() << ",\"4096 B\",";
-        } else {
-            out << "0," << attr.GetSize() << ",\"" << utils::toSizeString(attr.GetSize()) << "\",";
-        }
-        out << attr.GetModifyTime().seconds() << ",\"" << attr.GetModifyTime().toFormattedString("%Y/%m/%d %H:%M:%S") << "\");</script>\r\n";
-        tmplateHtml.append(out.str());
-    }
-    response.setStatusMessage(200, "HTTP/1.1", "OK");
-    response.setBody(tmplateHtml);
-    response.addHeader(ContentType, "text/html");
-    response.addHeader("Date", utils::toResponseBasicDateString());
-    return true;
-}
 /// login/{user}/{id}
-bool AuthLoginIndexPattern(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
+bool AuthLoginIndexPattern(const HttpRequest &request, HttpResponse &response, const HttpConfig &config) {
     std::string        user = request.getParams("user");
     int                id   = atoi(request.getParams("id").c_str());
     json::Json::object obj;
@@ -123,14 +31,7 @@ bool AuthLoginIndexPattern(const HttpRequest &request, HttpResponse &response, H
     return true;
 }
 
-bool MethodAllowIndexPatterm(const HttpRequest &request, HttpResponse &response, HttpConfig &config) {
-    response.setStatusMessage(405, request.getHttpVersion(), "Method Not Allowed");
-    response.addHeader(ContentType, "text/html");
-    response.setBody(METHODNOTALLOWED);
-    return true;
-}
-
-bool IndexFaviconPattern(const HttpRequest &req, HttpResponse &resp, HttpConfig &config) {
+bool IndexFaviconPattern(const HttpRequest &req, HttpResponse &resp, const HttpConfig &config) {
     resp.setStatusMessage(200, req.getHttpVersion(), "OK");
     resp.addHeader(ContentType, "image/x-icon");
     resp.addHeader("Accept-Ranges", "bytes");
@@ -141,13 +42,6 @@ bool IndexFaviconPattern(const HttpRequest &req, HttpResponse &resp, HttpConfig 
 void registerIndexPattern() {
     auto &mapper = HttpServer::getMapper();
     mapper.addRequestMapping({"/favicon.ico"}, std::move(IndexFaviconPattern));
-    mapper.addRequestMapping({"/index"}, std::move(IndexPatter));
-    mapper.addRequestMapping({NOTFOUND}, std::move(NotFoundIndexPatter));
-    mapper.addRequestMapping({FilePattern}, std::move(DefaultIndexPattern));
-    mapper.addRequestMapping({DefaultPattern}, std::move(ListDirIndexPatter));
-    mapper.addRequestMapping({"/405"}, std::move(MethodAllowIndexPatterm));
-    mapper.addRequestMapping({"/401"}, std::move(AuthRequiredIndexPattern));
-    mapper.addRequestMapping({"/400"}, std::move(BadRequestIndexPattern));
     mapper.addRequestMapping({"/login/{user}/{id}", "POST", true}, std::move(AuthLoginIndexPattern));
 }
 
@@ -170,11 +64,7 @@ void RegisterSignalHandle(HttpServer &server) {
 void InitObjPool() {
     ObjPool::Instance().PreInit();
     ObjPool::Instance().PostInit();
-
-    auto defaultHandler = ObjPool::Instance().Query<DefaultController>();
-    auto defaultHandler1 = ObjPool::Instance().Query<DefaultController>();
-    logger.info("is null of DefaultController: %b", defaultHandler == nullptr);
-    logger.info("defaultHandler equals defaultHandler1 :%b",(defaultHandler == defaultHandler1));
+    logger.info("get init controller size:%d", ObjPool::Instance().size());
 }
 
 int main(int argc, char const *argv[]) {

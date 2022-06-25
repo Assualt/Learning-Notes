@@ -12,7 +12,7 @@ void HttpResponse::appendToBuffer(Buffer &output) const {
     output.append("\r\n");
 
     if (encodingType_ == kContentRaw) {
-        output.append(FmtString("Content-Length: %\r\n").arg(body_.size() + 2).str().c_str());
+        output.append(FmtString("Content-Length: %\r\n").arg(body_.size()).str().c_str());
     } else if (encodingType_ == kContentStream) {
         output.append("Transfer-Encoding: chunked\r\n");
     }
