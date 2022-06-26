@@ -65,4 +65,5 @@ public:
     PARAM_SETER_GETER(AuthName, std::string);
     PARAM_SETER_GETER(ServerRoot, std::string);
     PARAM_SETER_GETER(DirentTmplateHtml, std::string);
+    PARAM_SETER_GETER(RecoredLog, bool);
 };

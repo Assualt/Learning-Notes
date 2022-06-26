@@ -8,7 +8,7 @@ REG_OBJECT(BadRequest);
 bool NotFound::onGet(const HttpRequest &req, HttpResponse &res, const HttpConfig &) {
     res.setStatusMessage(404, req.getHttpVersion(), "not found");
     res.addHeader(ContentType, "text/html; charset=utf8");
-    res.setBody("");
+    res.setBody(NOTFOUNDHTML);
     return true;
 }
 

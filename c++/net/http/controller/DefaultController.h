@@ -4,7 +4,7 @@
 class DefaultController : public IController {
 public:
     DefaultController()
-        : IController("[Default Controller]", {DefaultPattern, REQ_TYPE::TYPE_GET | REQ_TYPE::TYPE_POST}) {
+        : IController("[dir Controller]", {DefaultPattern, REQ_TYPE::TYPE_GET | REQ_TYPE::TYPE_POST}) {
     }
     virtual ~DefaultController() override = default;
     DECLARE_CONTROLLER
@@ -16,5 +16,14 @@ public:
         : IController("[File Index]", {FilePattern, "GET"}) {
     }
     virtual ~FileIndex() override = default;
+    DECLARE_CONTROLLER
+};
+
+class FavicoIndex : public IController {
+public:
+    FavicoIndex()
+        : IController("[File Index]", {"/favicon.ico", "GET"}) {
+    }
+    virtual ~FavicoIndex() override = default;
     DECLARE_CONTROLLER
 };

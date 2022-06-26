@@ -7,9 +7,6 @@
 #include <map>
 using namespace muduo::base;
 
-#define NOTFOUND "/404"
-#define NOTFOUNDHTML "<html><head><title>404 Not Found</title></head><body>404 not found</body></html>"
-
 RequestMapper::Key::Key(const std::string &pattern, int methods, bool needval)
     : pattern_(pattern)
     , method_(methods)
@@ -75,39 +72,23 @@ bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::stri
     return reqPath == pattern_;
 }
 
-void RequestMapper::addRequestMapping(const Key &key, Func &&F) {
-    m_vRequestMapper.push_back(std::pair<RequestMapper::Key, Func>(key, F));
+void RequestMapper::addRequestObject(const Key &key, uintptr_t object) {
+    m_vRequestsMapper.push_back({key, object});
 }
 
-Func RequestMapper::find(const std::string &RequestPath, const std::string &reqType, std::map<std::string, std::string> &resultMap) {
-    for (auto iter : m_vRequestMapper) {
-        bool allowed;
-        if (iter.first.MatchFilter(RequestPath, reqType, resultMap, allowed)) {
-            logger.debug("request path:%s, handle path:%s, method:%s allow:%b", RequestPath, iter.first.pattern_, reqType, allowed);
-            if (!allowed)
-                return find("/405", "GET");
+std::optional<uintptr_t> RequestMapper::findHandle(const std::string &reqPath, const std::string &reqType, std::map<std::string, std::string> &resultMap) {
+    for (auto &iter : m_vRequestsMapper) {
+        bool allowed = true;
+        if (iter.first.MatchFilter(reqPath, reqType, resultMap, allowed)) {
+            logger.info("success request path:%s, handle path:%s, method:%s allow:%b", reqPath, iter.first.pattern_, reqType, allowed);
+            if (!allowed) {
+                return findHandle("/405", "GET", resultMap);
+            }
             return iter.second;
         }
+        logger.debug("failure request path:%s, handle path:%s, method:%s allow:%b", reqPath, iter.first.pattern_, reqType, allowed);
     }
-    return find(NOTFOUND, reqType, resultMap);
-}
-
-Func RequestMapper::find(const std::string &RequestPath, const std::string &reqType) {
-    for (auto iter : m_vRequestMapper) {
-        bool allowed;
-        if (iter.first.MatchFilter(RequestPath, reqType, allowed)) {
-            logger.debug("request path:%s, handle path:%s, method:%s allow:%b", RequestPath, iter.first.pattern_, reqType, allowed);
-            if (!allowed)
-                return find("/405", "GET");
-            return iter.second;
-        }
-    }
-    return [ = ](const HttpRequest &, HttpResponse &response, const HttpConfig &) {
-        response.setStatusMessage(404, "HTTP/1.1", "not found");
-        response.addHeader("Content-Type", "text/html");
-        response.addHeader("Content-Length", 0);
-        return true;
-    };
+    return std::nullopt;
 }
 
 int RequestMapper::Key::transferMethod(const std::string &reqType) {

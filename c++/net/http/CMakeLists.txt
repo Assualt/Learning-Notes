@@ -9,6 +9,7 @@ set(http_SRCS
     HttpUtils.cpp
     controller/DefaultController.cpp
     controller/40xController.cpp
+    controller/UserController.cpp
     main_server.cpp
 )
 add_executable(httpserver ${http_SRCS})

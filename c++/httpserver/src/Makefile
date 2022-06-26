@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-I../../log -I../../argparse -I../../hash -Wno-deprecated-declarations -std=c++11  -g -I../../threadpool -I../../conf -I../../base/json -DUSE_OPENSSL
+CFLAGS=-I../../log -I../../base/argparse -I../../hash -Wno-deprecated-declarations -std=c++11  -g -I../../threadpool -I../../conf -I../../base/json -DUSE_OPENSSL
 
 vpath %.cpp ../../log ../../hash ../../conf ../../base/json
 

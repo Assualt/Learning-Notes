@@ -2,6 +2,7 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <optional>
 #include <vector>
 
 class HttpRequest;
@@ -38,9 +39,9 @@ public:
         std::vector<int>         keyPoint_;
     };
     void addRequestMapping(const Key &key, Func &&F);
-    Func find(const std::string &RequestPath, const std::string &reqType, std::map<std::string, std::string> &resultMap);
-    Func find(const std::string &RequestPath, const std::string &reqType);
+    void addRequestObject(const Key &key, uintptr_t object);
+    std::optional<uintptr_t> findHandle(const std::string &repPath, const std::string &reqType, std::map<std::string, std::string> &resultMap);
 
 protected:
-    std::vector<std::pair<Key, Func>> m_vRequestMapper;
+    std::vector<std::pair<Key, uintptr_t>> m_vRequestsMapper;
 };

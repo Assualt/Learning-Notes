@@ -3,6 +3,7 @@
 #include "HttpLog.h"
 #include "HttpUtils.h"
 #include "base/Logging.h"
+#include "controller/Controller_if.h"
 #include "signal.h"
 #include <any>
 #include <backtrace.h>
@@ -59,7 +60,6 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
         close = false;
     }
     HttpResponse response(close);
-    Func         func = m_mapper.find(request.getRequestPath(), request.getRequestType(), request.GetHeaderMap());
 
     std::string basicRequestPath = m_hConfig.getServerRoot();
     if (basicRequestPath.back() != '/') {
@@ -72,15 +72,20 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
         basicRequestPath += request.getRequestFilePath();
     }
 
+    auto objHandle = m_mapper.findHandle(request.getRequestPath(), request.getRequestType(), request.GetHeaderMap());
     bool fileExists = utils::FileExists(basicRequestPath);
-    if (!fileExists) {
-        func(request, response, m_hConfig);
+    if (!fileExists && objHandle.has_value()) {
+        reinterpret_cast<IController *>(objHandle.value())->onRequest(request, response, m_hConfig);
     } else if (utils::IsDir(basicRequestPath)) { // 展示目录
-        func = m_mapper.find(DefaultPattern, request.getRequestType());
-        func(request, response, m_hConfig);
+        auto obj = m_mapper.findHandle(DefaultPattern, request.getRequestType(), request.GetHeaderMap());
+        reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_hConfig);
     } else {
-        func = m_mapper.find(FilePattern, request.getRequestType());
-        func(request, response, m_hConfig);
+        auto obj = m_mapper.findHandle(FilePattern, request.getRequestType(), request.GetHeaderMap());
+        auto ret = reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_hConfig);
+        if (!ret) { // 文件不存在
+            obj = m_mapper.findHandle(NOTFOUND, request.getRequestType(), request.GetHeaderMap());
+            reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_hConfig);
+        }
     }
 
     Buffer buf;

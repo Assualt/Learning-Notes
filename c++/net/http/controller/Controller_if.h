@@ -16,8 +16,7 @@ public:
     IController(const std::string &name, const RequestMapper::Key &key)
         : name_(name)
         , key_(key) {
-        auto func = [ this ](const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) { return onRequest(req, res, cfg); };
-        HttpServer::getMapper().addRequestMapping(key_, func);
+        HttpServer::getMapper().addRequestObject(key_, reinterpret_cast<uintptr_t>(this));
     }
 
     virtual ~IController() = default;
@@ -36,7 +35,7 @@ public:
     }
 
     bool onRequest(const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) {
-        static std::map<std::string, Func> methodFuncs = {
+        std::map<std::string, Func> methodFuncs = {
             {"get", [ this ](const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) { return this->onGet(req, res, cfg); }},
             {"post", [ this ](const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) { return this->onPost(req, res, cfg); }},
             {"put", [ this ](const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) { return this->onPut(req, res, cfg); }},

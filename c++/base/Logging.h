@@ -88,6 +88,10 @@ public:
         m_mutexLock.UnLock();
     }
 
+    void setLevel(LogLevel nLevel) {
+        m_nLevel = nLevel;
+    }
+
 protected:
     std::string getCurrentHourTime(bool showMicroSeconds);
     void        getKeyString(const std::string &key, std::stringstream &ss, const std::string &message, LogLevel nLevel);
