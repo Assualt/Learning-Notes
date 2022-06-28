@@ -177,6 +177,12 @@ std::string utils::toHexString(ssize_t nSize) {
     return ss.str();
 }
 
+bool utils::endWith(const std::string &src, const char *backfix) {
+    if ((nullptr == backfix) || (src.size() < strlen(backfix)))
+        return false;
+    return src.substr(src.size() - strlen(backfix), strlen(backfix)) == backfix;
+}
+
 unsigned char UrlUtils::ToHex(unsigned char x) {
     return x > 9 ? x + 55 : x + 48;
 }

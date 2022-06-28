@@ -27,23 +27,25 @@ void InitObjPool() {
 }
 
 int main(int argc, char const *argv[]) {
-    cmdline::parser CommandParse;
-    CommandParse.add("version", 'v', "show this HttpServer Version and exit");
-    CommandParse.add<int>("threads_count", 'n', "The http server's threads count", false, 10, cmdline::range<int>(1, 100));
-    CommandParse.add<std::string>("config_path", 'c', "The http server's config path.", true);
-    CommandParse.add<int>("logLevel", 'l', "The http server's logs level.", false, 1, cmdline::range<int>(0, 7));
-    CommandParse.add<bool>("daemon", 'd', "The http server's run in daemon.", false, false);
-    bool ok = CommandParse.parse(argc, argv);
+    cmdline::parser cmd;
+    cmd.add("version", 'v', "show this HttpServer Version and exit");
+    cmd.add<int>("threads_count", 'n', "The http server's threads count", false, 10, cmdline::range<int>(1, 100));
+    cmd.add<std::string>("config_path", 'c', "The http server's config path.", true);
+    cmd.add<int>("logLevel", 'l', "The http server's logs level.", false, 1, cmdline::range<int>(0, 7));
+    cmd.add<bool>("daemon", 'd', "The http server's run in daemon.", false, false);
+    cmd.add<std::string>("libpath", 'p', "this controller lib path", true);
+    bool ok = cmd.parse(argc, argv);
     if (!ok) {
-        std::cout << CommandParse.error() << std::endl;
-        std::cout << CommandParse.usage() << std::endl;
+        std::cout << cmd.error() << std::endl;
+        std::cout << cmd.usage() << std::endl;
         return 0;
     }
 
-    std::string strConfigPath = CommandParse.get<std::string>("config_path");
-    bool        RunInDaemon   = CommandParse.get<bool>("daemon");
-    auto        nLevel        = CommandParse.get<int>("logLevel");
-    auto        threadNum     = CommandParse.get<int>("threads_count");
+    std::string strConfigPath = cmd.get<std::string>("config_path");
+    bool        RunInDaemon   = cmd.get<bool>("daemon");
+    auto        nLevel        = cmd.get<int>("logLevel");
+    auto        threadNum     = cmd.get<int>("threads_count");
+    auto        libpaths      = cmd.get<std::string>("libpath");
 
     auto &log = Logger::getLogger();
     log.BasicConfig(static_cast<LogLevel>(nLevel), "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
@@ -59,6 +61,7 @@ int main(int argc, char const *argv[]) {
     RegisterSignalHandle(server);
     server.SetThreadNum(threadNum);
     server.Start();
+    server.startScannerTask(libpaths);
     loop.loop();
 
     return 0;

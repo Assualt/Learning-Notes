@@ -4,6 +4,7 @@ set(base_SRCS
     Configure.cpp
     CountDownLatch.cpp
     Date.cpp
+    Dll.cpp
     DirScanner.cpp
     File.cpp
     Logging.cpp

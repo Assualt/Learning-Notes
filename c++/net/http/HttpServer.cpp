@@ -2,6 +2,7 @@
 #include "HttpContext.h"
 #include "HttpLog.h"
 #include "HttpUtils.h"
+#include "base/DirScanner.h"
 #include "base/Logging.h"
 #include "controller/Controller_if.h"
 #include "signal.h"
@@ -72,7 +73,7 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
         basicRequestPath += request.getRequestFilePath();
     }
 
-    auto objHandle = m_mapper.findHandle(request.getRequestPath(), request.getRequestType(), request.GetHeaderMap());
+    auto objHandle  = m_mapper.findHandle(request.getRequestPath(), request.getRequestType(), request.GetHeaderMap());
     bool fileExists = utils::FileExists(basicRequestPath);
     if (!fileExists && objHandle.has_value()) {
         reinterpret_cast<IController *>(objHandle.value())->onRequest(request, response, m_hConfig);
@@ -109,6 +110,7 @@ void HttpServer::Start() {
 void HttpServer::Exit() {
     logger.info("HttpServer stop ... at:%s", m_pServer->IpPort());
     m_pServer->Stop();
+    m_ctlScannerTask.stopTask();
 }
 
 void HttpServer::RegSignalCallback(int sig, uintptr_t param, SignalCallback cb) {
@@ -134,4 +136,9 @@ void HttpServer::SignalHandler(int sig) {
 
     LOG_SYSTEM.warning("begin to execute sig %d handler..", sig);
     m_signalCallBack[ sig ].first(sig, m_signalCallBack[ sig ].second);
+}
+
+void HttpServer::startScannerTask(const std::string &libsPath) {
+    m_ctlScannerTask.init(libsPath);
+    m_ctlScannerTask.startTask();
 }

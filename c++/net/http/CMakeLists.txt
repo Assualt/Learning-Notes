@@ -7,13 +7,14 @@ set(http_SRCS
     HttpResponse.cpp
     HttpPattern.cpp
     HttpUtils.cpp
+    CtlScanner.cpp
     controller/DefaultController.cpp
     controller/40xController.cpp
     controller/UserController.cpp
     main_server.cpp
 )
 add_executable(httpserver ${http_SRCS})
-target_link_libraries(httpserver muduo_base muduo_net pthread magic z)
+target_link_libraries(httpserver muduo_base muduo_net pthread magic z dl)
 install(TARGETS httpserver DESTINATION bin)
 
 file(GLOB HEADERS_base  "*.h")

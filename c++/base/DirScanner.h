@@ -78,6 +78,11 @@ public:
         return std::string(m_strParent) += m_strName;
     }
 
+    std::string BriefName(void) const {
+        std::string name = m_strName;
+        return (name.find(".") != std::string::npos ? name.substr(0, name.find(".")) : name);
+    }
+
     //! return the file/directory type.
     TFileFlags GetType(void) const {
         return m_nFlags;

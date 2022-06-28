@@ -39,6 +39,7 @@ public:
     static bool        IsDir(const std::string &filepath);
     static std::string toHexString(ssize_t nSize);
     static std::string toLower(const std::string &);
+    static bool endWith(const std::string &src, const char *backfix);
 };
 
 class UrlUtils {

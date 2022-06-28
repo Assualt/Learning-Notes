@@ -39,6 +39,7 @@ DirScanner::~DirScanner() {
 void DirScanner::CloseHandle() {
     if (m_nHandle) {
         closedir(m_nHandle);
+        m_nHandle = nullptr;
     }
 }
 

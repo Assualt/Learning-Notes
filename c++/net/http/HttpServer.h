@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CtlScanner.h"
 #include "HttpConfig.h"
 #include "HttpParttern.h"
 #include "base/nonecopyable.h"
@@ -37,6 +38,7 @@ public:
     }
 
     void RegSignalCallback(int sig, uintptr_t param, SignalCallback cb);
+    void startScannerTask(const std::string &libsPath);
 
 private:
     static void SignalHandler(int sig);
@@ -49,4 +51,5 @@ protected:
     static RequestMapper       m_mapper;
     std::shared_ptr<HttpLog>   m_httpLog{nullptr};
     static SigHandleMap        m_signalCallBack;
+    ControllerScanner          m_ctlScannerTask;
 };
