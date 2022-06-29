@@ -74,6 +74,7 @@ bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::stri
 
 void RequestMapper::addRequestObject(const Key &key, uintptr_t object) {
     m_vRequestsMapper.push_back({key, object});
+    logger.debug("success insert key:%s object:%d", key.pattern_, object);
 }
 
 std::optional<uintptr_t> RequestMapper::findHandle(const std::string &reqPath, const std::string &reqType, std::map<std::string, std::string> &resultMap) {

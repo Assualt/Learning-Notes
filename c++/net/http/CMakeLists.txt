@@ -14,6 +14,7 @@ set(http_SRCS
     main_server.cpp
 )
 add_executable(httpserver ${http_SRCS})
+add_subdirectory(controller/lib)
 target_link_libraries(httpserver muduo_base muduo_net pthread magic z dl)
 install(TARGETS httpserver DESTINATION bin)
 

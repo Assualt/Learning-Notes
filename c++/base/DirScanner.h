@@ -44,7 +44,13 @@ public:
         return *this;
     }
 
+    void clear() {
+        FileAttr attr;
+        Swap(attr);
+    }
+
     void SetInfor(const std::string &strName) {
+        clear();
         m_strName = strName;
     }
 

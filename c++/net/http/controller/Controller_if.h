@@ -41,7 +41,6 @@ public:
             {"put", [ this ](const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) { return this->onPut(req, res, cfg); }},
         };
 
-        logger.info("reqpath:%s ==> controller:%s method:%s", req.getRequestPath(), name_, req.getRequestType());
         auto itr = methodFuncs.find(utils::toLower(req.getRequestType()));
         if (itr != methodFuncs.end()) {
             return itr->second(req, res, cfg);

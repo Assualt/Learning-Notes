@@ -37,6 +37,7 @@ void ControllerScanner::TaskCallback() {
 
         while (scanner.Fetch(attr)) {
             if (attr.IsDir() || attr.IsLink()) {
+                logger.debug("attr name %s skip, isdir:%b isLink:%b", attr.GetFullName(), attr.IsDir(), attr.IsLink());
                 continue;
             }
 
@@ -46,20 +47,20 @@ void ControllerScanner::TaskCallback() {
             }
 
             attr.SetParentPath(libsPaths_);
-
-            if (libmaps_.count(attr.GetName()) && libmaps_[ attr.GetName() ] == attr.GetSize()) {
-                logger.info("so %s is equals", attr.GetName());
+            auto iter = libmaps_.find(attr.GetName());
+            if (iter != libmaps_.end() && iter->second == attr.GetSize()) {
+                logger.debug("file name %s is equals, skip", attr.GetName());
                 continue;
             }
 
-            if (libmaps_.find(attr.GetName()) == libmaps_.end()) {
-                logger.info("so %s is exist, so size:%d", attr.GetName(), attr.GetSize());
-                tmpMaps.emplace(attr.GetName(), attr.GetSize());
-            }
-
-            if (libmaps_.count(attr.GetName()) && libmaps_[ attr.GetName() ] != attr.GetSize()) {
-                logger.info("so %s is not equals, old size:%d new size:%d", attr.GetName(), libmaps_[ attr.GetName() ], attr.GetSize());
-                tmpMaps.emplace(attr.GetName(), attr.GetSize());
+            if (iter == libmaps_.end()) {
+                logger.info("%s should add here,new size:%d", attr.GetName(), attr.GetSize());
+                libmaps_.emplace(attr.GetName(), attr.GetSize());
+            } else if (iter->second != attr.GetSize()) {
+                logger.info("%s size is not equals, old size:%d new size:%d", attr.GetName(), libmaps_[ attr.GetName() ], attr.GetSize());
+                libmaps_.emplace(attr.GetName(), attr.GetSize());
+            } else {
+                continue;
             }
 
             DllHelper helper;
@@ -70,7 +71,7 @@ void ControllerScanner::TaskCallback() {
 
             std::string symbolName = attr.BriefName() + "_Entry";
             int (*entry)(void);
-            entry = reinterpret_cast<int(*)(void)>(helper.GetSymbol(symbolName.c_str()));
+            entry = reinterpret_cast<int (*)(void)>(helper.GetSymbol(symbolName.c_str()));
             if (entry == nullptr) {
                 logger.warning("%s so is invalid, msg:%s", attr.GetFullName(), helper.errMsg());
                 continue;
@@ -78,8 +79,7 @@ void ControllerScanner::TaskCallback() {
             auto ret = entry();
             logger.info("success reg call func name:%s ret:%d", attr.BriefName(), ret);
         }
-        libmaps_.swap(tmpMaps);
         scanner.CloseHandle();
-        sleep(10);
+        sleep(5);
     }
 }
