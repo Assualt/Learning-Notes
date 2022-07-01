@@ -1,10 +1,12 @@
 #pragma once
+#include "base/Mutex.h"
 #include <functional>
 #include <iostream>
 #include <map>
 #include <optional>
 #include <vector>
 
+using namespace muduo::base;
 class HttpRequest;
 class HttpResponse;
 class HttpConfig;
@@ -38,10 +40,12 @@ public:
         std::vector<std::string> keySet_;
         std::vector<int>         keyPoint_;
     };
-    void addRequestMapping(const Key &key, Func &&F);
-    void addRequestObject(const Key &key, uintptr_t object);
+
+    void                     addRequestObject(const Key &key, uintptr_t object);
+    void                     removeRequestObject(const std::string &pattern);
     std::optional<uintptr_t> findHandle(const std::string &repPath, const std::string &reqType, std::map<std::string, std::string> &resultMap);
 
 protected:
     std::vector<std::pair<Key, uintptr_t>> m_vRequestsMapper;
+    MutexLock                              lock_;
 };

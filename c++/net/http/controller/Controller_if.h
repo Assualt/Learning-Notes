@@ -14,9 +14,12 @@ using namespace muduo::net;
 class IController : Object {
 public:
     IController(const std::string &name, const RequestMapper::Key &key)
-        : name_(name)
-        , key_(key) {
-        HttpServer::getMapper().addRequestObject(key_, reinterpret_cast<uintptr_t>(this));
+        : name_(name) {
+        HttpServer::getMapper().addRequestObject(key, reinterpret_cast<uintptr_t>(this));
+    }
+
+    IController(const std::string &name)
+        : name_(name) {
     }
 
     virtual ~IController() = default;
@@ -34,13 +37,14 @@ public:
         return true;
     }
 
-    bool onRequest(const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) {
+    virtual bool onRequest(const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) {
         std::map<std::string, Func> methodFuncs = {
             {"get", [ this ](const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) { return this->onGet(req, res, cfg); }},
             {"post", [ this ](const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) { return this->onPost(req, res, cfg); }},
             {"put", [ this ](const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) { return this->onPut(req, res, cfg); }},
         };
 
+        logger.info("request path:%s controller name:%s type:%s", req.getRequestPath(), name_, req.getRequestType());
         auto itr = methodFuncs.find(utils::toLower(req.getRequestType()));
         if (itr != methodFuncs.end()) {
             return itr->second(req, res, cfg);
@@ -62,8 +66,7 @@ private:
     }
 
 private:
-    std::string               name_;
-    const RequestMapper::Key &key_;
+    std::string name_;
 };
 
 #define DECLARE_CONTROLLER                                                            \

@@ -18,16 +18,8 @@ ThreadContext::ThreadContext(ThreadFunc func, const std::string &name, pid_t *pi
 }
 
 void ThreadContext::Run() {
-    try {
-        System::SetThreadName(m_strThreadName);
-        m_func();
-    } catch (const Exception &e) {
-        logger.alert("run in thread occur Exception. msg:%s", e.what());
-        abort();
-    } catch (...) {
-        logger.alert("run in thread occur Unknown exception.");
-        abort();
-    }
+    System::SetThreadName(m_strThreadName);
+    m_func();    
 }
 
 void *Thread::StartThread(void *arg) {

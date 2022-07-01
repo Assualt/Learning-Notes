@@ -73,8 +73,18 @@ bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::stri
 }
 
 void RequestMapper::addRequestObject(const Key &key, uintptr_t object) {
+    AutoLock lock(lock_);
     m_vRequestsMapper.push_back({key, object});
     logger.debug("success insert key:%s object:%d", key.pattern_, object);
+}
+
+void RequestMapper::removeRequestObject(const std::string &pattern) {
+    auto iter = std::find_if(m_vRequestsMapper.begin(), m_vRequestsMapper.end(), [ &pattern ](auto &item) { return item.first.pattern_ == pattern; });
+    if (iter != m_vRequestsMapper.end()) {
+        AutoLock lock(lock_);
+        logger.debug("success delete key:%s object:%d", pattern, iter->second);
+        m_vRequestsMapper.erase(iter);
+    }
 }
 
 std::optional<uintptr_t> RequestMapper::findHandle(const std::string &reqPath, const std::string &reqType, std::map<std::string, std::string> &resultMap) {

@@ -60,10 +60,6 @@ bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::stri
     return reqPath == pattern;
 }
 
-void RequestMapper::addRequestMapping(const Key &key, http::Func &&F) {
-    m_vRequestMapper.push_back(std::pair<RequestMapper::Key, http::Func>(key, F));
-}
-
 http::Func RequestMapper::find(const std::string &RequestPath, const std::string &reqType, std::map<std::string, std::string> &resultMap) {
     for (auto iter : m_vRequestMapper) {
         bool MethodAllowed;

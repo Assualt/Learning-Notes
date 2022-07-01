@@ -1,14 +1,16 @@
 #include "CtlScanner.h"
 #include "HttpUtils.h"
 #include "base/DirScanner.h"
-#include "base/Dll.h"
 #include "base/Logging.h"
+#include "net/http/HttpParttern.h"
+#include "net/http/HttpServer.h"
+#include <algorithm>
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
 using namespace muduo::base;
 
-typedef void (*ControllerEntry)();
+using ControllerEntry = int (*)(std::string *, int *, bool *, uintptr_t *);
 
 void ControllerScanner::init(const std::string &path) {
     libsPaths_ = path;
@@ -34,7 +36,6 @@ void ControllerScanner::TaskCallback() {
         std::map<std::string, int> tmpMaps;
         DirScanner                 scanner(libsPaths_.c_str());
         FileAttr                   attr;
-
         while (scanner.Fetch(attr)) {
             if (attr.IsDir() || attr.IsLink()) {
                 logger.debug("attr name %s skip, isdir:%b isLink:%b", attr.GetFullName(), attr.IsDir(), attr.IsLink());
@@ -59,25 +60,32 @@ void ControllerScanner::TaskCallback() {
             } else if (iter->second != attr.GetSize()) {
                 logger.info("%s size is not equals, old size:%d new size:%d", attr.GetName(), libmaps_[ attr.GetName() ], attr.GetSize());
                 libmaps_.emplace(attr.GetName(), attr.GetSize());
+                // TODO so变化之后，需要重新load一把才可以完成功能
             } else {
                 continue;
             }
 
-            DllHelper helper;
-            if (helper.open(attr.GetFullName().c_str(), DllHelper::LOAD_LAZY) != 0) {
-                logger.warning("%s so is invalid, msg:%s", attr.GetFullName(), helper.errMsg());
+            auto helper = std::make_unique<DllHelper>();
+            if (helper->open(attr.GetFullName().c_str(), DllHelper::LOAD_LAZY) != 0) {
+                logger.warning("%s so is invalid, msg:%s", attr.GetFullName(), helper->errMsg());
                 continue;
             }
 
-            std::string symbolName = attr.BriefName() + "_Entry";
-            int (*entry)(void);
-            entry = reinterpret_cast<int (*)(void)>(helper.GetSymbol(symbolName.c_str()));
+            std::string     symbolName = attr.BriefName() + "_Entry";
+            ControllerEntry entry;
+            entry = reinterpret_cast<ControllerEntry>(helper->GetSymbol(symbolName.c_str()));
             if (entry == nullptr) {
-                logger.warning("%s so is invalid, msg:%s", attr.GetFullName(), helper.errMsg());
+                logger.warning("%s so is invalid, msg:%s", attr.GetFullName(), helper->errMsg());
                 continue;
             }
-            auto ret = entry();
-            logger.info("success reg call func name:%s ret:%d", attr.BriefName(), ret);
+            std::string key;
+            int         method;
+            bool        needval;
+            uintptr_t   obj;
+            auto        ret = entry(&key, &method, &needval, &obj);
+            HttpServer::getMapper().addRequestObject({key, method, needval}, obj);
+            logger.info("success reg call func name:%s pattern:%s, method:%d, needval:%b obj:%x", attr.BriefName(), key, method, needval, obj);
+            dllmaps_.push_back({attr.BriefName(), std::move(helper)});
         }
         scanner.CloseHandle();
         sleep(5);

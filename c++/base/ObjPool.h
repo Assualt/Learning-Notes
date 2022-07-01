@@ -57,6 +57,10 @@ public:
         }
     }
 
+    template <class ClassName> void pushObj(ClassName *obj) {
+        m_objMap.emplace(typeid(ClassName).hash_code(), reinterpret_cast<Object *>(obj));
+    }
+
     template <class ClassName> auto Query() -> std::shared_ptr<Object> {
         auto hash = typeid(ClassName).hash_code();
         auto iter = m_objMap.find(hash);
