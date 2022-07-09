@@ -13,16 +13,16 @@ class RpcServer {
 public:
     RpcServer(EventLoop *eventLoop, const InetAddress &addr);
 
-    bool InitEx(int threadNum);
+    bool initEx(int threadNum);
 
-    void Start();
+    void start();
 
-    void OnConnection(TcpConnectionPtr conn);
+    void onConnection(const TcpConnectionPtr &conn);
 
-    void OnMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timestamp recvTime);
+    void onMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timestamp recvTime);
 
 private:
-    EventLoop *                m_pLoop{nullptr};
+    EventLoop                 *m_pLoop{nullptr};
     std::unique_ptr<TcpServer> m_tcpServer{nullptr};
 
     std::unique_ptr<Acceptor> acceptor; // avoid revealing Acceptor

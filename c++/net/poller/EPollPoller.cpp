@@ -69,8 +69,9 @@ Timestamp EPollPoller::poll(int timeoutMs, ChannelList *activeChannels) {
     return now;
 }
 
-void EPollPoller::fillActiveChannels(int numEvents, ChannelList *activeChannels) const {
+void EPollPoller::fillActiveChannels(int numEvents, ChannelList *activeChannels) {
     assert(static_cast<size_t>(numEvents) <= events_.size());
+    std::set<int> eventSet;
     for (int i = 0; i < numEvents; ++i) {
         Channel *channel = static_cast<Channel *>(events_[ i ].data.ptr);
 #ifndef NDEBUG
@@ -81,6 +82,19 @@ void EPollPoller::fillActiveChannels(int numEvents, ChannelList *activeChannels)
 #endif
         channel->set_revents(events_[ i ].events);
         activeChannels->push_back(channel);
+        eventSet.insert(channel->fd());
+    }
+
+    m_noEventSet.clear();
+    for (auto channel : m_mChannels) {
+        if (eventSet.count(channel.second->fd())) {
+            continue;
+        }
+
+        if (channel.second->fd() == epollfd_) {
+            continue;
+        }
+        m_noEventSet.insert(channel.second->fd());
     }
 }
 

@@ -49,6 +49,7 @@ public:
 
 protected:
     void doPendingFunctors();
+    void clearReadTimeoutChannel();
 
 protected:
     bool m_bLooping;

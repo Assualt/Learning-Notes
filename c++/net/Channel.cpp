@@ -40,6 +40,12 @@ void Channel::remove() {
     m_pLoop->removeChannel(this);
 }
 
+void Channel::doReadTimeOutFunc() {
+    if (m_ReadTimeoutCallback) {
+        m_ReadTimeoutCallback();
+    }
+}
+
 void Channel::handleEvent(const base::Timestamp &recvTime) {
     std::shared_ptr<void> guard;
     if (m_bUseLock) {

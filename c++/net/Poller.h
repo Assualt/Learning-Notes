@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <set>
 #include <vector>
 
 #include "base/Timestamp.h"
@@ -23,12 +24,14 @@ public:
     virtual void updateChannel(Channel *channel) = 0;
     virtual void removeChannel(Channel *channel) = 0;
     virtual bool hasChannel(Channel *channel) const;
+    ChannelList  getEventTimeoutChannel();
 
     static Poller *newDefaultPoller(EventLoop *loop);
     void           assertInLoopThread();
 
 protected:
-    ChannelMap m_mChannels;
+    ChannelMap    m_mChannels;
+    std::set<int> m_noEventSet;
 
 protected:
     EventLoop *m_pLoop;

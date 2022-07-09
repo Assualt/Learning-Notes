@@ -23,7 +23,8 @@ TcpConnection::TcpConnection(EventLoop *loop, const std::string &name, int sockf
     m_channel->setWriteCallback(std::bind(&TcpConnection::handleWrite, this));
     m_channel->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
     m_channel->setErrorCallback(std::bind(&TcpConnection::handleError, this));
-    m_socket->setKeepAlive(true);
+    m_channel->setReadTimeOutCallback(std::bind(&TcpConnection::shutdown, this));
+    m_socket->setKeepAlive(false);
 }
 
 TcpConnection::~TcpConnection() {
@@ -50,7 +51,7 @@ void TcpConnection::handleWrite() {
         if (writeBytes) {
             m_output.retrieve(writeBytes);
             if (m_state == TcpState::DisConnecting) {
-                // shutdownInLoop();
+                shutdownInLoop();
             }
         } else {
             logger.warning("TcpConnection::HandleWrite failed");

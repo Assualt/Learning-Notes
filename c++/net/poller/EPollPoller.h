@@ -37,7 +37,7 @@ private:
 
     static const char *operationToString(int op);
 
-    void fillActiveChannels(int numEvents, ChannelList *activeChannels) const;
+    void fillActiveChannels(int numEvents, ChannelList *activeChannels);
     void update(int operation, Channel *channel);
 
     typedef std::vector<struct epoll_event> EventList;

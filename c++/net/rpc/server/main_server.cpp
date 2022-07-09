@@ -11,7 +11,7 @@ int main(int argc, char const *argv[]) {
 
     EventLoop loop;
     RpcServer server(&loop, InetAddress(8000));
-    server.Start();
+    server.start();
     loop.loop();
     return 0;
 }

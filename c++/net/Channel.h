@@ -31,6 +31,10 @@ public:
         m_FErrorCallback = std::move(cb);
     }
 
+    void setReadTimeOutCallback(EventCallback cb) {
+        m_ReadTimeoutCallback = std::move(cb);
+    }
+
     inline int fd() {
         return m_nFD;
     }
@@ -99,6 +103,8 @@ public:
     std::string eventToString() const;
     std::string eventsToString(int fd, int ev) const;
 
+    void doReadTimeOutFunc();
+
 protected:
     void update();
     void handleEventWithGuard(const base::Timestamp &recvTime);
@@ -121,6 +127,7 @@ private:
     EventCallback     m_FWriteCallback;
     EventCallback     m_FCloseCallback;
     EventCallback     m_FErrorCallback;
+    EventCallback     m_ReadTimeoutCallback;
 };
 
 } // namespace net

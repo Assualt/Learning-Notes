@@ -19,12 +19,13 @@ using muduo::net::Channel;
 
 __thread EventLoop *t_loopInThisThread = 0;
 constexpr int       kPollTimeMs        = 10000;
+constexpr int       kNoEventTimes      = 2;
 int                 createEventfd() {
-    int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-    if (evtfd < 0) {
-        abort();
+                    int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+                    if (evtfd < 0) {
+                        abort();
     }
-    return evtfd;
+                    return evtfd;
 }
 
 EventLoop::EventLoop()
@@ -75,6 +76,21 @@ void EventLoop::wakeup() {
     }
 }
 
+void EventLoop::clearReadTimeoutChannel() {
+    static int readTimeoutCnt = 0;
+    if (!m_vActiveChannels.empty()) {
+        readTimeoutCnt = 0;
+        return;
+    }
+    readTimeoutCnt++;
+    if (readTimeoutCnt >= kNoEventTimes) { //
+        auto channelList = m_Poller->getEventTimeoutChannel();
+        for (Channel* channel : channelList) {
+            channel->doReadTimeOutFunc();
+        }
+    }
+}
+
 void EventLoop::loop() {
     m_bLooping = true;
     m_bQuit    = false;
@@ -83,6 +99,7 @@ void EventLoop::loop() {
         m_vActiveChannels.clear();
         m_tRecvTimeStamp = m_Poller->poll(kPollTimeMs, &m_vActiveChannels);
         m_bEventHanding  = true;
+        clearReadTimeoutChannel();
         for (Channel *channel : m_vActiveChannels) {
             m_pCurrentChannel = channel;
             m_pCurrentChannel->handleEvent(m_tRecvTimeStamp);

@@ -43,7 +43,7 @@ public:
 private:
     int                                     m_nThreadNum;
     std::string                             m_strServerName;
-    std::map<std::string, TcpConnectionPtr> connectionMap;
+    std::map<std::string, TcpConnectionPtr> m_connectionMap;
     std::unique_ptr<Acceptor>               acceptor; // avoid revealing Acceptor
     ThreadInitCallback                      threadInitCallback;
     ConnectionCallback                      connectionCallback;

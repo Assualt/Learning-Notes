@@ -1,6 +1,6 @@
+#include "Poller.h"
 #include "Channel.h"
 #include "EventLoop.h"
-#include "Poller.h"
 #include "poller/EPollPoller.h"
 #include "poller/PollPoller.h"
 #include <stdlib.h>
@@ -26,6 +26,17 @@ Poller *Poller::newDefaultPoller(EventLoop *loop) {
 
 void Poller::assertInLoopThread() {
     m_pLoop->assertLoopThread();
+}
+
+Poller::ChannelList Poller::getEventTimeoutChannel() {
+    ChannelList noEventList;
+    for (auto &fd : m_noEventSet) {
+        if (m_mChannels.find(fd) != m_mChannels.end()) {
+            noEventList.push_back(m_mChannels[ fd ]);
+        }
+    }
+
+    return noEventList;
 }
 
 } // namespace net

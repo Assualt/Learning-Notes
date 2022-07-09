@@ -56,7 +56,7 @@ void TcpServer::NewConnection(int sockfd, const InetAddress &peerAddress) {
     conn->setMessageCallBack(messageCallback);
     conn->setCloseCallBack(std::bind(&TcpServer::RemoveConnection, this, std::placeholders::_1));
     ioLoop->runInLoop(std::bind(&TcpConnection::connectEstablished, conn));
-    connectionMap[ connName ] = conn;
+    m_connectionMap[ connName ] = conn;
 }
 
 void TcpServer::RemoveConnection(const TcpConnectionPtr &conn) {
@@ -66,7 +66,7 @@ void TcpServer::RemoveConnection(const TcpConnectionPtr &conn) {
 void TcpServer::RemoveConnectionInLoop(const TcpConnectionPtr &conn) {
     m_pLoop->assertLoopThread();
     logger.info("TcpServer::RemoveConnectionInLoop name:%s - connection Name:%s", m_strServerName, conn->name());
-    size_t     n    = connectionMap.erase(conn->name());
+    size_t     n    = m_connectionMap.erase(conn->name());
     EventLoop *loop = conn->getLoop();
     loop->queueInLoop(std::bind(&TcpConnection::connectDestory, conn));
 }

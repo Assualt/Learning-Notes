@@ -81,7 +81,7 @@ protected:
     void sendInLoop(const void *data, size_t len);
 
 protected:
-    EventLoop *              m_pLoop;
+    EventLoop               *m_pLoop;
     const InetAddress        m_locAddr;
     const InetAddress        m_peerAddr;
     TcpState                 m_state;
@@ -90,7 +90,6 @@ protected:
     std::unique_ptr<Channel> m_channel;
 
     // call backs
-
     ConnectionCallback    m_connCallBack;
     MessageCallback       m_messCallBack;
     HighWaterMarkCallback m_hightwaterCallBack;

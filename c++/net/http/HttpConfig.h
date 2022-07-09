@@ -38,7 +38,7 @@ protected:                                                \
 #define SERVER "Server"
 #define SERVERVal "HttpServer/0.1 Linux/GNU gcc/c++"
 
-#define FilePattern    "/#*#/"
+#define FilePattern "/#*#/"
 #define DefaultPattern "/#@#/"
 
 #define AUTHREQUIRED                                                                                                                         \
@@ -52,6 +52,11 @@ protected:                                                \
 #define METHODNOTALLOWED                                                                                                                       \
     "<html>\r\n<head>\r\n<title>405 Method not Allowed</title>\r\n</head>\r\n<body bgcolor=\"white\">\r\n<center><h1>405 Method  not Allowed." \
     "</h1></center>\r\n<hr>\r\n<center>httpserver</center>\r\n</body>\r\n</html>"
+
+enum HttpVersion {
+    HTTP_1_0,
+    HTTP_1_1,
+};
 
 using muduo::base::nonecopyable;
 class HttpConfig : nonecopyable {
