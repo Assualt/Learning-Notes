@@ -1,4 +1,4 @@
-#include "logging.h"
+#include "base/Logging.h"
 #include <algorithm>
 #include <functional>
 #include <iostream>
@@ -137,8 +137,12 @@ protected:
 
 } // namespace db
 
+using namespace muduo::base;
 int main(int argc, char const *argv[]) {
-
+    auto &log = Logger::getLogger();
+    log.BasicConfig(LogLevel::Debug, "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(funcname):%(lineno)] %(message)", "", "");
+    log.setAppName("app");
+    log.addLogHandle(std::make_shared<StdOutLogHandle>().get());
     db::LevelDBClient client;
 
     leveldb::Options options;
@@ -152,12 +156,13 @@ int main(int argc, char const *argv[]) {
     client.Put("Hello", "World");
     client.Put("test", "OK");
 
-    std::cout << client.Get("Hello") << std::endl;
+    logger.info("client Get Hello %s", client.Get("Hello"));
 
-    client.Iterator([](const std::string &key, const std::string &val) { std::cout << "Key:" << key << " Val:" << val << std::endl; });
+    client.Iterator([](const std::string &key, const std::string &val) {
+        logger.info("Key:%s Val:%s", key, val);
+    });
 
-    std::cout << client.getDBStatus() << std::endl;
-
+    logger.info("dbStatus:\n%s", client.getDBStatus());
     client.close();
 
     /* code */
