@@ -12,9 +12,9 @@
 
 SigHandleMap  HttpServer::m_signalCallBack;
 RequestMapper HttpServer::m_mapper;
-HttpServer::HttpServer(EventLoop *loop, const InetAddress &addr)
+HttpServer::HttpServer(EventLoop *loop, const InetAddress &address)
     : m_pLoop(loop)
-    , m_pServer(new TcpServer(loop, addr, "tcpServer")) {
+    , m_pServer(new TcpServer(loop, address, "tcpServer")) {
     auto &accessLogger = Logger::getLogger("AccessLogger");
     accessLogger.BasicConfig(LogLevel::Debug, "%(message)", "access.log", "");
     m_httpLog.reset(new HttpLog(accessLogger));

@@ -13,18 +13,25 @@ class InetAddress;
 
 class Socket : nonecopyable {
 public:
-    explicit Socket(int sockfd);
+    explicit Socket(int sockFd);
     ~Socket();
 
 public:
-    int  fd();
+    int fd();
+
     bool getTcpInfo(struct tcp_info *) const;
-    bool getTcpInfoString(std::string &infostring) const;
+
+    bool getTcpInfoString(std::string &infoString) const;
 
     void bindAddress(const InetAddress &addr);
+
     void listen();
 
+    bool connect(const InetAddress &addr, int timeout);
+
     int accept(InetAddress *remoteAddress);
+
+    void close();
 
     ///
     /// Enable/disable TCP_NODELAY (disable/enable Nagle's algorithm).
@@ -49,7 +56,7 @@ public:
     void shutdownWrite();
 
 private:
-    int sockfd_{-1};
+    int         sockFd_{-1};
 };
 } // namespace net
 } // namespace muduo

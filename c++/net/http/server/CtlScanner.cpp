@@ -84,7 +84,7 @@ void ControllerScanner::TaskCallback() {
             uintptr_t   obj;
             auto        ret = entry(&key, &method, &needval, &obj);
             HttpServer::getMapper().addRequestObject({key, method, needval}, obj);
-            logger.info("success reg call func name:%s pattern:%s, method:%d, needval:%b obj:%x", attr.BriefName(), key, method, needval, obj);
+            logger.info("success reg call func name:%s pattern:%s, method:%d, needval:%b obj:%x ret:%d", attr.BriefName(), key, method, needval, obj, ret);
             dllmaps_.push_back({attr.BriefName(), std::move(helper)});
         }
         scanner.CloseHandle();

@@ -11,32 +11,32 @@ namespace muduo {
 namespace net {
 
 DECLARE_EXCEPTION(SocketException, base::Exception);
-int sockets::connect(int sockfd, const struct sockaddr *addr) {
-    return ::connect(sockfd, addr, static_cast<socklen_t>(sizeof(struct sockaddr_in6)));
+int sockets::connect(int sockFd, const struct sockaddr *addr) {
+    return ::connect(sockFd, addr, static_cast<socklen_t>(sizeof(struct sockaddr_in6)));
 }
 
-void sockets::bind(int sockfd, const struct sockaddr *addr) {
-    int ret = ::bind(sockfd, addr, static_cast<socklen_t>(sizeof(struct sockaddr_in6)));
+void sockets::bind(int sockFd, const struct sockaddr *addr) {
+    int ret = ::bind(sockFd, addr, static_cast<socklen_t>(sizeof(struct sockaddr_in6)));
     if (ret < 0) {
-        throw SocketException(FmtString("bind address fd[%] error").arg(sockfd).str());
+        throw SocketException(FmtString("bind address fd[%] error").arg(sockFd).str());
     }
 }
 
-void sockets::listen(int sockfd) {
-    int ret = ::listen(sockfd, SOMAXCONN);
+void sockets::listen(int sockFd) {
+    int ret = ::listen(sockFd, SOMAXCONN);
     if (ret < 0) {
-        throw SocketException(FmtString("listen address fd[%] error").arg(sockfd).str());
+        throw SocketException(FmtString("listen address fd[%] error").arg(sockFd).str());
     }
 }
 
-int sockets::accept(int sockfd, struct sockaddr_in6 *addr) {
-    socklen_t addrlen = static_cast<socklen_t>(sizeof(*addr));
+int sockets::accept(int sockFd, struct sockaddr_in6 *addr) {
+    socklen_t addrLen = static_cast<socklen_t>(sizeof(*addr));
 #if USE_ACCEPT4
 #else
-    int connfd = ::accept(sockfd, (sockaddr *)addr, &addrlen);
+    int connFd = ::accept(sockFd, (sockaddr *)addr, &addrLen);
 #endif
-    if (connfd > 0) {
-        return connfd;
+    if (connFd > 0) {
+        return connFd;
     }
     int saveError = errno;
     logger.info("sockets::accept error. errno:%d", saveError);
@@ -64,74 +64,74 @@ int sockets::accept(int sockfd, struct sockaddr_in6 *addr) {
             logger.error("unknown error of ::accept errno:%d", saveError);
             break;
     }
-    return connfd;
+    return connFd;
 }
 
-ssize_t sockets::read(int sockfd, void *buf, size_t count) {
-    return ::read(sockfd, buf, count);
+ssize_t sockets::read(int sockFd, void *buf, size_t count) {
+    return ::read(sockFd, buf, count);
 }
 
-ssize_t sockets::readv(int sockfd, const struct iovec *iov, int iovcnt) {
-    return ::readv(sockfd, iov, iovcnt);
+ssize_t sockets::readv(int sockFd, const struct iovec *iov, int iovCnt) {
+    return ::readv(sockFd, iov, iovCnt);
 }
 
-ssize_t sockets::write(int sockfd, const void *buf, size_t nwrite) {
-    return ::write(sockfd, buf, nwrite);
+ssize_t sockets::write(int sockFd, const void *buf, size_t nWrite) {
+    return ::write(sockFd, buf, nWrite);
 }
 
-void sockets::close(int sockfd) {
-    auto ret = ::close(sockfd);
+void sockets::close(int sockFd) {
+    auto ret = ::close(sockFd);
     if (ret < 0) {
-        throw SocketException(FmtString("close fd:% failed. ret:% errmsg:%").arg(sockfd).arg(ret).arg(System::GetErrMsg(errno)).str());
+        throw SocketException(FmtString("close fd:% failed. ret:% errmsg:%").arg(sockFd).arg(ret).arg(System::GetErrMsg(errno)).str());
     }
 }
 
-void sockets::bindOrDie(int sockfd, const struct sockaddr *addr) {
-    int ret = ::bind(sockfd, (const sockaddr *)addr, static_cast<socklen_t>(sizeof(struct sockaddr)));
+void sockets::bindOrDie(int sockFd, const struct sockaddr *addr) {
+    int ret = ::bind(sockFd, (const sockaddr *)addr, static_cast<socklen_t>(sizeof(struct sockaddr)));
     if (ret < 0) {
-        logger.error("sockets::bindOrDie. sockfd is:%d ret:%d errno:%d msg:%s", sockfd, ret, errno, System::GetErrMsg(errno));
-        throw SocketException(FmtString("close fd:% failed.").arg(sockfd).str());
+        logger.error("sockets::bindOrDie. sockFd is:%d ret:%d errno:%d msg:%s", sockFd, ret, errno, System::GetErrMsg(errno));
+        throw SocketException(FmtString("close fd:% failed.").arg(sockFd).str());
     }
 }
 
-void sockets::listenOrDie(int sockfd) {
-    int ret = ::listen(sockfd, SOMAXCONN);
+void sockets::listenOrDie(int sockFd) {
+    int ret = ::listen(sockFd, SOMAXCONN);
     if (ret < 0) {
-        logger.error("sockets::listenOrdie. sockfd:%d errmsg:%s", sockfd, System::GetErrMsg(errno));
+        logger.error("sockets::listenOrDie. sockFd:%d errmsg:%s", sockFd, System::GetErrMsg(errno));
     }
 }
 
 int sockets::createNonblockingOrDie(const sa_family_t family) {
 #if VALGRIND
-    int sockfd = ::socket(family, SOCK_STREAM, IPPROTO_TCP);
-    if (sockfd < 0) {
+    int sockFd = ::socket(family, SOCK_STREAM, IPPROTO_TCP);
+    if (sockFd < 0) {
         logger.error("sockets::createNonblockingOrDie errmsg:%s", System::GetErrMsg(errno));
     }
 
-    setNonBlockAndCloseOnExec(sockfd);
+    setNonBlockAndCloseOnExec(sockFd);
 #else
-    int sockfd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
-    if (sockfd < 0) {
+    int sockFd = ::socket(family, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
+    if (sockFd < 0) {
         logger.error("sockets::createNonblockingOrDie");
         throw SocketException("sockets::createNonblockingOrDie failed");
     }
 #endif
-    return sockfd;
+    return sockFd;
 }
 
-struct sockaddr_in6 sockets::getLocalAddr(int sockfd) {
+struct sockaddr_in6 sockets::getLocalAddr(int sockFd) {
     struct sockaddr_in6 localaddr;
     bzero(&localaddr, sizeof localaddr);
-    socklen_t addrlen = static_cast<socklen_t>(sizeof localaddr);
-    if (::getsockname(sockfd, (struct sockaddr *)(&localaddr), &addrlen) < 0) {
+    socklen_t addrLen = static_cast<socklen_t>(sizeof localaddr);
+    if (::getsockname(sockFd, (struct sockaddr *)(&localaddr), &addrLen) < 0) {
         logger.warning("sockets::getLocalAddr");
     }
     return localaddr;
 }
 
-void sockets::shutdownWrite(int sockfd) {
-    if (::shutdown(sockfd, SHUT_WR) < 0) {
-        logger.error("shut down sockfd error :%d", sockfd);
+void sockets::shutdownWrite(int sockFd) {
+    if (::shutdown(sockFd, SHUT_WR) < 0) {
+        logger.error("shut down sockFd error :%d", sockFd);
     }
 }
 

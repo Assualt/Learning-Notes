@@ -65,7 +65,7 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime) {
                     // empty line, end of header
                     // FIXME:
                     setContentLengthType();
-                    if ((m_lenType = kContentLength) && (m_contentLenth == 0)) {
+                    if ((m_lenType == kContentLength) && (m_contentLenth == 0)) {
                         m_state = kGotAll;
                         hasMore = false;
                     } else {
