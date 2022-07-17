@@ -14,7 +14,6 @@ void myFunc() {
 }
 
 int main(int argc, char const *argv[]) {
-
     Thread myThread(myFunc, "OK");
     myThread.Start();
     myThread.Join();

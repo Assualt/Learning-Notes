@@ -86,7 +86,7 @@ public:
                     case Z_MEM_ERROR:
                         (void)inflateEnd(&strm);
                         return -1;
-                    ult:
+                    default:
                         break;
                 }
                 left = MAX_BUF_SIZE - strm.avail_out;

@@ -1,10 +1,9 @@
 #include "Dll.h"
 #include <dlfcn.h>
-#include <stdio.h>
 #include <unistd.h>
 using namespace muduo::base;
 
-int DllHelper::open(const char *filename, LOAD_TYPE type) {
+int DllHelper::open(const char *filename, LOAD_TYPE) {
     if (access(filename, F_OK) != 0) {
         return -1;
     }

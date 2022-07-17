@@ -1,9 +1,5 @@
-cmake_minimum_required(VERSION 2.6)
-project(muduo_base_tools)
-
-set(dep_muduo_VERSION_MAJOR 1)
-set(dep_muduo_VERSION_MINOR 1)
-set(dep_muduo_VERSION_PATCH 0)
+cmake_minimum_required(VERSION 3.13.0)
+project(muduo_base_tools VERSION 1.0.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED true)

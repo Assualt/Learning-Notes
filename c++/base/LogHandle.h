@@ -11,10 +11,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#define MAX_FILENAME_BUF 256
-
-#define SECONDS_DAY(n) (24 * n * 3600)
-#define SECONDS_ONE_DAY SECONDS_DAY(1)
 #define BASIC_TIME_POSTFIX "%Y-%m-%d"
 
 using std::string;
@@ -25,15 +21,15 @@ namespace base {
 
 class LogHandle {
 public:
-    virtual void writeData(const char *pData, size_t nsize) {
+    virtual void writeData(const char *pData, size_t nSize) {
     }
     virtual ~LogHandle() = default;
 };
 
 class StdOutLogHandle : public LogHandle {
 public:
-    virtual void writeData(const char *pData, size_t nsize) {
-        std::cout.write(pData, nsize).flush();
+    virtual void writeData(const char *pData, size_t nSize) {
+        std::cout.write(pData, nSize).flush();
     }
 };
 
@@ -48,11 +44,11 @@ public:
 
     virtual void writeData(const char *data, size_t nLength) {
         changeAccessFile();
-        foutputStream.write(data, nLength).flush();
+        fOutputStream.write(data, nLength).flush();
     }
 
     ~RollingFileLogHandle() {
-        foutputStream.close();
+        fOutputStream.close();
     }
 
 protected:
@@ -67,11 +63,11 @@ protected:
         if (currentFile == m_strCurrentFile) {
             return false;
         }
-        if (foutputStream.is_open()) {
-            foutputStream.close();
+        if (fOutputStream.is_open()) {
+            fOutputStream.close();
         }
         string FullFileName = FmtString("%/%").arg(m_strFilePathDir).arg(currentFile).str();
-        foutputStream.open(FullFileName, std::ios::app | std::ios::out);
+        fOutputStream.open(FullFileName, std::ios::app | std::ios::out);
         m_strCurrentFile = currentFile;
         return true;
     }
@@ -81,7 +77,7 @@ private:
     string        m_strFilePathDir; // current Log File Path
     string        m_strFilePrefix;  // filePrefix
     string        m_strTimePostfix; //
-    std::ofstream foutputStream;    // output stream
+    std::ofstream fOutputStream;    // output stream
 };
 
 class RollingFile2LogHandle : public LogHandle {
@@ -144,15 +140,15 @@ public:
         m_strFilePrefix = FmtString("%/%").arg(filepath).arg(filePrefix).str();
     }
     virtual void writeData(const char *data, size_t nLength) {
-        int nleftBytes = 0;
-        if (!changeAccessFile(data, nLength, nleftBytes)) {
+        int nLeftBytes = 0;
+        if (!changeAccessFile(data, nLength, nLeftBytes)) {
             fout.write(data, nLength).flush();
         } else {
-            fout.write(data + nLength - nleftBytes, nleftBytes).flush();
+            fout.write(data + nLength - nLeftBytes, nLeftBytes).flush();
         }
     }
 
-    bool changeAccessFile(const char *data, size_t nCurrentSize, int &nleftBytes) {
+    bool changeAccessFile(const char *data, size_t nCurrentSize, int &nLeftBytes) {
         if (!fout.is_open()) {
             fout.open(FmtString("%.%").arg(m_strFilePrefix).arg(m_nIndex).str());
         }
@@ -161,9 +157,9 @@ public:
             return false;
         }
         int writeBytes = m_nRollingFileSize - m_nCurrentFileSize;
-        nleftBytes     = nCurrentSize - writeBytes;
+        nLeftBytes     = nCurrentSize - writeBytes;
         fout.write(data, writeBytes).flush();
-        m_nCurrentFileSize = nleftBytes;
+        m_nCurrentFileSize = nLeftBytes;
         fout.close();
         m_nIndex++;
         fout.open(FmtString("%.%").arg(m_strFilePrefix).arg(m_nIndex).str());
@@ -184,13 +180,7 @@ private:
     std::ofstream fout;
 };
 
-class AsyncHttpLogHandle : public StdOutLogHandle {
-public:
-    AsyncHttpLogHandle(const char *requestUrl, const char *requestType = "POST") {
-    }
-
-private:
-};
+class [[maybe_unused]] AsyncHttpLogHandle : public StdOutLogHandle {};
 
 } // namespace base
 } // namespace muduo

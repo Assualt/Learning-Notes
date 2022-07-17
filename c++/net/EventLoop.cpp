@@ -1,16 +1,10 @@
-//
-// Created by Sunshine on 2021/3/9.
-//
-
 #include "EventLoop.h"
-
 #include "Channel.h"
 #include "CurrentThread.h"
 #include "SocketsOp.h"
 #include "base/Logging.h"
 #include <algorithm>
 #include <assert.h>
-#include <signal.h>
 #include <sys/eventfd.h>
 #include <unistd.h>
 namespace muduo {
@@ -85,7 +79,7 @@ void EventLoop::clearReadTimeoutChannel() {
     readTimeoutCnt++;
     if (readTimeoutCnt >= kNoEventTimes) { //
         auto channelList = m_Poller->getEventTimeoutChannel();
-        for (Channel* channel : channelList) {
+        for (Channel *channel : channelList) {
             channel->doReadTimeOutFunc();
         }
     }

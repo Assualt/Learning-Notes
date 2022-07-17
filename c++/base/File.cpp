@@ -44,7 +44,6 @@ File &File::operator=(File &&rhs) {
 }
 
 File::~File() {
-    auto fd = m_nFd;
     CloseNoThrow();
 }
 
@@ -150,10 +149,9 @@ std::string File::ReadLineByChar(char ch) {
     ssize_t     nRead;
     while (true) {
         nRead = read(m_nFd, temp, 1);
-        if (nRead == -1)
+        if (nRead <= 0)
             break;
         if (ch == temp[ 0 ]) {
-            lineString.push_back(ch);
             break;
         } else {
             lineString.push_back(temp[ 0 ]);
@@ -164,4 +162,8 @@ std::string File::ReadLineByChar(char ch) {
 
 size_t File::ReadBytes(void *temp, size_t nBytes) {
     return read(m_nFd, temp, nBytes);
+}
+
+int File::Fd() const {
+    return m_nFd;
 }

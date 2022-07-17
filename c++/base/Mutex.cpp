@@ -8,14 +8,14 @@ using namespace muduo::base;
         if (pointer == nullptr) {          \
             throw MutexLockException(val); \
         }                                  \
-    } while (0);
+    } while (0)
 
 #define CHECK_LOCK_RET(cond, val)          \
     do {                                   \
         if (cond) {                        \
             throw MutexLockException(val); \
         }                                  \
-    } while (0);
+    } while (0)
 
 MutexLock::MutexLock(const pthread_mutexattr_t *attr) {
     pthread_mutex_init(&m_mLock, attr);

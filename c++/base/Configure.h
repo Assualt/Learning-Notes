@@ -1,16 +1,17 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
 #pragma once
 #include <algorithm>
+#include <cstring>
 #include <dirent.h>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <sstream>
-#include <string.h>
 #include <sys/stat.h>
 #include <vector>
 
-namespace muduo {
-namespace base {
+namespace muduo::base {
 using cstring = const std::string &;
 using vstring = std::vector<std::string>;
 using Section = std::map<std::string, std::string>;
@@ -27,12 +28,12 @@ template <class typeString> static typeString trim(const typeString &strVal, con
     return trimLeft(trimRight(strVal, strSpace), strSpace);
 }
 static int count(const std::string &strVal, char ch) {
-    return std::count_if(strVal.begin(), strVal.end(), [ch](char c) { return ch == c; });
+    return std::count_if(strVal.begin(), strVal.end(), [ ch ](char c) { return ch == c; });
 }
 
 enum FILE_TYPE { Type_Unknown, Type_File, Type_Dir, Type_Other };
 static FILE_TYPE getFileType(cstring file) {
-    struct stat st;
+    struct stat st {};
     if (stat(file.c_str(), &st) == -1)
         return Type_Unknown;
     switch (st.st_mode & S_IFMT) {
@@ -40,8 +41,6 @@ static FILE_TYPE getFileType(cstring file) {
             return Type_File;
         case S_IFDIR:
             return Type_Dir;
-        default:
-            return Type_Other;
     }
     return Type_Other;
 }
@@ -81,7 +80,7 @@ public:
 
 template <typename Target> class lexical_cast_t<Target, std::string, false> {
 public:
-    static Target cast(const std::string &arg) {
+    [[maybe_unused]] static Target cast(const std::string &arg) {
         Target             ret;
         std::istringstream ss(arg);
         if (!(ss >> ret && ss.eof()))
@@ -101,22 +100,22 @@ template <typename Target, typename Source> Target lexical_cast(const Source &ar
 
 class ConfigureManager {
 public:
-    ConfigureManager(cstring confPath, cstring suffix = ".cf")
+    explicit ConfigureManager(cstring confPath, cstring suffix = ".cf")
         : m_Suffix(suffix) {
         GetAllFiles(confPath, suffix);
     }
     void Init();
 
 public:
-    void changeAccessPath(cstring confpath);
+    void changeAccessPath(cstring confPath);
 
-    std::string getString(cstring strdefault, cstring prefix) const;
-    bool        getBool(bool ndefault, cstring prefix) const;
-    int         getInt(int ndefault, cstring prefix) const;
-    float       getFloat(float fdefault, cstring prefix) const;
-    double      getDouble(double ddefault, cstring prefix) const;
-    long        getLong(long ldefault, cstring prefix) const;
-    Section     getSection(cstring prefix) const;
+    [[nodiscard]] std::string getString(cstring strDefault, cstring prefix) const;
+    [[nodiscard]] bool        getBool(bool nDefault, cstring prefix) const;
+    [[nodiscard]] int         getInt(int nDefault, cstring prefix) const;
+    [[nodiscard]] float       getFloat(float fDefault, cstring prefix) const;
+    [[nodiscard]] double      getDouble(double dDefault, cstring prefix) const;
+    [[nodiscard]] long        getLong(long lDefault, cstring prefix) const;
+    [[nodiscard]] Section     getSection(cstring prefix) const;
 
 protected:
     void GetAllFiles(cstring path, cstring suffix);
@@ -129,5 +128,5 @@ protected:
     std::string                        m_Suffix;
 };
 
-} // namespace base
-} // namespace muduo
+} // namespace muduo::base
+#pragma clang diagnostic pop

@@ -1,11 +1,10 @@
 #pragma once
-
+#include <dlfcn.h>
 namespace muduo {
 namespace base {
-
 class DllHelper {
 public:
-    enum LOAD_TYPE { LOAD_LAZY };
+    enum LOAD_TYPE { LOAD_LAZY = RTLD_LAZY, LOAD_NOW = RTLD_NOW, LOAD_NO_LOAD = RTLD_NOLOAD };
 
 public:
     DllHelper() = default;

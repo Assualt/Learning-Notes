@@ -21,7 +21,7 @@
 namespace muduo {
 namespace base {
 
-DECLARE_EXCEPTION(LogException, Exception);
+DECLARE_EXCEPTION(LogException, Exception)
 
 enum LogLevel { Debug, Info, Except, Warn, Error, Fatal, Alert, Emergency };
 class Logger final {
@@ -32,9 +32,9 @@ public:
 
 public:
     struct FileAttribute {
-        int         lineno;
-        std::string funcname;
-        std::string filename;
+        int         lineNo;
+        std::string funcName;
+        std::string fileName;
     };
 
     void SetAppendLF(bool val) {
@@ -43,44 +43,44 @@ public:
 
     Logger &BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix, const char *fileFormat, const char *fileMode = "a+");
 
-    template <class... Args> void debug(const char *messagefmt, Args &&...arg) {
-        this->LogMessage(Debug, messagefmt, arg...);
+    template <class... Args> void debug(const char *messageFmt, Args &&...arg) {
+        this->LogMessage(Debug, messageFmt, arg...);
     }
 
-    template <class... Args> void info(const char *messagefmt, Args &&...arg) {
-        this->LogMessage(Info, messagefmt, arg...);
+    template <class... Args> void info(const char *messageFmt, Args &&...arg) {
+        this->LogMessage(Info, messageFmt, arg...);
     }
 
-    template <class... Args> void warning(const char *messagefmt, Args &&...arg) {
-        this->LogMessage(Warn, messagefmt, arg...);
+    template <class... Args> void warning(const char *messageFmt, Args &&...arg) {
+        this->LogMessage(Warn, messageFmt, arg...);
     }
 
-    template <class... Args> void error(const char *messagefmt, Args &&...arg) {
-        this->LogMessage(Error, messagefmt, arg...);
+    template <class... Args> void error(const char *messageFmt, Args &&...arg) {
+        this->LogMessage(Error, messageFmt, arg...);
     }
 
-    template <class... Args> void fatal(const char *messagefmt, Args &&...arg) {
-        this->LogMessage(Fatal, messagefmt, arg...);
+    template <class... Args> void fatal(const char *messageFmt, Args &&...arg) {
+        this->LogMessage(Fatal, messageFmt, arg...);
     }
 
-    template <class... Args> void alert(const char *messagefmt, Args &&...arg) {
-        this->LogMessage(Alert, messagefmt, arg...);
+    template <class... Args> void alert(const char *messageFmt, Args &&...arg) {
+        this->LogMessage(Alert, messageFmt, arg...);
     }
 
-    template <class... Args> void emergency(const char *messagefmt, Args &&...arg) {
-        this->LogMessage(LogLevel::Emergency, messagefmt, arg...);
+    template <class... Args> void emergency(const char *messageFmt, Args &&...arg) {
+        this->LogMessage(LogLevel::Emergency, messageFmt, arg...);
     }
 
-    template <class... Args> void exception(const char *messagefmt, Args &&...arg) {
-        this->LogMessage(Except, messagefmt, arg...);
+    template <class... Args> void exception(const char *messageFmt, Args &&...arg) {
+        this->LogMessage(Except, messageFmt, arg...);
         auto callstack = GetBackCallStack();
         this->LogMessage(Except, callstack.c_str());
     }
 
     std::string getLevelName(LogLevel nLevel);
 
-    Logger &setFileAttr(const std::string &filename, const std::string &funcname, int lineno);
-    Logger &setAppName(const std::string &appname);
+    Logger &setFileAttr(const std::string &filename, const std::string &funcName, int lineno);
+    Logger &setAppName(const std::string &appName);
 
     void addLogHandle(LogHandle *au) {
         m_mutexLock.Lock();
@@ -95,12 +95,12 @@ public:
 protected:
     std::string getCurrentHourTime(bool showMicroSeconds);
     void        getKeyString(const std::string &key, std::stringstream &ss, const std::string &message, LogLevel nLevel);
-    std::string MessageFormat(const std::string &FormattedLogmessage, LogLevel nLevel);
+    std::string MessageFormat(const std::string &FormattedLogMessage, LogLevel nLevel);
 
-    template <class... Args> void LogMessage(LogLevel nLevel, const char *messagefmt, Args &&...arg) {
+    template <class... Args> void LogMessage(LogLevel nLevel, const char *messageFmt, Args &&...arg) {
         if (nLevel < m_nLevel)
             return;
-        std::string LogMessage = messagefmt;
+        std::string LogMessage = messageFmt;
         formatString(LogMessage, arg...);
         std::string message = MessageFormat(LogMessage, nLevel);
         if (m_MessageAppendCRLF) {
@@ -117,10 +117,10 @@ protected:
         size_t      index    = 0;
         bool        finished = false;
         std::string keyPrefix;
-        int         FilledInterger = 0;
-        int         FilledPointer  = 0;
-        int         nBeginIndex    = -1;
-        char        FilledChar     = ' ';
+        int         filledInteger = 0;
+        int         filledPointer  = 0;
+        int         nBeginIndex;
+        char        filledChar = ' ';
         while (!finished) {
             index       = result.find("%", index);
             nBeginIndex = index;
@@ -140,17 +140,17 @@ protected:
                         if (result[ i ] == '.')
                             bFindPointer = true;
                         else if (!bFindPointer)
-                            FilledInterger = FilledInterger * 10 + result[ i ] - '0';
-                        else if (bFindPointer)
-                            FilledPointer = FilledPointer * 10 + result[ i ] - '0';
+                            filledInteger = filledInteger * 10 + result[ i ] - '0';
+                        else
+                            filledPointer = filledPointer * 10 + result[ i ] - '0';
                         if (!FirstInteger && result[ i ] == '0') {
-                            FilledChar   = '0';
+                            filledChar   = '0';
                             FirstInteger = true;
                         }
 
                         keyPrefix.push_back(result[ i ]);
                     } else if (!FirstInteger) {
-                        FilledChar = result[ i ];
+                        filledChar = result[ i ];
                     }
                     index++;
                     if (finished)
@@ -161,10 +161,10 @@ protected:
         if (nBeginIndex != -1) {
             std::stringstream ss;
             ss << result.substr(0, nBeginIndex);
-            if (FilledChar != ' ')
-                ss << std::setfill(FilledChar);
-            if (FilledInterger != 0 && keyPrefix.back() != 'f')
-                ss << std::setw(FilledInterger);
+            if (filledChar != ' ')
+                ss << std::setfill(filledChar);
+            if (filledInteger != 0 && keyPrefix.back() != 'f')
+                ss << std::setw(filledInteger);
             if (keyPrefix.back() == 'x')
                 ss << std::hex;
             if (keyPrefix.back() == 'o')
@@ -207,7 +207,7 @@ protected:
 } // namespace base
 } // namespace muduo
 
-#define LOG(appname) muduo::base::Logger::getLogger(appname).setFileAttr(__FILE__, __func__, __LINE__)
+#define LOG(appName) muduo::base::Logger::getLogger(appName).setFileAttr(__FILE__, __func__, __LINE__)
 
 #define logger LOG(APP)
 #define LOG_SYSTEM LOG(APP).setAppName("system")

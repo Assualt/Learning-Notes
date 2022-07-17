@@ -2,10 +2,6 @@
 #include "Format.h"
 #include "Logging.h"
 #include "System.h"
-#include <assert.h>
-#include <sys/prctl.h>
-#include <sys/syscall.h>
-#include <unistd.h>
 
 using namespace muduo;
 using namespace muduo::base;
@@ -19,7 +15,7 @@ ThreadContext::ThreadContext(ThreadFunc func, const std::string &name, pid_t *pi
 
 void ThreadContext::Run() {
     System::SetThreadName(m_strThreadName);
-    m_func();    
+    m_func();
 }
 
 void *Thread::StartThread(void *arg) {
@@ -69,9 +65,9 @@ void Thread::Start() {
     if (m_isStarted) {
         throw Exception("thread is started! Run Failed");
     }
-    m_isStarted  = true;
+    m_isStarted            = true;
     ThreadContext *context = new ThreadContext(m_threadFunc, m_strFunName, &m_nTid);
-    auto ret     = pthread_create(&m_nThreadId, nullptr, &Thread::StartThread, context);
+    auto           ret     = pthread_create(&m_nThreadId, nullptr, &Thread::StartThread, context);
     if (ret != 0) {
         logger.alert("pthread_create error ret:%d", ret);
         throw ThreadException("pthread create error");
@@ -87,4 +83,20 @@ int Thread::Join() {
     }
     m_isJoined = true;
     return pthread_join(m_nThreadId, nullptr);
+}
+
+bool Thread::IsStarted() {
+    return m_isStarted;
+}
+
+pid_t Thread::Tid() const {
+    return System::Tid();
+}
+
+std::string Thread::Name() {
+    return System::GetCurrentThreadName();
+}
+
+int Thread::NumCreated() {
+    return 0;
 }

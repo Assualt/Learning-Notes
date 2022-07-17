@@ -12,13 +12,13 @@ namespace muduo {
 namespace base {
 using ThreadFunc = std::function<void()>;
 namespace detail {
-DECLARE_EXCEPTION(ThreadException, Exception);
+DECLARE_EXCEPTION(ThreadException, Exception)
 
 struct ThreadContext {
 public:
     ThreadFunc  m_func{nullptr};
     std::string m_strThreadName;
-    pid_t *     m_nPid{nullptr};
+    pid_t      *m_nPid{nullptr};
 
 public:
     ThreadContext(ThreadFunc func, const std::string &name, pid_t *pid);
@@ -32,12 +32,12 @@ public:
     ~Thread();
 
 public:
-    void               Start();
-    int                Join();
-    void               Detached();
-    bool               IsStarted();
-    pid_t              Tid() const;
-    const std::string &Name() const;
+    void        Start();
+    int         Join();
+    void        Detached();
+    bool        IsStarted();
+    pid_t       Tid() const;
+    std::string Name();
 
 public:
     static int   NumCreated();

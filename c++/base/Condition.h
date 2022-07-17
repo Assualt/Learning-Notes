@@ -13,14 +13,14 @@ public:
 
     void Wait();
 
-    bool WaitForTimeOut(double seconds);
+    [[maybe_unused]] bool WaitForTimeOut(double seconds);
 
     void Notify();
 
     void NotifyAll();
 
 private:
-    pthread_cond_t m_cond;
+    pthread_cond_t m_cond{};
     MutexLock &    m_lock;
 };
 } // namespace base

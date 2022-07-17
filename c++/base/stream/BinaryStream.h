@@ -1,6 +1,5 @@
 #pragma once
 #include "StreamBase.h"
-
 #include <stdio.h>
 
 namespace muduo {
@@ -8,7 +7,7 @@ namespace base {
 
 enum TAutoDeleteFlag { ADF_NOT_AUTO_DELETE = 0x00, ADF_AUTO_DELETE = 0x01 };
 
-class CMX_EXPORT BinaryStream;
+class BinaryStream;
 
 //! Binary Stream, a class in order to store the binary data,
 //! and provide a stream interface for access

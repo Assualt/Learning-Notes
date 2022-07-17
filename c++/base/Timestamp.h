@@ -37,11 +37,11 @@ private:
     int64_t microSecondsPerSeconds_;
 };
 
-INLINE_OPERATOR(==, Timestamp, microSeconds());
-INLINE_OPERATOR(<, Timestamp, microSeconds());
-INLINE_OPERATOR(<=, Timestamp, microSeconds());
-INLINE_OPERATOR(>, Timestamp, microSeconds());
-INLINE_OPERATOR(>=, Timestamp, microSeconds());
+INLINE_OPERATOR(==, Timestamp, microSeconds())
+INLINE_OPERATOR(<, Timestamp, microSeconds())
+INLINE_OPERATOR(<=, Timestamp, microSeconds())
+INLINE_OPERATOR(>, Timestamp, microSeconds())
+INLINE_OPERATOR(>=, Timestamp, microSeconds())
 
 } // namespace base
 } // namespace muduo

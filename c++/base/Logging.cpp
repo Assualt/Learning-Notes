@@ -7,17 +7,17 @@
 using namespace muduo;
 using namespace muduo::base;
 
-static std::string            g_detaultAppName = "main";
+static std::string            g_defaultAppName = "main";
 std::map<std::string, Logger> Logger::_MapLogger;
 
-string strip_filename(const std::string &filename) {
+std::string stripFileName(const std::string &filename) {
     if (filename.rfind("/") == std::string::npos) {
         return filename;
     }
     return filename.substr(filename.rfind("/") + 1);
 }
 
-Logger &Logger::BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix, const char *fileFormat, const char *fileMode) {
+Logger &Logger::BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix, const char *fileFormat, const char *) {
     if (messageFormat == nullptr) {
         throw LogException("invalid message format");
     }
@@ -43,7 +43,7 @@ std::string Logger::MessageFormat(const std::string &FormattedLogmessage, LogLev
                 getKeyString(strKey, ss, FormattedLogmessage, nLevel);
                 strKey.clear();
             }
-        } else if (!bFindKey && m_strMessageFormat[ i ] == '%' && i + 1 < m_strMessageFormat.size() && m_strMessageFormat[ i + 1 ] == '(') {
+        } else if (m_strMessageFormat[ i ] == '%' && i + 1 < m_strMessageFormat.size() && m_strMessageFormat[ i + 1 ] == '(') {
             strKey.push_back('(');
             bFindKey = true;
             i++;
@@ -90,25 +90,25 @@ void Logger::getKeyString(const std::string &key, std::stringstream &ss, const s
         {"(levelname)", [ this ](std::stringstream &ss, const std::string &, LogLevel level) { ss << getLevelName(level); }},
         {"(asctime)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << getCurrentHourTime(true); }},
         {"(ctime)",
-         [ this ](std::stringstream &ss, const std::string &msg, LogLevel) {
+         [](std::stringstream &ss, const std::string &msg, LogLevel) {
              Timestamp t = Timestamp::now();
              ss << t.toFormattedString();
          }},
-        {"(lineno)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << std::dec << m_FileAttribute.lineno; }},
-        {"(filename)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << strip_filename(m_FileAttribute.filename); }},
-        {"(funcname)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << m_FileAttribute.funcname; }},
-        {"(threadName)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << System::GetCurrentThreadName(); }},
+        {"(lineno)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << std::dec << m_FileAttribute.lineNo; }},
+        {"(filename)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << stripFileName(m_FileAttribute.fileName); }},
+        {"(funcname)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << m_FileAttribute.funcName; }},
+        {"(threadName)", [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << System::GetCurrentThreadName(); }},
         {"(appname)",
          [ this ](std::stringstream &ss, const std::string &msg, LogLevel) {
              if (!m_strAppName.empty()) {
                  ss << m_strAppName;
                  m_strAppName.clear();
              } else {
-                 ss << g_detaultAppName;
+                 ss << g_defaultAppName;
              }
          }},
         {"(threadName)",
-         [ this ](std::stringstream &ss, const std::string &msg, LogLevel) {
+         [](std::stringstream &ss, const std::string &msg, LogLevel) {
              uid_t          current_uid = getuid();
              struct passwd *pwd         = getpwuid(current_uid);
              ss << pwd->pw_name;
@@ -121,14 +121,14 @@ void Logger::getKeyString(const std::string &key, std::stringstream &ss, const s
     }
 }
 
-Logger &Logger::setFileAttr(const std::string &filename, const std::string &funcname, int lineno) {
-    m_FileAttribute.filename = filename;
-    m_FileAttribute.funcname = funcname;
-    m_FileAttribute.lineno   = lineno;
+Logger &Logger::setFileAttr(const std::string &fileName, const std::string &funcName, int lineNo) {
+    m_FileAttribute.fileName = fileName;
+    m_FileAttribute.funcName = funcName;
+    m_FileAttribute.lineNo   = lineNo;
     return *this;
 }
 
-Logger &Logger::setAppName(const std::string &appname) {
-    m_strAppName = appname;
+Logger &Logger::setAppName(const std::string &appName) {
+    m_strAppName = appName;
     return *this;
 }

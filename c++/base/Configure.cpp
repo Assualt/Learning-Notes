@@ -87,7 +87,7 @@ bool ConfigureManager::getBool(bool bdefault, cstring prefix) const {
     return detail::lexical_cast<bool, std::string>(m_mConfigKeyValMapper.at(strPrefix));
 }
 
-std::string ConfigureManager::getString(cstring strdefault, cstring prefix) const {
+[[maybe_unused]] std::string ConfigureManager::getString(cstring strdefault, cstring prefix) const {
     std::string strPrefix = m_strPrefix + prefix;
     if (m_mConfigKeyValMapper.find(strPrefix) == m_mConfigKeyValMapper.end())
         return strdefault;
@@ -133,6 +133,6 @@ Section ConfigureManager::getSection(cstring prefix) const {
     return s;
 }
 
-void ConfigureManager::changeAccessPath(cstring confpath) {
+[[maybe_unused]] void ConfigureManager::changeAccessPath(cstring confpath) {
     m_strPrefix = confpath;
 }

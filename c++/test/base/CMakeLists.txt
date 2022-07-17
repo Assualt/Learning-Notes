@@ -22,7 +22,11 @@ add_executable(test_file test_file.cpp)
 target_link_libraries(test_file gtest muduo_base)
 add_test(NAME test_file COMMAND test_file)
 
-install(TARGETS test_logging DESTINATION b/in)
+add_executable(test_checksum test_checksum.cpp)
+target_link_libraries(test_checksum gtest muduo_base)
+add_test(NAME test_checksum COMMAND test_checksum)
+
+install(TARGETS test_logging DESTINATION bin)
 install(TARGETS test_range DESTINATION bin)
 install(TARGETS test_thread DESTINATION bin)
 install(TARGETS test_timestamp DESTINATION bin)

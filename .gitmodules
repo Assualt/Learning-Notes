@@ -4,3 +4,6 @@
 [submodule "c++/third_party/googletest"]
 	path = c++/third_party/googletest
 	url = https://github.com/google/googletest.git
+[submodule "c++/httpclient/liburlparse"]
+	path = c++/httpclient/liburlparse
+	url = https://github.com/Assualt/liburlparse.git

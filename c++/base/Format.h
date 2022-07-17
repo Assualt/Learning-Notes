@@ -74,5 +74,5 @@ public:
     }
 };
 
-}; // namespace base
+} // namespace base
 } // namespace muduo

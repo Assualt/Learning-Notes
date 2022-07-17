@@ -1,17 +1,16 @@
 #include "Timestamp.h"
 #include "nonecopyable.h"
 #include <dirent.h>
-#include <stdio.h>
+#include <cstdio>
 #include <sys/stat.h>
-namespace muduo {
-namespace base {
+namespace muduo::base {
 
 class FileAttr {
     //!	The attribute flags
     enum TFileFlags { type_None = 0x00, type_FILE = 0x01, type_DIR = 0x02, type_Link = 0x03 };
 
 public:
-    FileAttr(const std::string &strName = "", const std::string &strParent = "", TFileFlags attr = type_None)
+    explicit FileAttr(const std::string &strName = "", const std::string &strParent = "", TFileFlags attr = type_None)
         : m_strParent(strParent)
         , m_strName(strName)
         , m_nFlags(attr)
@@ -33,7 +32,7 @@ public:
     }
 
     //! destrcutor
-    ~FileAttr(void) = default;
+    ~FileAttr() = default;
 
     //! copy assert operator
     FileAttr &operator=(const FileAttr &rt) {
@@ -70,62 +69,62 @@ public:
 
 public:
     //! return the file/directory name
-    const std::string &GetName(void) const {
+    const std::string &GetName() const {
         return m_strName;
     }
 
     //! return the parent directory name
-    const std::string &SetPath(void) const {
+    const std::string &SetPath() const {
         return m_strParent;
     }
 
     //! return the file/directory full name
-    std::string GetFullName(void) const {
+    std::string GetFullName() const {
         return std::string(m_strParent) += m_strName;
     }
 
-    std::string BriefName(void) const {
+    std::string BriefName() const {
         std::string name = m_strName;
         return (name.find(".") != std::string::npos ? name.substr(0, name.find(".")) : name);
     }
 
     //! return the file/directory type.
-    TFileFlags GetType(void) const {
+    TFileFlags GetType() const {
         return m_nFlags;
     }
 
     //! return true when this is a file.
-    bool IsFile(void) const {
+    bool IsFile() const {
         return (m_nFlags & type_FILE) != 0;
     }
 
     //! return true when this is a link.
-    bool IsLink(void) const {
+    bool IsLink() const {
         return (m_nFlags & type_Link) != 0;
     }
 
     //! return true when this is a directory.
-    bool IsDir(void) const {
+    bool IsDir() const {
         return (m_nFlags & type_DIR) != 0;
     }
 
     //! return the create time.
-    Timestamp GetCreateTime(void) const {
+    Timestamp GetCreateTime() const {
         return m_tCreate;
     }
 
     //! return the last modify time.
-    Timestamp GetModifyTime(void) const {
+    Timestamp GetModifyTime() const {
         return m_tModify;
     }
 
     //! return the last access time.
-    Timestamp GetReadTime(void) const {
+    Timestamp GetReadTime() const {
         return m_tRead;
     }
 
     //! return the file size.
-    size_t GetSize(void) const {
+    size_t GetSize() const {
         return m_nSize;
     }
 
@@ -156,7 +155,7 @@ public:
     ~DirScanner();
 
 public:
-    void CloseHandle(void);
+    void CloseHandle();
     bool Fetch(FileAttr &attr);
     void StartSearch(const std::string &strPath);
 
@@ -164,5 +163,4 @@ protected:
     DIR *m_nHandle;
 };
 
-} // namespace base
 } // namespace muduo

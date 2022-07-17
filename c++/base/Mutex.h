@@ -4,7 +4,7 @@
 namespace muduo {
 namespace base {
 
-DECLARE_EXCEPTION(MutexLockException, Exception);
+DECLARE_EXCEPTION(MutexLockException, Exception)
 class MutexLock final {
 public:
     MutexLock(const pthread_mutexattr_t *attr = nullptr);

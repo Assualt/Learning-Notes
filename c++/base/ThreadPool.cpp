@@ -81,7 +81,7 @@ void ThreadPool::Run(Task func) {
 
 ThreadPool::Task ThreadPool::Take() {
     AutoLock myLock(m_mutex);
-    while (m_dQueue.empty() && m_bIsRunning) {
+    while (m_dQueue.empty()) {
         m_notEmptyCond->Wait();
     }
     Task t;

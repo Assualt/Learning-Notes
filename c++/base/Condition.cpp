@@ -24,13 +24,13 @@ void Condition::NotifyAll() {
     (void)pthread_cond_broadcast(&m_cond);
 }
 
-bool Condition::WaitForTimeOut(double seconds) {
-    struct timespec abstime;
+[[maybe_unused]] bool Condition::WaitForTimeOut(double seconds) {
+    struct timespec abstime {};
     // FIXME: use CLOCK_MONOTONIC or CLOCK_MONOTONIC_RAW to prevent time rewind.
     clock_gettime(CLOCK_REALTIME, &abstime);
 
     const int64_t kNanoSecondsPerSecond = 1000000000;
-    int64_t       nanoseconds           = static_cast<int64_t>(seconds * kNanoSecondsPerSecond);
+    auto          nanoseconds           = static_cast<int64_t>(seconds * kNanoSecondsPerSecond);
 
     abstime.tv_sec += static_cast<time_t>((abstime.tv_nsec + nanoseconds) / kNanoSecondsPerSecond);
     abstime.tv_nsec = static_cast<long>((abstime.tv_nsec + nanoseconds) % kNanoSecondsPerSecond);

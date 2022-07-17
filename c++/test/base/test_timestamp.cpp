@@ -1,7 +1,7 @@
 #include "base/Timestamp.h"
 #include <iostream>
 using namespace muduo::base;
-int main(int agrc, char **argv) {
+int main(int, char **) {
 
     Timestamp t = Timestamp::now();
 

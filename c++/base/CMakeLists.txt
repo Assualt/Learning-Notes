@@ -12,9 +12,14 @@ set(base_SRCS
     Thread.cpp
     ThreadPool.cpp
     Timestamp.cpp
+    checksum/checksum.cpp
+    crypto/base64.cpp
     json/json.cpp
     stream/StreamBase.cpp
+    stream/BinaryStream.cpp
 )
+
+add_subdirectory(fsm)
 
 add_library(muduo_base ${base_SRCS})
 target_link_libraries(muduo_base pthread rt)
