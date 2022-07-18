@@ -7,12 +7,58 @@
 
 using namespace muduo::base;
 using namespace muduo::net;
+
 void HttpConnection::setTimeOut(int seconds) {
     timedOut_ = seconds;
 }
+
 bool HttpConnection::connect(const std::string &url) {
-    return connect(HttpUrl(url));
+    HttpUrl u(url);
+    bool    ret = connect(u);
+    if (!ret) {
+        logger.error("can't connect to url:%s", url);
+        return ret;
+    }
+
+    if (!useSsl_) {
+        return ret;
+    }
+
+    return connectWithSSL();
 }
+
+int32_t HttpConnection::send(const Buffer &reqBuf) {
+    if (socket_ == nullptr) {
+        logger.info("socket is null, send error ");
+        return -1;
+    }
+
+    return socket_->write((void *)reqBuf.peek(), reqBuf.readableBytes());
+}
+
+int32_t HttpConnection::recv(muduo::net::Buffer &respBuf) {
+    if (socket_ == nullptr) {
+        logger.info("socket is null, send error ");
+        return -1;
+    }
+
+    return socket_->read(respBuf);
+}
+
+bool HttpConnection::connectWithSSL() {
+    if (socket_ == nullptr) {
+        logger.info("socket is nullptr. skip to connect.");
+        return true;
+    }
+
+    if (!socket_->initSSL()) {
+        logger.info("init ssl context failed.");
+        return false;
+    }
+
+    return socket_->switchToSSL();
+}
+
 bool HttpConnection::connect(const HttpUrl &url) {
     connectUrl_ = url.fullUrl;
     auto netloc = url.host;
@@ -38,7 +84,7 @@ bool HttpConnection::connect(const HttpUrl &url) {
             continue;
         }
 
-        auto socket = std::make_shared<Socket>(tmpFd);
+        auto socket = std::make_unique<Socket>(tmpFd);
         if (socket == nullptr) {
             logger.info("create socket fd error errmsg:%s", System::GetErrMsg(errno));
             continue;
@@ -47,15 +93,15 @@ bool HttpConnection::connect(const HttpUrl &url) {
         sockaddr_in sock = {.sin_family = static_cast<sa_family_t>(host->h_addrtype), .sin_port = htons(port), .sin_addr = *(struct in_addr *)host->h_addr_list[ idx ]};
 
         muduo::net::InetAddress addr(sock);
-        bool result = socket->connect(addr, 10);
+        bool                    result = socket->connect(addr, 10);
         if (!result) {
             socket->close();
-            continue ;
+            continue;
         }
 
+        socket_ = std::move(socket);
         return true;
     }
-
 
     logger.info("can't connect the server. %s ", url.netloc);
     return false;

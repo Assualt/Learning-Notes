@@ -19,7 +19,7 @@ set(net_SRCS
 
 
 add_library(muduo_net ${net_SRCS})
-target_link_libraries(muduo_net muduo_base pthread rt)
+target_link_libraries(muduo_net muduo_base pthread rt ssl crypto)
 install(TARGETS muduo_net DESTINATION lib)
 
 file(GLOB HEADERS_net

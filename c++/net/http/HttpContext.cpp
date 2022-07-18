@@ -32,7 +32,20 @@ bool HttpContext::processRequestLine(const char *begin, const char *end) {
                 }
             }
         }
+    } else if (start != space) {
+        start = space + 1;
+        space = std::find(start, end, ' ');
+        try {
+            int status_code = std::stoi(std::string(start, space));
+            start           = space + 1;
+            m_request.setStatusMessage(std::string(start, end));
+            m_request.setStatusCode(status_code);
+            return true;
+        } catch (...) {
+            return succeed;
+        }
     }
+
     return succeed;
 }
 

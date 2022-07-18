@@ -42,6 +42,14 @@ public:
         statusMessage_ = message;
     }
 
+    std::string getStatusMessage() const {
+        return statusMessage_;
+    }
+
+    std::string getBody() const {
+        return body_;
+    }
+
     void setCloseConnection(bool on) {
         closeConnection_ = on;
     }

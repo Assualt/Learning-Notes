@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     auto &log = muduo::base::Logger::getLogger();
     log.BasicConfig(static_cast<LogLevel>(Debug), "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
     log.setAppName("app");
-    auto stdHandle  = std::make_shared<StdOutLogHandle>();
+    auto stdHandle = std::make_shared<StdOutLogHandle>();
     log.addLogHandle(stdHandle.get());
 
     auto       urlString = parser.get<std::string>("url");
@@ -56,6 +56,26 @@ int main(int argc, char *argv[]) {
     auto       redirect  = parser.get<bool>("enable_redirect");
     auto       verbose   = parser.get<bool>("verbose");
     HttpClient client;
+
+    client.setAccept(parser.get<string>("accept"));
+    client.setConnectTimeout(parser.get<int>("timeout"));
+    client.setUserAgent(parser.get<string>("userAgent"));
+    client.setAcceptEncoding(parser.get<string>("acceptEncoding"));
+    client.setAcceptLanguage(parser.get<string>("acceptLanguage"));
+    client.setHeader("Connection", "keep-alive");
+    int httpVersion = parser.get<int>("http_version");
+    client.setHttpVersion("HTTP/1.1");
+
+    std::string strCookie = parser.get<string>("cookie");
+    if (!strCookie.empty())
+        client.setCookie(strCookie);
+
+    std::string strAuthBasic = parser.get<string>("auth-basic");
+    if (!strAuthBasic.empty() && strAuthBasic.find(":") != std::string::npos) {
+        std::string strUser = strAuthBasic.substr(0, strAuthBasic.find(":"));
+        std::string strPass = strAuthBasic.substr(strAuthBasic.find(":") + 1);
+        client.setBasicAuthUserPass(strUser, strPass);
+    }
 
     HttpResponse resp(false);
     if (reqType == "GET") {
@@ -66,6 +86,11 @@ int main(int argc, char *argv[]) {
         bodyBuf.append(reqBody);
         resp = client.Post(urlString, bodyBuf, redirect, verbose);
     }
+
+    std::cout << "================================\n"
+              << "status_code:" << resp.getStatusCode() << " \n"
+              << "status_message:" << resp.getStatusMessage() << " \n"
+              << "reply message:" << resp.getBody() << "\n";
 
     return 0;
 }

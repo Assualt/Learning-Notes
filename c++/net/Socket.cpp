@@ -1,6 +1,7 @@
 #include "Socket.h"
 #include "SocketsOp.h"
 #include "base/Logging.h"
+#include "net/Buffer.h"
 #include "net/InetAddress.h"
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -150,6 +151,125 @@ bool Socket::connect(const InetAddress &addr, int timeout) {
     logger.info("connection ready after select with the socket:%d", sockFd_);
     fcntl(sockFd_, F_SETFL, oldFlag);
     return true;
+}
+
+uint32_t Socket::write(void *buf, size_t size) {
+    if (sockFd_ == -1) {
+        return -1;
+    }
+
+    if (sslConn_ == nullptr) {
+        return sockets::write(sockFd_, buf, size);
+    }
+
+#ifdef USE_SSL
+    return SSL_write(sslConn_->m_ptrHandle, buf, size);
+#else
+    return sockets::write(sockFd_, buf, size);
+#endif
+}
+
+uint32_t Socket::read(Buffer &buf) {
+    if (sockFd_ == -1) {
+        return -1;
+    }
+
+    char   buffer[ 8192 ] = {0};
+    size_t nRead          = 0;
+    size_t nTotal         = 0;
+    while (true) {
+        memset(buffer, 0, sizeof(buffer));
+        if (sslConn_ == nullptr) {
+            nRead = sockets::read(sockFd_, buffer, sizeof(buffer));
+        } else {
+#ifdef USE_SSL
+            nRead = SSL_read(sslConn_->m_ptrHandle, buffer, sizeof(buffer));
+#else
+            nRead = sockets::read(sockFd_, buffer, sizeof(buffer));
+#endif
+        }
+        if (nRead <= 0) {
+            break;
+        }
+
+        buf.append(buffer, nRead);
+        nTotal += nRead;
+
+        if (nRead < sizeof(buffer)) {
+//            break;
+        }
+    }
+
+    return nTotal;
+}
+
+bool Socket::initSSL() {
+#ifdef USE_SSL
+#if OPENSSL_VERSION_NUMBER < 0x10100003L
+    OPENSSL_config(nullptr);
+    // Register the error strings for libcrypto & libssl
+    SSL_load_error_strings();
+
+    // Register the available ciphers and digests
+    SSL_library_init();
+
+    OpenSSL_add_all_algorithms();
+#else
+    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, nullptr);
+    ERR_clear_error();
+#endif
+    return true;
+#endif
+    return false;
+}
+
+void Socket::sslDisConnect() {
+#ifdef USE_SSL
+    if (sslConn_ == nullptr) {
+        return;
+    }
+    if (sslConn_->m_ptrHandle) {
+        SSL_shutdown(sslConn_->m_ptrHandle);
+        SSL_free(sslConn_->m_ptrHandle);
+    }
+    if (sslConn_->m_ptrContext)
+        SSL_CTX_free(sslConn_->m_ptrContext);
+#endif
+}
+
+bool Socket::switchToSSL() {
+#ifdef USE_SSL
+    sslConn_               = std::make_unique<SSL_Connection>();
+    sslConn_->m_ptrContext = SSL_CTX_new(TLS_client_method());
+    if (sslConn_->m_ptrContext == nullptr) {
+        sslDisConnect();
+        ERR_print_errors_fp(stderr);
+        return false;
+    }
+    // Create an SSL struct for the connection
+    sslConn_->m_ptrHandle = SSL_new(sslConn_->m_ptrContext);
+    if (sslConn_->m_ptrHandle == nullptr) {
+        sslDisConnect();
+        ERR_print_errors_fp(stderr);
+        return false;
+    }
+
+    // Connect the SSL struct to our connection
+    if (!SSL_set_fd(sslConn_->m_ptrHandle, sockFd_)) {
+        sslDisConnect();
+        ERR_print_errors_fp(stderr);
+        return false;
+    }
+    // Initiate SSL handshake
+    if (SSL_connect(sslConn_->m_ptrHandle) != 1) {
+        ERR_print_errors_fp(stderr);
+        sslDisConnect();
+        return false;
+    }
+    return true;
+#else
+    return false;
+#endif
 }
 
 void Socket::close() {

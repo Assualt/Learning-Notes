@@ -48,7 +48,7 @@ public:
     const char *findCRLF() const;
     const char *findCRLF(const char *start) const;
     const char *beginWrite() const;
-    char *      beginWrite();
+    char       *beginWrite();
 
     const char *findEOL() const;
     const char *findEOL(const char *start) const;
@@ -71,15 +71,15 @@ public:
     std::string       retrieveAsString(size_t len);
     base::StringPiece toStringPiece() const;
 
-    void append(const base::StringPiece &piece);
-    void append(const char *data, size_t len);
-    void append(const void * /*restrict*/ data, size_t len);
-    void append(const std::string &buffer);
-    void append(const char *data);
-    void appendInt64(int64_t x);
-    void appendInt32(int32_t x);
-    void appendInt16(int16_t x);
-    void appendInt8(int8_t x);
+    Buffer &append(const base::StringPiece &piece);
+    Buffer &append(const char *data, size_t len);
+    Buffer &append(const void * /*restrict*/ data, size_t len);
+    Buffer &append(const std::string &buffer);
+    Buffer &append(const char *data);
+    Buffer &appendInt64(int64_t x);
+    Buffer &appendInt32(int32_t x);
+    Buffer &appendInt16(int16_t x);
+    Buffer &appendInt8(int8_t x);
 
     void ensureWritableBytes(size_t len);
 
@@ -106,7 +106,7 @@ public:
 
 private:
     const char *begin() const;
-    char *      begin();
+    char       *begin();
     void        makeSpace(size_t len);
 };
 

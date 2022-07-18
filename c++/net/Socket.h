@@ -2,15 +2,23 @@
 #include "base/nonecopyable.h"
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <netinet/tcp.h>
 #include <sstream>
+
+#ifdef USE_SSL
+#include <openssl/err.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+#endif
 
 using muduo::base::nonecopyable;
 
 namespace muduo {
 namespace net {
 class InetAddress;
-
+class Buffer;
 class Socket : nonecopyable {
 public:
     explicit Socket(int sockFd);
@@ -32,6 +40,10 @@ public:
     int accept(InetAddress *remoteAddress);
 
     void close();
+
+    uint32_t write(void *buf, size_t size);
+
+    uint32_t read(Buffer &buf);
 
     ///
     /// Enable/disable TCP_NODELAY (disable/enable Nagle's algorithm).
@@ -55,8 +67,22 @@ public:
 
     void shutdownWrite();
 
+    bool switchToSSL();
+
+    bool initSSL();
+
+    void sslDisConnect();
+
 private:
-    int         sockFd_{-1};
+    int sockFd_{-1};
+
+#ifdef USE_SSL
+    typedef struct {
+        SSL     *m_ptrHandle;
+        SSL_CTX *m_ptrContext;
+    } SSL_Connection;
+    std::unique_ptr<SSL_Connection> sslConn_{nullptr};
+#endif
 };
 } // namespace net
 } // namespace muduo

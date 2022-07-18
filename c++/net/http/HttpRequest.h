@@ -23,7 +23,7 @@ public:
         else
             m_vReqestHeader.push_back(std::pair<std::string, std::string>(key, tmpVal));
     }
-    std::string       toStringHeader();
+    std::string       toStringHeader() const;
     const std::string get(const std::string &key) const;
     std::string       getRequestType() const;
     void              setRequestType(const std::string &strRequestType);
@@ -41,6 +41,10 @@ public:
     void              setQuery(const std::string &query);
     std::string       getPath() const;
     void              setPath(const std::string &path);
+    std::string       getStatusMessage() const;
+    void              setStatusMessage(const std::string &message);
+    int               getStatusCode() const;
+    void              setStatusCode(int statusCode);
     void              addHeader(const char *start, const char *colon, const char *end);
 
     std::map<std::string, std::string> &GetHeaderMap() {
@@ -80,4 +84,6 @@ private:
     Timestamp                          m_recvTime;
     std::string                        m_strPath;
     std::string                        m_strQuery;
+    int                                m_statusCode;
+    std::string                        m_strStatusMessage;
 };

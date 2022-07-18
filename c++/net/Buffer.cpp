@@ -105,37 +105,42 @@ std::string Buffer::retrieveAsString(size_t len) {
 base::StringPiece Buffer::toStringPiece() const {
     return base::StringPiece(peek(), peek() + readableBytes());
 }
-void Buffer::append(const char *data) {
+Buffer &Buffer::append(const char *data) {
     append(data, strlen(data));
+    return *this;
 }
-void Buffer::append(const std::string &buffer) {
+Buffer &Buffer::append(const std::string &buffer) {
     append(buffer.data(), buffer.size());
+    return *this;
 }
-void Buffer::append(const base::StringPiece &piece) {
+Buffer &Buffer::append(const base::StringPiece &piece) {
     append(piece.data(), piece.size());
+    return *this;
 }
-void Buffer::append(const char *data, size_t len) {
+Buffer &Buffer::append(const char *data, size_t len) {
     ensureWritableBytes(len);
     std::copy(data, data + len, beginWrite());
     hasWritten(len);
+    return *this;
 }
-void Buffer::append(const void * /*restrict*/ data, size_t len) {
+Buffer &Buffer::append(const void * /*restrict*/ data, size_t len) {
     append(static_cast<const char *>(data), len);
+    return *this;
 }
-void Buffer::appendInt64(int64_t x) {
+Buffer &Buffer::appendInt64(int64_t x) {
     int64_t be = sockets::hostToNetwork64(x);
-    append(&be, sizeof(be));
+    return append(&be, sizeof(be));
 }
-void Buffer::appendInt32(int32_t x) {
+Buffer &Buffer::appendInt32(int32_t x) {
     int8_t be = sockets::hostToNetwork32(x);
-    append(&be, sizeof(be));
+    return append(&be, sizeof(be));
 }
-void Buffer::appendInt16(int16_t x) {
+Buffer &Buffer::appendInt16(int16_t x) {
     int8_t be = sockets::hostToNetwork16(x);
-    append(&be, sizeof(be));
+    return append(&be, sizeof(be));
 }
-void Buffer::appendInt8(int8_t x) {
-    append(&x, sizeof(x));
+Buffer &Buffer::appendInt8(int8_t x) {
+    return append(&x, sizeof(x));
 }
 int64_t Buffer::peekInt64() const {
     assert(readableBytes() >= sizeof(int64_t));

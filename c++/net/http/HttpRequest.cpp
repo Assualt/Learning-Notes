@@ -1,6 +1,6 @@
 #include "HttpRequest.h"
 
-std::string HttpRequest::toStringHeader() {
+std::string HttpRequest::toStringHeader() const {
     std::stringstream ss;
     ss << m_strRequestType << " " << m_strRequestPath << " " << m_strHttpVersion << CTRL;
     for (auto &item : m_vReqestHeader)
@@ -100,6 +100,22 @@ std::string HttpRequest::getQuery() const {
 }
 void HttpRequest::setQuery(const std::string &query) {
     m_strQuery = query;
+}
+
+std::string HttpRequest::getStatusMessage() const {
+    return m_strStatusMessage;
+}
+
+void HttpRequest::setStatusMessage(const std::string &message) {
+    m_strStatusMessage = message;
+}
+
+int HttpRequest::getStatusCode() const {
+    return m_statusCode;
+}
+
+void HttpRequest::setStatusCode(int statusCode) {
+    m_statusCode = statusCode;
 }
 
 bool HttpRequest::setMethod(const char *start, const char *end) {

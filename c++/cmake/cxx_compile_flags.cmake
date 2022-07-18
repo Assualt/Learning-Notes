@@ -3,6 +3,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 add_definitions("-g")
 set(BUILD_ASAN OFF)
+set(CMAKE_CXX_FLAGS "-DUSE_SSL")
 if (BUILD_ASAN)
   add_definitions("-fsanitize=address -fno-omit-frame-pointer -lasan")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -lasan")

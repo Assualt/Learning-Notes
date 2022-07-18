@@ -32,7 +32,7 @@ public:
         return true;
     }
 
-    virtual uint32_t configure(FsmConfig &cfg) {};
+    virtual uint32_t configure(FsmConfig &cfg) {}
 
     void initRootState(StateEnum state) {
     }
