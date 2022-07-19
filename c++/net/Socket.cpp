@@ -175,7 +175,7 @@ uint32_t Socket::read(Buffer &buf) {
     }
 
     char   buffer[ 8192 ] = {0};
-    size_t nRead          = 0;
+    int    nRead          = 0;
     size_t nTotal         = 0;
     while (true) {
         memset(buffer, 0, sizeof(buffer));
@@ -194,9 +194,16 @@ uint32_t Socket::read(Buffer &buf) {
 
         buf.append(buffer, nRead);
         nTotal += nRead;
+//        printf("nread ======> %d\n", nRead);
+//        for (auto idx = 0; idx < nRead; idx++) {
+//            printf("%c", buffer[idx] & 0xFF);
+//            if (buffer[idx] == '\n' && idx > 1 && buffer[idx-1] == 0xd) {
+//                printf("\n");
+//            }
+//        }
 
         if (nRead < sizeof(buffer)) {
-//            break;
+            break;
         }
     }
 

@@ -3,7 +3,7 @@
 std::string HttpRequest::toStringHeader() const {
     std::stringstream ss;
     ss << m_strRequestType << " " << m_strRequestPath << " " << m_strHttpVersion << CTRL;
-    for (auto &item : m_vReqestHeader)
+    for (auto &item : m_vRequestHeader)
         ss << item.first << ": " << item.second << CTRL;
     if (!m_strRangeBytes.empty())
         ss << "Range: " << m_strRangeBytes << CTRL;
@@ -41,7 +41,7 @@ void HttpRequest::setParams(const std::map<std::string, std::string> &headerMap)
 }
 
 const std::string HttpRequest::get(const std::string &key) const {
-    for (auto item : m_vReqestHeader) {
+    for (auto item : m_vRequestHeader) {
         if (strcasecmp(item.first.c_str(), key.c_str()) == 0)
             return item.second;
     }
@@ -156,4 +156,12 @@ void HttpRequest::addHeader(const char *start, const char *colon, const char *en
         value.resize(value.size() - 1);
     }
     setHeader(field, value);
+}
+
+void HttpRequest::appendBodyBuffer(const void *buf, size_t size) {
+    m_bodyBuffer.append(buf, size);
+}
+
+const muduo::net::Buffer &HttpRequest::getBodyBuffer() const {
+    return m_bodyBuffer;
 }

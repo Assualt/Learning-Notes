@@ -27,5 +27,5 @@ add_test(
     NAME
         test_client_baidu.com
     COMMAND
-        httpclient --url https://www.baidu.com --verbose 1
+        httpclient --url https://www.jianshu.com/p/7ce037a2eafb --verbose 1
 )

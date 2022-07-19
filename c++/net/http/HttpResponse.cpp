@@ -40,28 +40,29 @@ void HttpResponse::appendToBuffer(Buffer &output) const {
     }
 }
 
-void HttpResponse::setStatusMessage(int statusCode, const std::string &HttpVersion, const std::string &message, const std::string &strAcceptEncoding) {
+void HttpResponse::setStatusMessage(int statusCode, const std::string &httpVersion, const std::string &message, const std::string &strAcceptEncoding) {
     setStatusCode(static_cast<HttpStatusCode>(statusCode));
     setStatusMessage(message);
+    httpVersion_ = httpVersion;
 }
 
 void HttpResponse::setBodyStream(void *buf, size_t size, EncodingType type) {
     encodingType_                  = kContentStream;
     size_t         compress_length = 0;
-    MyStringBuffer outbuffer;
+    MyStringBuffer outBuffer;
     if (type == Type_Gzip) {
-        compress_length = ZlibStream::GzipCompress(reinterpret_cast<char *>(buf), size, outbuffer);
+        compress_length = ZlibStream::GzipCompress(reinterpret_cast<char *>(buf), size, outBuffer);
         addHeader("Content-Encoding", "gzip");
     } else if (type == Type_Deflate) {
-        compress_length = ZlibStream::DeflateCompress(reinterpret_cast<char *>(buf), size, outbuffer);
-        addHeader("Content-Encoding", "defalte");
+        compress_length = ZlibStream::DeflateCompress(reinterpret_cast<char *>(buf), size, outBuffer);
+        addHeader("Content-Encoding", "deflate");
     } else if (type == Type_Raw) {
-        compress_length = ZlibStream::ZlibCompress(reinterpret_cast<char *>(buf), size, outbuffer);
+        compress_length = ZlibStream::ZlibCompress(reinterpret_cast<char *>(buf), size, outBuffer);
         addHeader("Content-Encoding", "raw");
     }
 
-    chunkedBuffer(outbuffer);
-    logger.info("compress data with type:%d, compress data:%d, after:%d bdoySize:%d", type, size, compress_length, bodyBuffer_.readableBytes());
+    chunkedBuffer(outBuffer);
+    logger.info("compress data with type:%d, compress data:%d, after:%d bodySize:%d", type, size, compress_length, bodyBuffer_.readableBytes());
 }
 
 void HttpResponse::chunkedBuffer(MyStringBuffer &buffer) {

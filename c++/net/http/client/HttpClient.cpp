@@ -32,7 +32,7 @@ HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &reqUrl,
     }
 
     if (verbose) {
-        logger.info("request Header:\n%s", request_.toStringHeader());
+        std::cout << request_;
     }
 
     Buffer respBuf;
@@ -42,16 +42,17 @@ HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &reqUrl,
         return resp;
     }
 
+    resp = TransBufferToResponse(respBuf);
     if (verbose) {
-        logger.info("response body:\n%s size:%d", respBuf.peek(), respBuf.readableBytes());
+        std::cout << resp;
     }
 
-    return TransBufferToResponse(respBuf);
+    return resp;
 }
 
 HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
     HttpResponse resp(false);
-    HttpContext context;
+    HttpContext  context;
     if (!context.parseRequest(&buffer, Timestamp())) {
         logger.info("response error");
         return resp;
@@ -59,15 +60,28 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
 
     if (context.gotAll()) {
         HttpRequest req = context.request();
-        req.setHttpVersion(req.getHttpVersion());
-        req.setRequestType(req.getRequestPath());
-        for (auto &item : req.GetHeaderMap()) {
+        for (auto &item : req.GetRequestHeader()) {
             resp.addHeader(item.first, item.second);
         }
 
-        resp.setStatusCode(static_cast<HttpResponse::HttpStatusCode>(req.getStatusCode()));
-        resp.setStatusMessage(req.getStatusMessage());
-        resp.setBody(req.getPostParams());
+        resp.setStatusMessage(static_cast<HttpResponse::HttpStatusCode>(req.getStatusCode()), req.getHttpVersion(), req.getStatusMessage());
+
+        if (req.get(ContentType).find("text/") != std::string::npos) {
+            auto encodingType = req.get(ContentEncoding);
+            if (strcasecmp(encodingType.c_str(), "gzip") == 0) { //
+                auto           buf = req.getBodyBuffer();
+                MyStringBuffer in, out;
+                in.sputn(buf.peek(), buf.readableBytes());
+                ZlibStream::GzipDecompress(in, out);
+                resp.setBody(out.toString());
+            } else {
+                if (!req.getPostParams().empty()) {
+                    resp.setBody(req.getPostParams());
+                } else {
+                    resp.setBody(std::string(req.getBodyBuffer().peek(), req.getBodyBuffer().readableBytes()));
+                }
+            }
+        }
     }
 
     return resp;

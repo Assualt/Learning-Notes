@@ -73,18 +73,18 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
         basicRequestPath += request.getRequestFilePath();
     }
 
-    auto objHandle  = m_mapper.findHandle(request.getRequestPath(), request.getRequestType(), request.GetHeaderMap());
+    auto objHandle  = m_mapper.findHandle(request.getRequestPath(), request.getRequestType(), request.GetRequestQueryMap());
     bool fileExists = utils::FileExists(basicRequestPath);
     if (!fileExists && objHandle.has_value()) {
         reinterpret_cast<IController *>(objHandle.value())->onRequest(request, response, m_hConfig);
     } else if (utils::IsDir(basicRequestPath)) { // 展示目录
-        auto obj = m_mapper.findHandle(DefaultPattern, request.getRequestType(), request.GetHeaderMap());
+        auto obj = m_mapper.findHandle(DefaultPattern, request.getRequestType(), request.GetRequestQueryMap());
         reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_hConfig);
     } else {
-        auto obj = m_mapper.findHandle(FilePattern, request.getRequestType(), request.GetHeaderMap());
+        auto obj = m_mapper.findHandle(FilePattern, request.getRequestType(), request.GetRequestQueryMap());
         auto ret = reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_hConfig);
         if (!ret) { // 文件不存在
-            obj = m_mapper.findHandle(NOTFOUND, request.getRequestType(), request.GetHeaderMap());
+            obj = m_mapper.findHandle(NOTFOUND, request.getRequestType(), request.GetRequestQueryMap());
             reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_hConfig);
         }
     }

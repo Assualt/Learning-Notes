@@ -33,13 +33,15 @@ bool HttpContext::processRequestLine(const char *begin, const char *end) {
             }
         }
     } else if (start != space) {
-        start = space + 1;
-        space = std::find(start, end, ' ');
+        auto str = std::string(start, space);
+        start    = space + 1;
+        space    = std::find(start, end, ' ');
         try {
             int status_code = std::stoi(std::string(start, space));
             start           = space + 1;
             m_request.setStatusMessage(std::string(start, end));
             m_request.setStatusCode(status_code);
+            m_request.setHttpVersion(str);
             return true;
         } catch (...) {
             return succeed;
@@ -78,7 +80,7 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime) {
                     // empty line, end of header
                     // FIXME:
                     setContentLengthType();
-                    if ((m_lenType == kContentLength) && (m_contentLenth == 0)) {
+                    if ((m_lenType == kContentLength) && (m_contentLength == 0)) {
                         m_state = kGotAll;
                         hasMore = false;
                     } else {
@@ -103,8 +105,8 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime) {
 void HttpContext::setContentLengthType() {
     auto contentStr = m_request.get(ContentLength);
     if (!contentStr.empty()) {
-        m_contentLenth = atol(contentStr.c_str());
-        m_lenType      = kContentLength;
+        m_contentLength = atol(contentStr.c_str());
+        m_lenType       = kContentLength;
     }
     contentStr = m_request.get(TransferEncoding);
     if (strcasecmp(contentStr.c_str(), "chunked") == 0) {
@@ -119,6 +121,7 @@ void HttpContext::parseBodyPart(Buffer *buf) {
     if (m_lenType == kContentLength) {
         parseBodyByContentLength(buf);
     } else if (m_lenType == kContentChunked) {
+        logger.info("parse buffer with chunked");
         parseBodyByChunkedBuffer(buf);
     }
 }
@@ -133,16 +136,13 @@ void HttpContext::parseBodyByChunkedBuffer(Buffer *buf) {
             break;
         }
         size_t nBytes = utils::chunkSize(std::string(buf->peek(), crlf));
+        logger.info("recv chunked size:%#x", nBytes);
         buf->retrieveUntil(crlf + 2);
-        if ((nBytes == 0) || (crlf == nullptr)) {
+        if ((nBytes == 0) || (buf->readableBytes() < nBytes)) {
             break;
         }
-        crlf = buf->findCRLF();
-        if (crlf - buf->peek() == nBytes) {
-
-        } else {
-            logger.warning("wrong bytes chunked size:%#x, read size:%#x", nBytes, crlf - buf->peek());
-        }
+        m_request.appendBodyBuffer(buf->peek(), nBytes);
+        logger.info("success insert into %x bytes", nBytes);
         buf->retrieveUntil(crlf + 2);
     }
 }

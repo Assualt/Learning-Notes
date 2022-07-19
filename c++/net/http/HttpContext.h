@@ -30,10 +30,8 @@ public:
         : m_state(kExpectRequestLine)
         , m_lenType(kContentLength)
         , m_encodingType(kEncodingRaw)
-        , m_contentLenth(-1) {
+        , m_contentLength(-1) {
     }
-
-    // default copy-ctor, dtor and assignment are fine
 
     // return false if any error
     bool parseRequest(Buffer *buf, Timestamp receiveTime);
@@ -68,5 +66,5 @@ private:
     HttpRequestBodyLenType  m_lenType;
     HttpRequestBodyEncoding m_encodingType;
     HttpRequest             m_request;
-    long                    m_contentLenth;
+    long                    m_contentLength;
 };

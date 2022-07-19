@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
     std::cout << "================================\n"
               << "status_code:" << resp.getStatusCode() << " \n"
               << "status_message:" << resp.getStatusMessage() << " \n"
-              << "reply message:" << resp.getBody() << "\n";
+              << "reply message:" << resp.getBody().size() << "\n";
 
     return 0;
 }

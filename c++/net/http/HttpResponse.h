@@ -10,6 +10,7 @@ using namespace muduo::base;
 using namespace muduo::net;
 
 #define CHUNK_SIGNLE_SIZE 1024
+#define CTRL "\r\n"
 
 class HttpResponse : public copyable {
 public:
@@ -36,7 +37,7 @@ public:
         statusCode_ = code;
     }
 
-    void setStatusMessage(int statusCode, const std::string &HttpVersion, const std::string &message, const std::string &strAcceptEncoding = "");
+    void setStatusMessage(int statusCode, const std::string &httpVersion, const std::string &message, const std::string &strAcceptEncoding = "");
 
     void setStatusMessage(const std::string &message) {
         statusMessage_ = message;
@@ -86,7 +87,21 @@ public:
         return statusCode_;
     }
 
+    friend std::ostream &operator<<(std::ostream &os, const HttpResponse &obj) {
+        os << "< " << obj.httpVersion_ << " " << obj.statusCode_ << " " << obj.statusMessage_ << CTRL;
+        for (auto &item : obj.headers_)
+            os << "< " << item.first << ": " << item.second << CTRL;
+        os << CTRL;
+        if (!obj.body_.empty()) {
+            os << obj.body_ << CTRL;
+        } else {
+            os << "[Binary]" << obj.bodyBuffer_.readableBytes() << CTRL;
+        }
+        return os;
+    }
+
 private:
+    std::string                        httpVersion_;
     std::map<std::string, std::string> headers_;
     HttpStatusCode                     statusCode_;
     std::string                        statusMessage_;
