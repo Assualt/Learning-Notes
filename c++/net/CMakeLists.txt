@@ -1,4 +1,4 @@
-set(net_SRCS
+set(muduo_net_objects
     Acceptor.cpp
     Buffer.cpp
     Channel.cpp
@@ -18,7 +18,7 @@ set(net_SRCS
 )
 
 
-add_library(muduo_net ${net_SRCS})
+add_library(muduo_net SHARED ${muduo_net_objects})
 target_link_libraries(muduo_net muduo_base pthread rt ssl crypto)
 install(TARGETS muduo_net DESTINATION lib)
 

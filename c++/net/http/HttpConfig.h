@@ -1,19 +1,17 @@
+#pragma once
 #include "base/nonecopyable.h"
+#include <algorithm>
 #include <iostream>
+#include <map>
+#include <set>
 
-#define PARAM_SETER_GETER(strParamName, valType)          \
-public:                                                   \
-    inline const valType &get##strParamName(void) const { \
-        return m_##strParamName;                          \
-    }                                                     \
-    inline void set##strParamName(const valType &n) {     \
-        m_##strParamName = n;                             \
-    }                                                     \
-    inline void set##strParamName(valType &&n) {          \
-        m_##strParamName = std::move(n);                  \
-    }                                                     \
-                                                          \
-protected:                                                \
+#define PARAM_SETER_GETER(strParamName, valType)                                              \
+public:                                                                                       \
+    inline const valType &get##strParamName(void) const { return m_##strParamName; }          \
+    inline void           set##strParamName(const valType &n) { m_##strParamName = n; }       \
+    inline void           set##strParamName(valType &&n) { m_##strParamName = std::move(n); } \
+                                                                                              \
+protected:                                                                                    \
     valType m_##strParamName;
 
 #define CTRL "\r\n"
@@ -35,8 +33,15 @@ protected:                                                \
 #define NOTFOUNDHTML "<html><head><title>404 Not Found</title></head><body>404 not found</body></html>"
 #define NOTFOUND "/404"
 
+#define Date "Date"
+#define LastModified "Last-Modified"
+
+#define Connection "Connection"
+
 #define SERVER "Server"
 #define SERVERVal "HttpServer/0.1 Linux/GNU gcc/c++"
+
+#define WwwAuthenticate "WWW-Authenticate"
 
 #define FilePattern "/#*#/"
 #define DefaultPattern "/#@#/"
@@ -53,10 +58,83 @@ protected:                                                \
     "<html>\r\n<head>\r\n<title>405 Method not Allowed</title>\r\n</head>\r\n<body bgcolor=\"white\">\r\n<center><h1>405 Method  not Allowed." \
     "</h1></center>\r\n<hr>\r\n<center>httpserver</center>\r\n</body>\r\n</html>"
 
-enum HttpVersion {
+#define CHUNK_SIZE 1024
+
+enum HttpContentType {
+    ContentRaw,   /* Content-Type: length */
+    ContentStream /* Content-Bytes: bytes*/
+};
+
+enum EncodingType {
+    Type_Gzip,
+    Type_Br,
+    Type_Deflate,
+    Type_Raw,
+};
+
+enum HttpStatusCode : uint32_t {
+    kUnknown,
+    k200Ok               = 200,
+    k301MovedPermanently = 301,
+    k400BadRequest       = 400,
+    k401NotAuth          = 401,
+    k404NotFound         = 404,
+    k405MethodNotAllow   = 405,
+};
+
+enum HttpVersion : uint32_t {
     HTTP_1_0,
     HTTP_1_1,
+    HTTP_2_0,
+    HTTP_UNKNOWN,
 };
+
+enum REQ_TYPE : uint32_t {
+    TYPE_GET  = (0x1 << 0),
+    TYPE_POST = (0x1 << 1),
+    TYPE_PUT  = (0x1 << 2),
+    TYPE_BUT  = UINT32_MAX,
+};
+
+inline std::string getHttpVersionString(HttpVersion version) {
+    static std::map<HttpVersion, std::string> verMap = {
+        {HTTP_1_0, "HTTP/1.0"},
+        {HTTP_1_1, "HTTP/1.1"},
+        {HTTP_2_0, "HTTP/2.0"},
+    };
+
+    auto itr = verMap.find(version);
+    if (itr != verMap.end()) {
+        return itr->second;
+    }
+
+    return verMap[ HTTP_1_1 ];
+}
+
+inline HttpVersion getHttpVersionByString(const std::string &ver) {
+    static std::map<std::string, HttpVersion> verStrMap = {
+        {"HTTP/1.0", HTTP_1_0},
+        {"HTTP/1.1", HTTP_1_1},
+        {"HTTP/2.0", HTTP_2_0},
+    };
+
+    auto itr = verStrMap.find(ver);
+    if (itr != verStrMap.end()) {
+        return itr->second;
+    }
+
+    return HttpVersion::HTTP_1_1;
+}
+
+inline bool isValidRequest(const std::string &requestType) {
+    static std::set<std::string> reqTypeMap = {
+        "GET", "POST", "PUT", "HEAD", "DELETE",
+    };
+
+    std::string type = requestType;
+    std::transform(type.begin(), type.end(), type.begin(), ::toupper);
+    return reqTypeMap.find(type) != reqTypeMap.end();
+}
 
 using muduo::base::nonecopyable;
 class HttpConfig : nonecopyable {

@@ -61,10 +61,10 @@ bool DefaultController::onGet(const HttpRequest &request, HttpResponse &response
         out << attr.GetModifyTime().seconds() << ",\"" << attr.GetModifyTime().toFormattedString("%Y/%m/%d %H:%M:%S") << "\");</script>\r\n";
         tmplateHtml.append(out.str());
     }
-    response.setStatusMessage(200, "HTTP/1.1", "OK");
+    response.setStatusMessage(HttpStatusCode::k200Ok, "HTTP/1.1", "OK");
     response.setBody(tmplateHtml);
     response.addHeader(ContentType, "text/html");
-    response.addHeader("Date", utils::toResponseBasicDateString());
+    response.addHeader(Date, utils::toResponseBasicDateString());
     return true;
     return true;
 }
@@ -88,9 +88,9 @@ bool FileIndex::onGet(const HttpRequest &request, HttpResponse &response, const 
         response.setBody(result);
         logger.info("load %s file bytes:%d, errno:%d", strRequestPath, result.size(), errno);
         if (result.size() <= 0) {
-            response.setStatusMessage(404, request.getHttpVersion(), "not found");
+            response.setStatusMessage(HttpStatusCode::k404NotFound, request.getHttpVersion(), "not found");
         } else {
-            response.setStatusMessage(200, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
+            response.setStatusMessage(HttpStatusCode::k200Ok, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
         }
     } else {
         MyStringBuffer mybuf;
@@ -98,21 +98,21 @@ bool FileIndex::onGet(const HttpRequest &request, HttpResponse &response, const 
         logger.info("load %s file bytes:%d", strRequestPath, n);
         auto buf = std::make_unique<char[]>(n);
         mybuf.sgetn(buf.get(), n);
-        response.setBodyStream(buf.get(), n, HttpResponse::EncodingType::Type_Gzip);
-        response.setStatusMessage(200, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
+        response.setBodyStream(buf.get(), n, EncodingType::Type_Gzip);
+        response.setStatusMessage(HttpStatusCode::k200Ok, request.getHttpVersion(), "OK", request.get(AcceptEncoding));
     }
     response.addHeader(ContentType, utils::FileMagicType(strRequestPath));
     struct stat st;
     if (stat(strRequestPath.c_str(), &st) != -1)
-        response.addHeader("Last-Modified", utils::toResponseBasicDateString(st.st_mtime));
+        response.addHeader(LastModified, utils::toResponseBasicDateString(st.st_mtime));
 
     return true;
 }
 
 bool FileIndex::onPost(const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) {
-    res.setStatusMessage(401, "HTTP/1.1", "Unauthorized=>on");
+    res.setStatusMessage(HttpStatusCode::k401NotAuth, "HTTP/1.1", "Unauthorized=>on");
     res.addHeader(ContentType, "text/html");
-    res.addHeader("WWW-Authenticate", cfg.getAuthName());
+    res.addHeader(WwwAuthenticate, cfg.getAuthName());
     res.setBody("on Post");
     return true;
 }
@@ -122,10 +122,10 @@ bool FileIndex::onPut(const HttpRequest &, HttpResponse &res, const HttpConfig &
 }
 
 bool FavicoIndex::onGet(const HttpRequest &req, HttpResponse &resp, const HttpConfig &) {
-    resp.setStatusMessage(200, req.getHttpVersion(), "OK");
+    resp.setStatusMessage(HttpStatusCode::k200Ok, req.getHttpVersion(), "OK");
     resp.addHeader(ContentType, "image/x-icon");
-    resp.addHeader("Accept-Ranges", "bytes");
-    resp.setBodyStream(favicon, sizeof(favicon), HttpResponse::EncodingType::Type_Gzip);
+    resp.addHeader(AcceptRanges, "bytes");
+    resp.setBodyStream(favicon, sizeof(favicon), EncodingType::Type_Gzip);
     return true;
 }
 

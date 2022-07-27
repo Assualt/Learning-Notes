@@ -1,3 +1,4 @@
+#pragma once
 #include "Timestamp.h"
 #include "nonecopyable.h"
 #include <dirent.h>

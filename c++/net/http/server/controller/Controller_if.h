@@ -59,9 +59,9 @@ public:
 
 private:
     bool onLost(const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) {
-        res.setStatusMessage(302, "HTTP/1.1", "req method is not support");
-        res.addHeader("Content-Type", "text/html");
-        res.addHeader("Content-Length", 0);
+        res.setStatusMessage(HttpStatusCode::k301MovedPermanently, "HTTP/1.1", "req method is not support");
+        res.addHeader(ContentType, "text/html");
+        res.addHeader(ContentLength, 0);
         return true;
     }
 

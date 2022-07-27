@@ -1,4 +1,4 @@
-set(base_SRCS
+set(muduo_base_objects
     Backtrace.cpp
     Condition.cpp
     Configure.cpp
@@ -21,7 +21,7 @@ set(base_SRCS
 
 add_subdirectory(fsm)
 
-add_library(muduo_base ${base_SRCS})
+add_library(muduo_base SHARED ${muduo_base_objects})
 target_link_libraries(muduo_base pthread rt)
 
 install(TARGETS muduo_base DESTINATION lib)

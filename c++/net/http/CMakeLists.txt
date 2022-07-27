@@ -7,6 +7,6 @@ set(http_common
     HttpResponse.cpp
     HttpUtils.cpp
 )
-add_library(http_common ${http_common})
+add_library(http_common SHARED ${http_common})
 add_subdirectory(server)
 add_subdirectory(client)

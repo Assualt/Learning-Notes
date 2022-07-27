@@ -17,7 +17,7 @@ std::string HttpRequest::toStringHeader() const {
 
 void HttpRequest::setParams(const std::map<std::string, std::string> &headerMap) {
     for (auto iter : headerMap) {
-        m_HeaderMap.insert(iter);
+        m_urlQueryMap.insert(iter);
     }
     size_t nPos = m_strRequestPath.find("?");
     if (nPos != std::string::npos) {
@@ -28,7 +28,7 @@ void HttpRequest::setParams(const std::map<std::string, std::string> &headerMap)
                 bFindKey = true;
             else if (m_strRequestPath[ i ] == '&') {
                 bFindKey = false;
-                m_HeaderMap.insert({strKey, strVal});
+                m_urlQueryMap.insert({strKey, strVal});
                 strKey = strVal = "";
             } else if (bFindKey) {
                 strVal.push_back(m_strRequestPath[ i ]);
@@ -36,7 +36,7 @@ void HttpRequest::setParams(const std::map<std::string, std::string> &headerMap)
                 strKey.push_back(m_strRequestPath[ i ]);
         }
         if (!strKey.empty())
-            m_HeaderMap.insert({strKey, strVal});
+            m_urlQueryMap.insert({strKey, strVal});
     }
 }
 
@@ -120,29 +120,20 @@ void HttpRequest::setStatusCode(int statusCode) {
 
 bool HttpRequest::setMethod(const char *start, const char *end) {
     std::string m(start, end);
-    if (m == "GET") {
-        setRequestType(m);
-    } else if (m == "POST") {
-        setRequestType(m);
-    } else if (m == "HEAD") {
-        setRequestType(m);
-    } else if (m == "PUT") {
-        setRequestType(m);
-    } else if (m == "DELETE") {
-        setRequestType(m);
-    } else {
+    if (!isValidRequest(m)) {
         return false;
     }
+    setRequestType(m);
     return true;
 }
 
 std::string HttpRequest::getParams(const std::string &key) const {
-    if (!m_HeaderMap.count(key))
+    if (!m_urlQueryMap.count(key))
         return "";
-    return m_HeaderMap.at(key);
+    return m_urlQueryMap.at(key);
 }
 std::map<std::string, std::string> HttpRequest::getAllParams() const {
-    return m_HeaderMap;
+    return m_urlQueryMap;
 }
 
 void HttpRequest::addHeader(const char *start, const char *colon, const char *end) {

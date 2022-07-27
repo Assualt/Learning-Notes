@@ -48,7 +48,6 @@ void DirScanner::StartSearch(const std::string &path) {
     m_nHandle = opendir(path.c_str());
     if (m_nHandle == nullptr) {
         logger.warning("open %s dir failed", path);
-        throw std::invalid_argument("path is invalid");
     }
 }
 

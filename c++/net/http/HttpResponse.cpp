@@ -1,6 +1,7 @@
 #include "HttpResponse.h"
 #include "base/Format.h"
 #include <stdio.h>
+
 using namespace muduo;
 using namespace muduo::net;
 
@@ -11,16 +12,16 @@ void HttpResponse::appendToBuffer(Buffer &output) const {
     output.append(statusMessage_);
     output.append("\r\n");
 
-    if (encodingType_ == kContentRaw) {
-        output.append(FmtString("Content-Length: %\r\n").arg(body_.size()).str().c_str());
-    } else if (encodingType_ == kContentStream) {
+    if (encodingType_ == HttpContentType::ContentRaw) {
+        output.append(FmtString("%: %\r\n").arg(ContentLength).arg(body_.size()).str());
+    } else if (encodingType_ == HttpContentType::ContentStream) {
         output.append("Transfer-Encoding: chunked\r\n");
     }
 
     if (closeConnection_) {
-        output.append("Connection: close\r\n");
+        output.append(FmtString("%: close\r\n").arg(Connection).str());
     } else {
-        output.append("Connection: Keep-Alive\r\n");
+        output.append(FmtString("%: Keep-Alive\r\n").arg(Connection).str());
     }
 
     for (const auto &header : headers_) {
@@ -30,35 +31,35 @@ void HttpResponse::appendToBuffer(Buffer &output) const {
         output.append("\r\n");
     }
 
-    output.append("server: httpserver 1.1\r\n");
-    output.append("\r\n");
-    if (encodingType_ == kContentRaw) {
+    output.append(FmtString("%: %\r\n").arg(SERVER).arg(SERVERVal).str());
+    output.append(CTRL);
+    if (encodingType_ == HttpContentType::ContentRaw) {
         output.append(body_);
-        output.append("\r\n");
-    } else if (encodingType_ == kContentStream) {
+        output.append(CTRL);
+    } else if (encodingType_ == HttpContentType::ContentStream) {
         output.append(bodyBuffer_.peek(), bodyBuffer_.readableBytes());
     }
 }
 
-void HttpResponse::setStatusMessage(int statusCode, const std::string &httpVersion, const std::string &message, const std::string &strAcceptEncoding) {
-    setStatusCode(static_cast<HttpStatusCode>(statusCode));
+void HttpResponse::setStatusMessage(HttpStatusCode statusCode, const std::string &httpVersion, const std::string &message, const std::string &strAcceptEncoding) {
+    setStatusCode(statusCode);
     setStatusMessage(message);
-    httpVersion_ = httpVersion;
+    httpVersion_ = getHttpVersionByString(httpVersion);
 }
 
 void HttpResponse::setBodyStream(void *buf, size_t size, EncodingType type) {
-    encodingType_                  = kContentStream;
+    encodingType_                  = HttpContentType::ContentStream;
     size_t         compress_length = 0;
     MyStringBuffer outBuffer;
     if (type == Type_Gzip) {
         compress_length = ZlibStream::GzipCompress(reinterpret_cast<char *>(buf), size, outBuffer);
-        addHeader("Content-Encoding", "gzip");
+        addHeader(ContentEncoding, "gzip");
     } else if (type == Type_Deflate) {
         compress_length = ZlibStream::DeflateCompress(reinterpret_cast<char *>(buf), size, outBuffer);
-        addHeader("Content-Encoding", "deflate");
+        addHeader(ContentEncoding, "deflate");
     } else if (type == Type_Raw) {
         compress_length = ZlibStream::ZlibCompress(reinterpret_cast<char *>(buf), size, outBuffer);
-        addHeader("Content-Encoding", "raw");
+        addHeader(ContentEncoding, "raw");
     }
 
     chunkedBuffer(outBuffer);
@@ -66,9 +67,9 @@ void HttpResponse::setBodyStream(void *buf, size_t size, EncodingType type) {
 }
 
 void HttpResponse::chunkedBuffer(MyStringBuffer &buffer) {
-    auto buf = std::make_unique<uint8_t[]>(CHUNK_SIGNLE_SIZE);
+    auto buf = std::make_unique<uint8_t[]>(CHUNK_SIZE);
     while (true) {
-        size_t nRead = buffer.sgetn(reinterpret_cast<char *>(buf.get()), CHUNK_SIGNLE_SIZE);
+        size_t nRead = buffer.sgetn(reinterpret_cast<char *>(buf.get()), CHUNK_SIZE);
         if (nRead <= 0) {
             break;
         }

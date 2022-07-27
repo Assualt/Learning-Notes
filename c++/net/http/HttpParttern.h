@@ -1,4 +1,5 @@
 #pragma once
+#include "HttpConfig.h"
 #include "base/Mutex.h"
 #include <functional>
 #include <iostream>
@@ -12,31 +13,26 @@ class HttpResponse;
 class HttpConfig;
 
 using Func = std::function<bool(const HttpRequest &, HttpResponse &, const HttpConfig &)>;
-enum REQ_TYPE : uint32_t {
-    TYPE_GET  = (0x1 << 0),
-    TYPE_POST = (0x1 << 1),
-    TYPE_PUT  = (0x1 << 2),
-    TYPE_BUT  = UINT32_MAX,
-};
-
 class RequestMapper {
 public:
     struct Key {
     public:
-        Key(const std::string &pattern, int methods, bool needval = false);
-        Key(const std::string &pattern, const std::string &method = "GET", bool needval = false);
+        Key(const std::string &pattern, int methods, bool needVal = false, bool useRegex = false);
+        Key(const std::string &pattern, const std::string &method = "GET", bool needVal = false);
         bool MatchFilter(const std::string &reqPath, const std::string &reqType, std::map<std::string, std::string> &valMap, bool &methodAllowed);
         bool MatchFilter(const std::string &reqPath, const std::string &reqType, bool &methodAllowed);
 
     private:
         bool checkAllowed(const std::string &reqType);
-        int  transferMethod(const std::string &reqType);
+        int  transferMethod(const std::string &method);
         void splitKeyPoint();
+        bool tryRegexMatch(const std::string &pattern);
 
     public:
         std::string              pattern_;
         int                      method_;
-        bool                     needval_;
+        bool                     needVal_{false};
+        bool                     useRegex_{false};
         std::vector<std::string> keySet_;
         std::vector<int>         keyPoint_;
     };

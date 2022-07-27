@@ -1,16 +1,13 @@
 #include "CtlScanner.h"
-#include "base/DirScanner.h"
 #include "base/Logging.h"
 #include "net/http/HttpParttern.h"
 #include "net/http/HttpUtils.h"
 #include "net/http/server/HttpServer.h"
 #include <algorithm>
-#include <stdio.h>
-#include <time.h>
 #include <unistd.h>
 using namespace muduo::base;
 
-using ControllerEntry = int (*)(std::string *, int *, bool *, uintptr_t *);
+using ControllerEntry = int (*)(std::string *, int *, bool *, bool *, uintptr_t *);
 
 void ControllerScanner::init(const std::string &path) {
     libsPaths_ = path;
@@ -31,6 +28,70 @@ void ControllerScanner::stopTask() {
     }
 }
 
+bool ControllerScanner::needUpdate(const FileAttr &attr) {
+    auto itr = std::find_if(dllVectors_.begin(), dllVectors_.end(), [ &attr ](auto info) { return info.fullPath_ == attr.GetFullName(); });
+
+    if (itr == dllVectors_.end()) {
+        return true;
+    }
+
+    return itr->soModifyTime_ < attr.GetModifyTime();
+}
+
+void ControllerScanner::update(const FileAttr &attr) {
+    auto itr = std::find_if(dllVectors_.begin(), dllVectors_.end(), [ &attr ](auto info) { return info.fullPath_ == attr.GetFullName(); });
+
+    if (itr != dllVectors_.end()) {
+        unRegisterHandle(*itr);
+        dllVectors_.erase(itr);
+        logger.info("unregister pattern for %s", itr->pattern_);
+    }
+
+    DllInfo info;
+    info.soModifyTime_ = attr.GetModifyTime();
+    info.fullPath_     = attr.GetFullName();
+    info.soName_       = attr.GetName();
+    info.helper_       = std::make_shared<DllHelper>();
+
+    if (info.helper_ == nullptr) {
+        logger.warning("dll helper is nullptr. skip add");
+        return;
+    }
+
+    auto   entryName = attr.GetName();
+    size_t pos;
+    if ((pos = entryName.find(".")) != string::npos) {
+        entryName = entryName.substr(0, pos);
+    }
+
+    if (info.helper_->open(info.fullPath_.c_str(), DllHelper::LOAD_LAZY) != 0) {
+        logger.info("open so for %s failed.", info.fullPath_);
+        return;
+    }
+
+    entryName             = FmtString("%_Entry").arg(entryName).str();
+    ControllerEntry entry = reinterpret_cast<ControllerEntry>(info.helper_->GetSymbol(entryName.c_str()));
+    if (entry == nullptr) {
+        logger.warning("%s so is invalid, msg:%s, entryName:%s", attr.GetFullName(), info.helper_->errMsg(), entryName);
+        return;
+    }
+
+    bool      needVal;
+    uintptr_t obj;
+    int       method;
+    bool      useRegex;
+    auto      ret = entry(&info.pattern_, &method, &needVal, &useRegex, &obj);
+    HttpServer::getMapper().addRequestObject({info.pattern_, method, needVal, useRegex}, obj);
+    logger.info("success reg call func name:%s pattern:%s, method:%d, needVal:%b useRegex:%b obj:%x ret:%d", attr.BriefName(), info.pattern_, method, needVal, useRegex, obj, ret);
+
+    dllVectors_.push_back(std::move(info));
+}
+
+void ControllerScanner::unRegisterHandle(DllInfo &info) {
+    HttpServer::getMapper().removeRequestObject(info.pattern_);
+    info.helper_->close();
+}
+
 void ControllerScanner::TaskCallback() {
     while (!exit_) {
         std::map<std::string, int> tmpMaps;
@@ -48,44 +109,11 @@ void ControllerScanner::TaskCallback() {
             }
 
             attr.SetParentPath(libsPaths_);
-            auto iter = libmaps_.find(attr.GetName());
-            if (iter != libmaps_.end() && iter->second == attr.GetSize()) {
-                logger.debug("file name %s is equals, skip", attr.GetName());
+            if (!needUpdate(attr)) {
                 continue;
             }
 
-            if (iter == libmaps_.end()) {
-                logger.info("%s should add here,new size:%d", attr.GetName(), attr.GetSize());
-                libmaps_.emplace(attr.GetName(), attr.GetSize());
-            } else if (iter->second != attr.GetSize()) {
-                logger.info("%s size is not equals, old size:%d new size:%d", attr.GetName(), libmaps_[ attr.GetName() ], attr.GetSize());
-                libmaps_.emplace(attr.GetName(), attr.GetSize());
-                // TODO so变化之后，需要重新load一把才可以完成功能
-            } else {
-                continue;
-            }
-
-            auto helper = std::make_unique<DllHelper>();
-            if (helper->open(attr.GetFullName().c_str(), DllHelper::LOAD_LAZY) != 0) {
-                logger.warning("%s so is invalid, msg:%s", attr.GetFullName(), helper->errMsg());
-                continue;
-            }
-
-            std::string     symbolName = attr.BriefName() + "_Entry";
-            ControllerEntry entry;
-            entry = reinterpret_cast<ControllerEntry>(helper->GetSymbol(symbolName.c_str()));
-            if (entry == nullptr) {
-                logger.warning("%s so is invalid, msg:%s", attr.GetFullName(), helper->errMsg());
-                continue;
-            }
-            std::string key;
-            int         method;
-            bool        needval;
-            uintptr_t   obj;
-            auto        ret = entry(&key, &method, &needval, &obj);
-            HttpServer::getMapper().addRequestObject({key, method, needval}, obj);
-            logger.info("success reg call func name:%s pattern:%s, method:%d, needval:%b obj:%x ret:%d", attr.BriefName(), key, method, needval, obj, ret);
-            dllmaps_.push_back({attr.BriefName(), std::move(helper)});
+            update(attr);
         }
         scanner.CloseHandle();
         sleep(5);

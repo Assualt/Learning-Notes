@@ -40,12 +40,11 @@ int main(int argc, char const *argv[]) {
         std::cout << cmd.usage() << std::endl;
         return 0;
     }
-
-    std::string strConfigPath = cmd.get<std::string>("config_path");
-    bool        RunInDaemon   = cmd.get<bool>("daemon");
+    bool        runInDaemon   = cmd.get<bool>("daemon");
     auto        nLevel        = cmd.get<int>("logLevel");
     auto        threadNum     = cmd.get<int>("threads_count");
-    auto        libpaths      = cmd.get<std::string>("libpath");
+    auto        libPaths      = cmd.get<std::string>("libpath");
+    std::string strConfigPath = cmd.get<std::string>("config_path");
 
     auto &log = Logger::getLogger();
     log.BasicConfig(static_cast<LogLevel>(nLevel), "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
@@ -61,7 +60,7 @@ int main(int argc, char const *argv[]) {
     RegisterSignalHandle(server);
     server.SetThreadNum(threadNum);
     server.Start();
-    server.startScannerTask(libpaths);
+    server.startScannerTask(libPaths);
     loop.loop();
 
     return 0;

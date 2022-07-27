@@ -12,7 +12,7 @@ HttpResponse HttpClient::Post(const string &url, const Buffer &body, bool needRe
     return Request(ReqType::Type_POST, url, body, needRedirect, verbose);
 }
 
-HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &reqUrl, const Buffer &buff, bool redirect, bool verbose) {
+HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &reqUrl, const Buffer &buff, bool, bool verbose) {
     HttpResponse resp(false);
     if (!conn_.connect(reqUrl)) {
         logger.info("connect the url:%s error", reqUrl);
@@ -64,11 +64,11 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
             resp.addHeader(item.first, item.second);
         }
 
-        resp.setStatusMessage(static_cast<HttpResponse::HttpStatusCode>(req.getStatusCode()), req.getHttpVersion(), req.getStatusMessage());
+        resp.setStatusMessage(static_cast<HttpStatusCode>(req.getStatusCode()), req.getHttpVersion(), req.getStatusMessage());
 
         if (req.get(ContentType).find("text/") != std::string::npos) {
             auto encodingType = req.get(ContentEncoding);
-            if (strcasecmp(encodingType.c_str(), "gzip") == 0) { //
+            if (strcasecmp(encodingType.c_str(), "gzip") == 0) {
                 auto           buf = req.getBodyBuffer();
                 MyStringBuffer in, out;
                 in.sputn(buf.peek(), buf.readableBytes());

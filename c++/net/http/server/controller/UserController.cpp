@@ -16,7 +16,7 @@ bool UserController::onPost(const HttpRequest &request, HttpResponse &response, 
     }
     json::Json retJson({{"ret", 200}, {"errmsg", ""}, {"data", json::Json(obj)}, {"postdata", request.getPostParams()}, 
         {"query" , request.getQuery()}});
-    response.setStatusMessage(200, request.getHttpVersion(), "OK");
+    response.setStatusMessage(HttpStatusCode::k200Ok, request.getHttpVersion(), "OK");
     response.addHeader(ContentType, "application/json");
     response.setBody(retJson.dump());
     return true;

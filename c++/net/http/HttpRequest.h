@@ -1,4 +1,5 @@
 #pragma once
+#include "HttpConfig.h"
 #include "base/Timestamp.h"
 #include "net/Buffer.h"
 #include <iostream>
@@ -7,22 +8,22 @@
 #include <stdio.h>
 #include <string.h>
 #include <vector>
-#define CTRL "\r\n"
+
 using muduo::base::Timestamp;
 class HttpRequest {
 public:
-    HttpRequest()
-        : m_strPostParams("") {
-    }
+    HttpRequest() = default;
     typedef std::vector<std::pair<std::string, std::string>> ResourceMap;
-    template <class T> void                                  setHeader(const std::string &key, const T &val) {
-                                         std::string tmpVal = std::stringstream(val).str();
-                                         if (key == "Host")
+
+    template <class T> void setHeader(const std::string &key, const T &val) {
+        std::string tmpVal = std::stringstream(val).str();
+        if (key == "Host") {
             m_strRequestHost = tmpVal;
-        else if (key == "Range")
+        } else if (key == "Range") {
             m_strRangeBytes = tmpVal;
-        else
+        } else {
             m_vRequestHeader.push_back(std::pair<std::string, std::string>(key, tmpVal));
+        }
     }
     std::string               toStringHeader() const;
     const std::string         get(const std::string &key) const;
@@ -52,9 +53,10 @@ public:
 
     // request 请求解析时候的 query参数解析
     std::map<std::string, std::string> &GetRequestQueryMap() {
-        return m_HeaderMap;
+        return m_urlQueryMap;
     }
 
+    // request 请求的header列表
     const ResourceMap &GetRequestHeader() {
         return m_vRequestHeader;
     }
@@ -94,7 +96,7 @@ private:
     ResourceMap                        m_vRequestHeader;
     std::string                        m_strRequestHost;
     std::string                        m_strRangeBytes;
-    std::map<std::string, std::string> m_HeaderMap;
+    std::map<std::string, std::string> m_urlQueryMap;
     Timestamp                          m_recvTime;
     std::string                        m_strPath;
     std::string                        m_strQuery;

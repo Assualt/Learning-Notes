@@ -1,4 +1,5 @@
 #pragma once
+#include "HttpConfig.h"
 #include "HttpUtils.h"
 #include "base/Logging.h"
 #include "base/copyable.h"
@@ -9,35 +10,19 @@
 using namespace muduo::base;
 using namespace muduo::net;
 
-#define CHUNK_SIGNLE_SIZE 1024
-#define CTRL "\r\n"
-
 class HttpResponse : public copyable {
 public:
-    enum HttpContentType {
-        kContentRaw,   /* Content-Type: length */
-        kContentStream /* Content-Bytes: bytes*/
-    };
-    enum EncodingType { Type_Gzip, Type_Br, Type_Deflate, Type_Raw };
-    enum HttpStatusCode {
-        kUnknown,
-        k200Ok               = 200,
-        k301MovedPermanently = 301,
-        k400BadRequest       = 400,
-        k404NotFound         = 404,
-    };
-
     explicit HttpResponse(bool close)
         : statusCode_(kUnknown)
         , closeConnection_(close)
-        , encodingType_(kContentRaw) {
+        , encodingType_(HttpContentType::ContentRaw) {
     }
 
     void setStatusCode(HttpStatusCode code) {
         statusCode_ = code;
     }
 
-    void setStatusMessage(int statusCode, const std::string &httpVersion, const std::string &message, const std::string &strAcceptEncoding = "");
+    void setStatusMessage(HttpStatusCode statusCode, const std::string &httpVersion, const std::string &message, const std::string &strAcceptEncoding = "");
 
     void setStatusMessage(const std::string &message) {
         statusMessage_ = message;
@@ -60,7 +45,7 @@ public:
     }
 
     void setContentType(const std::string &contentType) {
-        addHeader("Content-Type", contentType);
+        addHeader(ContentType, contentType);
     }
 
     void printBodyBuffer() const;
@@ -75,7 +60,7 @@ public:
     }
 
     void setBody(const std::string &body) {
-        encodingType_ = kContentRaw;
+        encodingType_ = HttpContentType::ContentRaw;
         body_         = body;
     }
 
@@ -88,7 +73,7 @@ public:
     }
 
     friend std::ostream &operator<<(std::ostream &os, const HttpResponse &obj) {
-        os << "< " << obj.httpVersion_ << " " << obj.statusCode_ << " " << obj.statusMessage_ << CTRL;
+        os << "< " << getHttpVersionString(obj.httpVersion_) << " " << obj.statusCode_ << " " << obj.statusMessage_ << CTRL;
         for (auto &item : obj.headers_)
             os << "< " << item.first << ": " << item.second << CTRL;
         os << CTRL;
@@ -101,7 +86,7 @@ public:
     }
 
 private:
-    std::string                        httpVersion_;
+    HttpVersion                        httpVersion_;
     std::map<std::string, std::string> headers_;
     HttpStatusCode                     statusCode_;
     std::string                        statusMessage_;

@@ -13,6 +13,7 @@ HttpLog::HttpLog(Logger &log)
 
 HttpLog::~HttpLog() {
     m_pLogger.debug(m_sCmdInStream.str().c_str());
+    m_bExit = true;
     m_pThread->Join();
 }
 

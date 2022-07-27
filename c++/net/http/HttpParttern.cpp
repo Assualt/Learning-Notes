@@ -1,28 +1,28 @@
 #include "HttpParttern.h"
 #include "HttpRequest.h"
-#include "HttpResponse.h"
 #include "HttpUtils.h"
 #include "base/Logging.h"
-#include <algorithm>
-#include <map>
+#include <regex>
+
 using namespace muduo::base;
 
-RequestMapper::Key::Key(const std::string &pattern, int methods, bool needval)
+RequestMapper::Key::Key(const std::string &pattern, int methods, bool needVal, bool useRegex)
     : pattern_(pattern)
     , method_(methods)
-    , needval_(needval) {
+    , needVal_(needVal)
+    , useRegex_(useRegex) {
     splitKeyPoint();
 }
 
-RequestMapper::Key::Key(const std::string &pattern, const std::string &method, bool needval)
+RequestMapper::Key::Key(const std::string &pattern, const std::string &method, bool needVal)
     : pattern_(pattern)
     , method_(transferMethod(method))
-    , needval_(needval) {
+    , needVal_(needVal) {
     splitKeyPoint();
 }
 
 void RequestMapper::Key::splitKeyPoint() {
-    if (!needval_) {
+    if (!needVal_) {
         return;
     }
 
@@ -37,34 +37,48 @@ void RequestMapper::Key::splitKeyPoint() {
     }
 }
 
-bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::string &reqType, std::map<std::string, std::string> &valMap, bool &allowed) {
-    allowed = checkAllowed(reqType);
-    if (!needval_)
-        return reqPath == pattern_;
-    else {
-        std::string path = reqPath;
-        if (reqPath.find("?") != std::string::npos)
-            path = path.substr(0, path.find("?"));
-        auto itemList    = utils::split(path, '/');
-        auto patternList = utils::split(pattern_, '/');
-        // reqpath: /index/
-        // pattern: /index/{user}/{pass}  false
-        if (itemList.size() != patternList.size())
-            return false;
-        // reqpath: /index/x/y
-        // pattern: /indep/{user}/{pass}  false
-        for (int i = 0; i < keyPoint_.front(); i++) {
-            if (itemList[ i ] != patternList[ i ])
-                return false;
-        }
-        for (auto i = 0, j = 0; i < keyPoint_.size(); i++) {
-            int pos = keyPoint_[ i ];
-            if (pos >= itemList.size())
-                break;
-            valMap.insert(std::pair<std::string, std::string>(keySet_[ j++ ], itemList[ pos ]));
-        }
+bool RequestMapper::Key::tryRegexMatch(const std::string &pattern) {
+    if (!useRegex_) {
+        return false;
+    }
+    std::regex  regPattern(pattern_, regex::icase);
+    std::smatch ret;
+    if (std::regex_match(pattern, ret, regPattern)) { // 匹配OK
+        logger.info("try Regex match for pattern %s success", pattern);
         return true;
     }
+    logger.info("try Regex match for pattern %s failed", pattern);
+    return false;
+}
+
+bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::string &reqType, std::map<std::string, std::string> &valMap, bool &allowed) {
+    allowed = checkAllowed(reqType);
+    if (!needVal_) {
+        return (reqPath == pattern_) || (tryRegexMatch(reqPath));
+    }
+
+    std::string path = reqPath;
+    if (reqPath.find("?") != std::string::npos)
+        path = path.substr(0, path.find("?"));
+    auto itemList    = utils::split(path, '/');
+    auto patternList = utils::split(pattern_, '/');
+    // reqPath: /index/
+    // pattern: /index/{user}/{pass}  false
+    if (itemList.size() != patternList.size())
+        return false;
+    // reqPath: /index/x/y
+    // pattern: /index/{user}/{pass}  false
+    for (int i = 0; i < keyPoint_.front(); i++) {
+        if (itemList[ i ] != patternList[ i ])
+            return false;
+    }
+    for (auto i = 0, j = 0; i < keyPoint_.size(); i++) {
+        int pos = keyPoint_[ i ];
+        if (pos >= itemList.size())
+            break;
+        valMap.insert(std::pair<std::string, std::string>(keySet_[ j++ ], itemList[ pos ]));
+    }
+    return true;
 }
 
 bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::string &reqType, bool &allowed) {
@@ -75,7 +89,7 @@ bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::stri
 void RequestMapper::addRequestObject(const Key &key, uintptr_t object) {
     AutoLock lock(lock_);
     m_vRequestsMapper.push_back({key, object});
-    logger.debug("success insert key:%s object:%d", key.pattern_, object);
+    logger.debug("success insert key:%s object:%d useRegex:%b", key.pattern_, object, key.useRegex_);
 }
 
 void RequestMapper::removeRequestObject(const std::string &pattern) {
@@ -102,16 +116,15 @@ std::optional<uintptr_t> RequestMapper::findHandle(const std::string &reqPath, c
     return std::nullopt;
 }
 
-int RequestMapper::Key::transferMethod(const std::string &reqType) {
-    int                                    method  = 0;
-    std::string                            reqtype = utils::toLower(reqType);
+int RequestMapper::Key::transferMethod(const std::string &method) {
+    std::string                            reqType = utils::toLower(method);
     static std::map<std::string, REQ_TYPE> reqMap  = {
          {"get", REQ_TYPE::TYPE_GET},
          {"post", REQ_TYPE::TYPE_POST},
          {"put", REQ_TYPE::TYPE_PUT},
     };
 
-    auto itr = reqMap.find(reqtype);
+    auto itr = reqMap.find(reqType);
     if (itr != reqMap.end()) {
         return static_cast<int>(itr->second);
     }

@@ -54,7 +54,7 @@ void Thread::SetDefaultName() {
 
 void Thread::Detached() {
     if (!m_isStarted) {
-        throw ThreadException("thread isnot started!");
+        throw ThreadException("thread is not started!");
     }
 
     auto ret = pthread_detach(m_nThreadId);

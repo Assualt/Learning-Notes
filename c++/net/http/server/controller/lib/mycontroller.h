@@ -7,5 +7,3 @@ public:
     virtual ~MyController() override = default;
     DECLARE_CONTROLLER
 };
-
-extern "C" int mycontroller_Entry(std::string *pattern, int *method, bool *needVal, uintptr_t *);
