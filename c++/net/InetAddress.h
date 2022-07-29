@@ -8,7 +8,7 @@ class InetAddress {
 
 public:
     InetAddress() = default;
-    explicit InetAddress(uint16_t port, bool loopbackOnly = false, bool ipv6 = false);
+    explicit InetAddress(uint16_t port, bool loopBackOnly = false, bool ipv6 = false);
     explicit InetAddress(const sockaddr_in6 &addr);
     explicit InetAddress(const sockaddr_in &addr);
 

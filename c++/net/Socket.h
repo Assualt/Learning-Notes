@@ -45,6 +45,10 @@ public:
 
     uint32_t read(Buffer &buf);
 
+    int32_t setReadTimeout(int seconds);
+
+    int32_t setWriteTimeout(int seconds);
+
     ///
     /// Enable/disable TCP_NODELAY (disable/enable Nagle's algorithm).
     ///

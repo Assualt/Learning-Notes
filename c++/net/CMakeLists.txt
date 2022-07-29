@@ -11,6 +11,7 @@ set(muduo_net_objects
     Socket.cpp
     SocketsOp.cpp
     TcpServer.cpp
+    TcpClient.cpp
     TcpConnection.cpp
     TcpConnection.cpp
     poller/EPollPoller.cpp

@@ -194,13 +194,13 @@ uint32_t Socket::read(Buffer &buf) {
 
         buf.append(buffer, nRead);
         nTotal += nRead;
-//        printf("nread ======> %d\n", nRead);
-//        for (auto idx = 0; idx < nRead; idx++) {
-//            printf("%c", buffer[idx] & 0xFF);
-//            if (buffer[idx] == '\n' && idx > 1 && buffer[idx-1] == 0xd) {
-//                printf("\n");
-//            }
-//        }
+        //        printf("nread ======> %d\n", nRead);
+        //        for (auto idx = 0; idx < nRead; idx++) {
+        //            printf("%c", buffer[idx] & 0xFF);
+        //            if (buffer[idx] == '\n' && idx > 1 && buffer[idx-1] == 0xd) {
+        //                printf("\n");
+        //            }
+        //        }
 
         if (nRead < sizeof(buffer)) {
             break;
@@ -284,6 +284,22 @@ void Socket::close() {
         sockets::close(sockFd_);
         sockFd_ = -1;
     }
+}
+
+int32_t Socket::setReadTimeout(int seconds) {
+    struct timeval val {
+        .tv_sec = seconds, .tv_usec = 0
+    };
+
+    return setsockopt(sockFd_, SOL_SOCKET, SO_RCVTIMEO, (const void *)&val, sizeof(val));
+};
+
+int32_t Socket::setWriteTimeout(int seconds) {
+    struct timeval val {
+        .tv_sec = seconds, .tv_usec = 0
+    };
+
+    return setsockopt(sockFd_, SOL_SOCKET, SO_SNDTIMEO, (const void *)&val, sizeof(val));
 }
 
 } // namespace net
