@@ -1,0 +1,19 @@
+set(mail_objects
+    mailenv.cpp
+    mailserver.cpp
+    mail_process.cpp
+)
+
+add_library(mail_runtime SHARED ${mail_objects})
+target_link_libraries(mail_runtime pthread dl)
+
+add_executable(mailserver unitMailServer.cpp)
+target_link_libraries(mailserver
+    mail_runtime
+    pthread
+    dl
+    muduo_base
+    muduo_net
+)
+
+add_test(NAME test_mail COMMAND mailserver -c /home/xhou/work/git/Learning-Notes/c++/net/mail1/conf/programs.cf)

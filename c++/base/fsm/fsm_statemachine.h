@@ -15,9 +15,9 @@ public:
 
 public:
     static std::shared_ptr<StateMachine> create() {
-        auto state = std::make_shared<StateMachine>();
+        auto state   = std::make_shared<StateMachine>();
         auto context = std::make_shared<FsmContext>();
-        auto ret   = state->initialize();
+        auto ret     = state->initialize();
         if (ret != true) {
             Logger::log("initialize failed for context");
             return nullptr;
@@ -32,7 +32,9 @@ public:
         return true;
     }
 
-    virtual uint32_t configure(FsmConfig &cfg) {}
+    virtual uint32_t configure(FsmConfig &cfg) {
+        return 0;
+    }
 
     void initRootState(StateEnum state) {
     }

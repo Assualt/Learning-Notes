@@ -33,6 +33,8 @@ protected:                                                                      
 #define NOTFOUNDHTML "<html><head><title>404 Not Found</title></head><body>404 not found</body></html>"
 #define NOTFOUND "/404"
 
+#define PATTERN_METHOD_NOT_ALLOWED "/405"
+
 #define Date "Date"
 #define LastModified "Last-Modified"
 
@@ -45,18 +47,6 @@ protected:                                                                      
 
 #define FilePattern "/#*#/"
 #define DefaultPattern "/#@#/"
-
-#define AUTHREQUIRED                                                                                                                         \
-    "<html>\r\n<head>\r\n<title>401 Authorization Required</title>\r\n</head>\r\n<body bgcolor=\"white\">\r\n<center><h1>401 Authorization " \
-    "Required</h1></center>\r\n<hr>\r\n<center>httpserver</center>\r\n</body>\r\n</html>\r\n"
-
-#define BADREQUEST                                                                                                      \
-    "<html>\r\n<head>\r\n<title>401 Bad Request</title>\r\n</head>\r\n<body bgcolor=\"white\">\r\n<center><h1>401 Bad " \
-    "Request</h1></center>\r\n<hr>\r\n<center>httpserver</center>\r\n</body>\r\n</html>"
-
-#define METHODNOTALLOWED                                                                                                                       \
-    "<html>\r\n<head>\r\n<title>405 Method not Allowed</title>\r\n</head>\r\n<body bgcolor=\"white\">\r\n<center><h1>405 Method  not Allowed." \
-    "</h1></center>\r\n<hr>\r\n<center>httpserver</center>\r\n</body>\r\n</html>"
 
 #define CHUNK_SIZE 1024
 

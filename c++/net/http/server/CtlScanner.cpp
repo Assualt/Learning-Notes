@@ -94,7 +94,6 @@ void ControllerScanner::unRegisterHandle(DllInfo &info) {
 
 void ControllerScanner::TaskCallback() {
     while (!exit_) {
-        std::map<std::string, int> tmpMaps;
         DirScanner                 scanner(libsPaths_.c_str());
         FileAttr                   attr;
         while (scanner.Fetch(attr)) {

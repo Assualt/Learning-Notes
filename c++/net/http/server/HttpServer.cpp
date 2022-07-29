@@ -36,7 +36,7 @@ void HttpServer::onConnect(const TcpConnectionPtr &conn) {
 
 void HttpServer::SetThreadNum(int num) {
     if (num <= 0) {
-        logger.alert("threadnum(<=0) is not allowed ");
+        logger.alert("thread num(<=0) is not allowed ");
         return;
     }
     m_pServer->SetThreadNum(num);
@@ -55,9 +55,8 @@ void HttpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp 
 }
 
 void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
-    const string &connection = request.get("Connection");
     bool          close      = true;
-    if (strcasecmp(connection.c_str(), "keep-alive") == 0) {
+    if (strcasecmp(request.get(Connection).c_str(), "keep-alive") == 0) {
         close = false;
     }
     HttpResponse response(close);

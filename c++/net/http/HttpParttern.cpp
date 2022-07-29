@@ -107,7 +107,7 @@ std::optional<uintptr_t> RequestMapper::findHandle(const std::string &reqPath, c
         if (iter.first.MatchFilter(reqPath, reqType, resultMap, allowed)) {
             logger.info("success request path:%s, handle path:%s, method:%s allow:%b", reqPath, iter.first.pattern_, reqType, allowed);
             if (!allowed) {
-                return findHandle("/405", "GET", resultMap);
+                return findHandle(PATTERN_METHOD_NOT_ALLOWED, "GET", resultMap);
             }
             return iter.second;
         }

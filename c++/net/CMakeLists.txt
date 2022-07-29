@@ -30,3 +30,4 @@ install(FILES ${HEADERS_base} DESTINATION include/net)
 
 add_subdirectory(http)
 add_subdirectory(rpc)
+add_subdirectory(mail)
