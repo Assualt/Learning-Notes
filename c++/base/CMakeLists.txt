@@ -22,7 +22,7 @@ set(muduo_base_objects
 add_subdirectory(fsm)
 
 add_library(muduo_base SHARED ${muduo_base_objects})
-target_link_libraries(muduo_base pthread rt)
+target_link_libraries(muduo_base pthread rt dl)
 
 install(TARGETS muduo_base DESTINATION lib)
 

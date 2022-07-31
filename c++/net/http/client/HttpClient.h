@@ -7,6 +7,7 @@
 #include "net/http/HttpRequest.h"
 #include "net/http/HttpResponse.h"
 #include <iostream>
+
 class HttpClient {
 public:
     enum ReqType { Type_GET, Type_POST, Type_PUT, Type_HEAD };

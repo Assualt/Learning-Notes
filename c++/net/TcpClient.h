@@ -3,7 +3,6 @@
 #include "InetAddress.h"
 #include "Socket.h"
 #include "TcpConnection.h"
-#define DEFAULT_TIMEOUT 3
 
 namespace muduo::net {
 
@@ -14,6 +13,8 @@ public:
     void setTimeOut(int connectTimeout, int sendTimeOut, int recvTimeout);
 
     bool connect(const InetAddress &address);
+
+    int32_t sendBuf(const char *buf, uint32_t size);
 
     int32_t sendRequest(const Buffer &buffer);
 

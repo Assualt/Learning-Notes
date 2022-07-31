@@ -2,6 +2,7 @@
 #include "base/Logging.h"
 using namespace muduo::net;
 using namespace muduo::base;
+
 TcpClient::TcpClient(bool useSsl)
     : useSsl_(useSsl) {
     fd_     = socket(AF_INET, SOCK_STREAM, 0);
@@ -37,6 +38,10 @@ bool TcpClient::connect(const InetAddress &address) {
 
 int32_t TcpClient::sendRequest(const Buffer &buffer) {
     return socket_->write((void *)buffer.peek(), buffer.readableBytes());
+}
+
+int32_t TcpClient::sendBuf(const char *buf, uint32_t size) {
+    return socket_->write((void *)buf, size);
 }
 
 int32_t TcpClient::recvResponse(Buffer &recvBuf) {

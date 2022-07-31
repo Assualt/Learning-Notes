@@ -10,7 +10,7 @@ using muduo::base::FmtString;
 namespace muduo {
 namespace net {
 
-DECLARE_EXCEPTION(SocketException, base::Exception);
+DECLARE_EXCEPTION(SocketException, base::Exception)
 int sockets::connect(int sockFd, const struct sockaddr *addr) {
     return ::connect(sockFd, addr, static_cast<socklen_t>(sizeof(struct sockaddr_in6)));
 }

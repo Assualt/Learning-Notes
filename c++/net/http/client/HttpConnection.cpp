@@ -2,7 +2,7 @@
 #include "base/Logging.h"
 #include "base/System.h"
 #include "net/InetAddress.h"
-#include "net/Socket.h"
+#include "net/SocketsOp.h"
 #include "netdb.h"
 
 using namespace muduo::base;
@@ -15,48 +15,26 @@ void HttpConnection::setTimeOut(int seconds) {
 bool HttpConnection::connect(const std::string &url) {
     HttpUrl u(url);
     bool    ret = connect(u);
-    if (!ret) {
-        logger.error("can't connect to url:%s", url);
-        return ret;
-    }
-
-    if (!useSsl_) {
-        return ret;
-    }
-
-    return connectWithSSL();
+    LOG_IF(!ret).warning("can't connect to url:%s", url);
+    return ret;
 }
 
 int32_t HttpConnection::send(const Buffer &reqBuf) {
-    if (socket_ == nullptr) {
+    if (client_ == nullptr) {
         logger.info("socket is null, send error ");
         return -1;
     }
 
-    return socket_->write((void *)reqBuf.peek(), reqBuf.readableBytes());
+    return client_->sendRequest(reqBuf);
 }
 
 int32_t HttpConnection::recv(muduo::net::Buffer &respBuf) {
-    if (socket_ == nullptr) {
-        logger.info("socket is null, send error ");
+    if (client_ == nullptr) {
+        logger.info("tcpClient is null, recv error ");
         return -1;
     }
 
-    return socket_->read(respBuf);
-}
-
-bool HttpConnection::connectWithSSL() {
-    if (socket_ == nullptr) {
-        logger.info("socket is nullptr. skip to connect.");
-        return true;
-    }
-
-    if (!socket_->initSSL()) {
-        logger.info("init ssl context failed.");
-        return false;
-    }
-
-    return socket_->switchToSSL();
+    return client_->recvResponse(respBuf);
 }
 
 bool HttpConnection::connect(const HttpUrl &url) {
@@ -76,30 +54,27 @@ bool HttpConnection::connect(const HttpUrl &url) {
         return false;
     }
 
-    int tmpFd = -1;
     for (size_t idx = 0; host->h_addr_list[ idx ]; ++idx) {
-        tmpFd = socket(host->h_addrtype, SOCK_STREAM, 0);
-        if (tmpFd == -1) {
+        auto tcpClient = std::make_unique<TcpClient>(useSsl_);
+        if (tcpClient == nullptr) {
             logger.info("create socket fd error errmsg:%s", System::GetErrMsg(errno));
             continue;
         }
 
-        auto socket = std::make_unique<Socket>(tmpFd);
-        if (socket == nullptr) {
-            logger.info("create socket fd error errmsg:%s", System::GetErrMsg(errno));
-            continue;
-        }
+        sockaddr_in sock = {
+            .sin_family = static_cast<sa_family_t>(host->h_addrtype),
+            .sin_port   = htons(port),
+            .sin_addr   = *(struct in_addr *)host->h_addr_list[ idx ],
+        };
 
-        sockaddr_in sock = {.sin_family = static_cast<sa_family_t>(host->h_addrtype), .sin_port = htons(port), .sin_addr = *(struct in_addr *)host->h_addr_list[ idx ]};
-
-        muduo::net::InetAddress addr(sock);
-        bool                    result = socket->connect(addr, 10);
+        tcpClient->setTimeOut(timedOut_, timedOut_, timedOut_);
+        bool result = tcpClient->connect(muduo::net::InetAddress(sock));
         if (!result) {
-            socket->close();
+            tcpClient->close();
             continue;
         }
 
-        socket_ = std::move(socket);
+        client_ = std::move(tcpClient);
         return true;
     }
 

@@ -50,7 +50,7 @@ void ConfigureManager::InitFile(cstring file) {
             continue;
         }
 
-        size_t nPos = 0;
+        size_t nPos;
         if ((nPos = strLine.find("#")) != std::string::npos)
             strLine = strLine.substr(0, nPos);
         if (strLine.back() == ']' && strLine.front() == '[' && detail::count(strLine, '[') == 1 && detail::count(strLine, ']') == 1) {
@@ -61,9 +61,9 @@ void ConfigureManager::InitFile(cstring file) {
             strSectionKey = strPrefix + "/" + temp;
             bFindSection  = true;
         } else if (bFindSection && detail::count(strLine, '=')) {
-            auto pos = strLine.find('=');
-            strKey   = detail::trim(strLine.substr(0, pos), std::string(" "));
-            strVal   = detail::trim(strLine.substr(pos + 1), std::string(" "));
+            auto pos1 = strLine.find('=');
+            strKey   = detail::trim(strLine.substr(0, pos1), std::string(" "));
+            strVal   = detail::trim(strLine.substr(pos1 + 1), std::string(" "));
             strKey   = detail::trim(strKey, std::string("'"));
             strVal   = detail::trim(strVal, std::string("'"));
             strKey   = detail::trim(strKey, std::string("\""));

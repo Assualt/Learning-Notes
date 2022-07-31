@@ -40,7 +40,7 @@ public:
     typedef Iter                                                                                 const_iterator;
     typedef typename std::remove_reference<typename std::iterator_traits<Iter>::reference>::type value_type;
     /* iterator */
-    using difference_type = typename std::iterator_traits<Iter>::difference_type;
+    using difference_type [[maybe_unused]] = typename std::iterator_traits<Iter>::difference_type;
     typedef typename std::iterator_traits<Iter>::reference reference;
 
     typedef typename std::conditional<std::is_same<Iter, char *>::value || std::is_same<Iter, unsigned char *>::value, Range<const value_type *>, Range<Iter>>::type const_range_type;
@@ -52,10 +52,10 @@ public:
         : begin_()
         , end_() {
     }
-    constexpr Range(const Range &)                                                                    = default;
-    constexpr Range(Range &&)                                                                         = default;
-    Range &                                                                                   operator=(const Range &rhs) = default;
-    Range &                                                                                   operator=(Range &&rhs) = default;
+    constexpr Range(const Range &)                                                                                            = default;
+    constexpr Range(Range &&)                                                                                                 = default;
+    Range                                                                                    &operator=(const Range &rhs)     = default;
+    Range                                                                                    &operator=(Range &&rhs)          = default;
     template <class Alloc, class T, typename detail::IsCharPointer<T>::const_type = 0> Range &operator=(mstring<Alloc> &&rhs) = delete;
     constexpr Range(Iter start, Iter end)
         : begin_(start)
@@ -273,7 +273,7 @@ public:
         }
         size_t    pos          = 0;
         size_t    num_replaced = 0;
-        size_type found        = std::string::npos;
+        size_type found;
         while ((found = find(source, pos)) != std::string::npos) {
             replaceAt(found, dest);
             pos += source.size();

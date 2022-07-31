@@ -101,25 +101,23 @@ void Socket::setTcpNoDelay(bool on) {
 }
 
 bool Socket::connect(const InetAddress &addr, int timeout) {
-    if (timeout == 0) {
+    if (timeout <= 0) {
         return sockets::connect(sockFd_, addr.getSockAddr());
     }
 
     int oldFlag = fcntl(sockFd_, F_GETFL, 0);
-    fcntl(sockFd_, F_SETFL, oldFlag | O_NONBLOCK);
+    (void)fcntl(sockFd_, F_SETFL, oldFlag | O_NONBLOCK);
 
     auto ret = sockets::connect(sockFd_, addr.getSockAddr());
     if (ret == 0) {
-        fcntl(sockFd_, F_SETFL, oldFlag);
+        (void)fcntl(sockFd_, F_SETFL, oldFlag);
         return true;
     } else if (errno != EINPROGRESS) {
         logger.error("connect address [%s] error ...", addr.toIpPort());
         return false;
     }
 
-    struct timeval tm {
-        .tv_sec = timeout, .tv_usec = 0
-    };
+    struct timeval tm { .tv_sec = timeout, .tv_usec = 0 };
     fd_set writeSet;
     FD_ZERO(&writeSet);
     FD_SET(sockFd_, &writeSet);
@@ -149,7 +147,7 @@ bool Socket::connect(const InetAddress &addr, int timeout) {
     }
 
     logger.info("connection ready after select with the socket:%d", sockFd_);
-    fcntl(sockFd_, F_SETFL, oldFlag);
+    (void)fcntl(sockFd_, F_SETFL, oldFlag);
     return true;
 }
 

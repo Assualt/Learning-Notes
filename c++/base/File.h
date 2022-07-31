@@ -11,7 +11,7 @@
 namespace muduo {
 namespace base {
 
-DECLARE_EXCEPTION(FileException, Exception);
+DECLARE_EXCEPTION(FileException, Exception)
 class File {
 private:
     int  m_nFd{-1};
