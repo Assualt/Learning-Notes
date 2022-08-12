@@ -1,4 +1,5 @@
 #include "Timestamp.h"
+#include <iomanip>
 #include <sstream>
 #include <sys/time.h>
 
@@ -22,6 +23,16 @@ Timestamp Timestamp::fromUnixTime(time_t t, int microSeconds) {
     return Timestamp(static_cast<int64_t>(t) * kMicroSecondsPerSecond + microSeconds);
 }
 
+Timestamp Timestamp::fromTimeStr(const std::string &str, const std::string &fmt) {
+    struct tm t;
+    std::stringstream ss(str.c_str());
+    ss >> std::get_time(&t, fmt.c_str());
+    if (ss.fail()) {
+        return Timestamp(0);
+    }
+    return Timestamp::fromUnixTime(mktime(&t));
+}
+
 Timestamp Timestamp::now() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -42,7 +53,7 @@ std::string Timestamp::toString() {
     return ss.str();
 }
 
-std::string Timestamp::toFormattedString(const char *fmt) {
+std::string Timestamp::toFormattedString(const char *fmt) const {
     time_t     ts                = seconds();
     struct tm *t                 = localtime(&ts);
     char       timeBuffer[ 128 ] = {0};

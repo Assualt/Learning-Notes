@@ -192,13 +192,13 @@ uint32_t Socket::read(Buffer &buf) {
 
         buf.append(buffer, nRead);
         nTotal += nRead;
-        //        printf("nread ======> %d\n", nRead);
-        //        for (auto idx = 0; idx < nRead; idx++) {
-        //            printf("%c", buffer[idx] & 0xFF);
-        //            if (buffer[idx] == '\n' && idx > 1 && buffer[idx-1] == 0xd) {
-        //                printf("\n");
-        //            }
-        //        }
+//                printf("nRead ======> %d\n", nRead);
+//                for (auto idx = 0; idx < nRead; idx++) {
+//                    printf("%c", buffer[idx] & 0xFF);
+//                    if (buffer[idx] == '\n' && idx > 1 && buffer[idx-1] == 0xd) {
+//                        printf("\n");
+//                    }
+//                }
 
         if (nRead < sizeof(buffer)) {
             break;
@@ -225,7 +225,6 @@ bool Socket::initSSL() {
 #endif
     return true;
 #endif
-    return false;
 }
 
 void Socket::sslDisConnect() {

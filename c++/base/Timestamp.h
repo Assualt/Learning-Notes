@@ -4,10 +4,8 @@
 #include <chrono>
 #include <iostream>
 
-#define INLINE_OPERATOR(ops, type, val)            \
-    inline bool operator ops(type lhs, type rhs) { \
-        return lhs.val ops rhs.val;                \
-    }
+#define INLINE_OPERATOR(ops, type, val) \
+    inline bool operator ops(type lhs, type rhs) { return lhs.val ops rhs.val; }
 namespace muduo {
 namespace base {
 class Timestamp {
@@ -20,7 +18,7 @@ public:
     void swap(Timestamp &other);
 
     std::string toString();
-    std::string toFormattedString(const char *fmt = "%Y-%m-%d %H:%M:%S.%Z%z");
+    std::string toFormattedString(const char *fmt = "%Y-%m-%d %H:%M:%S.%Z%z") const;
     bool        valid() const;
 
     int64_t microSeconds() const;
@@ -31,6 +29,7 @@ public:
     static Timestamp invalid();
     static Timestamp fromUnixTime(time_t t);
     static Timestamp fromUnixTime(time_t t, int microSecond);
+    static Timestamp fromTimeStr(const std::string &str, const std::string &fmt = "%Y-%m-%d %H:%M:%S");
     static int64_t   kMicroSecondsPerSecond;
 
 private:

@@ -25,6 +25,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <limits>
+#include <time.h>
 
 namespace json {
 
@@ -56,6 +57,10 @@ struct NullStruct {
 
 static void dump(NullStruct, string &out) {
     out += "null";
+}
+
+static void dump(time_t val, string &out) {
+    out += std::to_string(val);
 }
 
 static void dump(double value, string &out) {
@@ -125,6 +130,11 @@ static void dump(const Json::array &values, string &out) {
     out += "]";
 }
 
+static void dump(const Timestamp &stamp, string &out) {
+//    out += std::to_string(stamp.seconds());
+    out += "\"" + stamp.toFormattedString() + "\"";
+}
+
 static void dump(const Json::object &values, string &out) {
     bool first = true;
     out += "{";
@@ -157,6 +167,7 @@ protected:
         : m_value(move(value)) {
     }
 
+protected:
     // Get type tag
     Json::Type type() const override {
         return tag;
@@ -170,8 +181,8 @@ protected:
         return m_value < static_cast<const Value<tag, T> *>(other)->m_value;
     }
 
-    const T m_value;
-    void    dump(string &out) const override {
+    T    m_value;
+    void dump(string &out) const override {
         json::dump(m_value, out);
     }
 };
@@ -247,6 +258,8 @@ class JsonArray final : public Value<Json::ARRAY, Json::array> {
     }
     const Json &operator[](size_t i) const override;
 
+    void push_back(const Json &val) override;
+
 public:
     explicit JsonArray(const Json::array &value)
         : Value(value) {
@@ -256,11 +269,32 @@ public:
     }
 };
 
+class JsonDateTime final : public Value<Json::DATETIME, Timestamp> {
+public:
+    time_t datetime_value() const override {
+        return m_value.seconds();
+    }
+
+    explicit JsonDateTime(Timestamp val)
+        : Value(val) {
+    }
+
+    explicit JsonDateTime(JsonDateTime &value)
+        : Value(value) {
+    }
+
+    explicit JsonDateTime(JsonDateTime &&value)
+        : Value(std::move(value)) {
+    }
+};
+
 class JsonObject final : public Value<Json::OBJECT, Json::object> {
     const Json::object &object_items() const override {
         return m_value;
     }
     const Json &operator[](const string &key) const override;
+
+    Json &operator[](const string &key) override;
 
 public:
     explicit JsonObject(const Json::object &value)
@@ -344,6 +378,38 @@ Json::Json(Json::object &&values)
     : m_ptr(make_shared<JsonObject>(move(values))) {
 }
 
+Json::Json(time_t val)
+    : m_ptr(make_shared<JsonDateTime>(Timestamp::fromUnixTime(val))) {
+}
+
+Json::Json(const Timestamp &val)
+    : m_ptr(make_shared<JsonDateTime>(val)) {
+}
+
+Json::Json(Json::Type type) {
+    switch (type) {
+        case BOOL:
+            m_ptr.reset(new JsonBoolean(false));
+            break;
+        case NUMBER:
+            m_ptr.reset(new JsonInt(0));
+            break;
+        case ARRAY:
+            m_ptr.reset(new JsonArray({}));
+            break;
+        case OBJECT:
+            m_ptr.reset(new JsonObject({}));
+            break;
+        case DATETIME:
+            m_ptr.reset(new JsonDateTime(Timestamp::now()));
+            break;
+        case NUL:
+        default:
+            m_ptr.reset(new JsonNull);
+            break;
+    }
+}
+
 /* * * * * * * * * * * * * * * * * * * *
  * Accessors
  */
@@ -376,9 +442,28 @@ const Json &Json::operator[](const string &key) const {
     return (*m_ptr)[ key ];
 }
 
+Json &Json::operator[](const string &key) {
+    return (*m_ptr)[ key ];
+}
+
+void Json::push_back(const Json &val) {
+    m_ptr->push_back(val);
+}
+
 double JsonValue::number_value() const {
     return 0;
 }
+
+time_t JsonValue::datetime_value() const {
+    return 0;
+}
+
+Json &JsonValue::operator[](const std::string &key) {
+}
+
+void JsonValue::push_back(const Json &val) {
+}
+
 int JsonValue::int_value() const {
     return 0;
 }
@@ -405,6 +490,15 @@ const Json &JsonObject::operator[](const string &key) const {
     auto iter = m_value.find(key);
     return (iter == m_value.end()) ? static_null() : iter->second;
 }
+
+Json &JsonObject::operator[](const string &key) {
+    return m_value[ key ];
+}
+
+void JsonArray::push_back(const Json &val) {
+    m_value.push_back(val);
+}
+
 const Json &JsonArray::operator[](size_t i) const {
     if (i >= m_value.size())
         return static_null();

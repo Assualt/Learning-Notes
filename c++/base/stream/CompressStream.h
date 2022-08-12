@@ -75,7 +75,6 @@ public:
 private:
     Encoder encoder_;
     Decoder decoder_;
-    size_t  blockSize_{2048};
 };
 
 class Base64Impl : EncoderImpl<char>, DecoderImpl<char> {

@@ -3,11 +3,13 @@
  */
 #pragma once
 
+#include "base/Timestamp.h"
 #include <initializer_list>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
+using muduo::base::Timestamp;
 
 #ifdef _MSC_VER
 #if _MSC_VER <= 1800 // VS 2013
@@ -30,7 +32,7 @@ class JsonValue;
 class Json final {
 public:
     // Types
-    enum Type { NUL, NUMBER, BOOL, STRING, ARRAY, OBJECT };
+    enum Type { NUL, NUMBER, BOOL, STRING, ARRAY, OBJECT, DATETIME };
 
     // Array and object typedefs
     typedef std::vector<Json>           array;
@@ -49,12 +51,17 @@ public:
     Json(array &&values);           // ARRAY
     Json(const object &values);     // OBJECT
     Json(object &&values);          // OBJECT
+    Json(time_t val);               // DATETIME
+    Json(const Timestamp &val);     // DATETIME
 
     // Implicit constructor: anything with a to_json() function.
     template <class T, class = decltype(&T::to_json)>
     Json(const T &t)
         : Json(t.to_json()) {
     }
+
+    // 指定类型初始化
+    Json(Type type);
 
     // Implicit constructor: map-like objects (std::map, std::unordered_map, etc)
     template <class M, typename std::enable_if<std::is_constructible<std::string, decltype(std::declval<M>().begin()->first)>::value &&
@@ -115,6 +122,12 @@ public:
     const Json &operator[](size_t i) const;
     // Return a reference to obj[key] if this is an object, Json() otherwise.
     const Json &operator[](const std::string &key) const;
+
+    // Return a reference to obj[key]& if this is an object, Json() otherwise
+    Json &operator[](const std::string &key);
+
+    // only for array
+    void push_back(const Json &val);
 
     // Serialize.
     void        dump(std::string &out) const;
@@ -182,13 +195,15 @@ protected:
     virtual double              number_value() const;
     virtual int                 int_value() const;
     virtual bool                bool_value() const;
-    virtual const std::string & string_value() const;
-    virtual const Json::array & array_items() const;
-    virtual const Json &        operator[](size_t i) const;
+    virtual const std::string  &string_value() const;
+    virtual const Json::array  &array_items() const;
+    virtual const Json         &operator[](size_t i) const;
     virtual const Json::object &object_items() const;
-    virtual const Json &        operator[](const std::string &key) const;
-    virtual ~JsonValue() {
-    }
+    virtual const Json         &operator[](const std::string &key) const;
+    [[noreturn]] virtual Json  &operator[](const std::string &key);
+    virtual void                push_back(const Json &val);
+    virtual time_t              datetime_value() const;
+    virtual ~JsonValue() = default;
 };
 
 } // namespace json

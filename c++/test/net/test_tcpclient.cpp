@@ -1,4 +1,5 @@
 #include "base/Logging.h"
+#include "base/stream/CompressStream.h"
 #include "net/TcpClient.h"
 using namespace muduo::net;
 using namespace muduo::base;
@@ -10,9 +11,9 @@ int main(int, char **) {
 
     TcpClient client;
     client.setTimeOut(10, 5, 5);
-    bool ret = client.connect(InetAddress(20000));
+    bool ret = client.connect(InetAddress(8000));
     if (!ret) {
-        logger.info("connect 0.0.0.0:20000 failed.");
+        logger.info("connect 0.0.0.0:8000 failed.");
         return 0;
     }
 
@@ -25,11 +26,21 @@ int main(int, char **) {
             break;
         }
 
+        if (str.size() == 0) {
+            logger.info("send string is empty");
+            continue;
+        }
+
         auto sendSize = client.sendBuf(str.c_str(), str.size());
         logger.info("<<< send buf str:%s. size:%d", str, sendSize);
 
         Buffer recvBuf;
         auto   recvSize = client.recvResponse(recvBuf);
+        if (recvSize <= 0) { // send Error
+            logger.info("recv error errno:%d", errno);
+            break;
+        }
+
         logger.info(">>> recv buf str:%s. size:%d", std::string(recvBuf.peek(), recvSize), recvSize);
     }
 
