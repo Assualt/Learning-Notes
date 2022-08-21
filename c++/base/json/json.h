@@ -200,7 +200,7 @@ protected:
     virtual const Json         &operator[](size_t i) const;
     virtual const Json::object &object_items() const;
     virtual const Json         &operator[](const std::string &key) const;
-    [[noreturn]] virtual Json  &operator[](const std::string &key);
+    virtual Json  &operator[](const std::string &key);
     virtual void                push_back(const Json &val);
     virtual time_t              datetime_value() const;
     virtual ~JsonValue() = default;

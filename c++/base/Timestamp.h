@@ -18,7 +18,7 @@ public:
     void swap(Timestamp &other);
 
     std::string toString();
-    std::string toFormattedString(const char *fmt = "%Y-%m-%d %H:%M:%S.%Z%z") const;
+    std::string toFormattedString(const char *fmt = "%Y-%m-%d %H:%M:%S.000.%Z%z") const;
     bool        valid() const;
 
     int64_t microSeconds() const;

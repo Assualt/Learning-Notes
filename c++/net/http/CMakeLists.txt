@@ -10,3 +10,5 @@ set(http_common
 add_library(http_common SHARED ${http_common})
 add_subdirectory(server)
 add_subdirectory(client)
+add_subdirectory(cpp12306)
+add_subdirectory(tldextract)

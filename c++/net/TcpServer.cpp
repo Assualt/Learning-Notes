@@ -1,10 +1,10 @@
+#include "TcpServer.h"
 #include "Acceptor.h"
 #include "Buffer.h"
 #include "EventLoop.h"
 #include "EventLoopThreadPool.h"
 #include "SocketsOp.h"
 #include "TcpConnection.h"
-#include "TcpServer.h"
 #include "base/Format.h"
 #include "base/Logging.h"
 #include <functional>
@@ -12,7 +12,7 @@ using namespace std;
 namespace muduo {
 namespace net {
 void defaultConnectionCallback(const TcpConnectionPtr &conn) {
-    logger.info("Connnection local address:[%s] -> peer address:[%s] ", conn->localAddress().toIpPort(), conn->peerAddress().toIpPort());
+    logger.info("Connection local address:[%s] -> peer address:[%s] ", conn->localAddress().toIpPort(), conn->peerAddress().toIpPort());
 }
 
 void defaultMessageCallback(const TcpConnectionPtr &, Buffer *buf, Timestamp) {
@@ -24,34 +24,34 @@ void TcpServer::SetThreadNum(int threadNum) {
     m_threadPool->SetThreadNum(threadNum);
 }
 
-TcpServer::TcpServer(EventLoop *loop, const InetAddress &addr, const std::string &serverName, AddressOption option)
+TcpServer::TcpServer(EventLoop *loop, const InetAddress &addr, const std::string &serverName, bool useSSL, AddressOption)
     : m_pLoop(loop)
     , m_strServerName(serverName)
-    , acceptor(new Acceptor(loop, addr, false))
+    , acceptor(new Acceptor(loop, addr, false, useSSL))
     , connectionCallback(defaultConnectionCallback)
     , messageCallback(defaultMessageCallback)
     , m_threadPool(new EventLoopThreadPool(loop, serverName))
     , m_nNexcConnId(1)
     , m_address(addr) {
-    acceptor->setNewConnectionCallback(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1, std::placeholders::_2));
+    acceptor->setNewConnectionCallback(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 }
 
 std::string TcpServer::IpPort() {
     return m_address.toIpPort();
 }
 
-void TcpServer::NewConnection(int sockfd, const InetAddress &peerAddress) {
+void TcpServer::NewConnection(int sockFd, const InetAddress &peerAddress, void *arg) {
     m_pLoop->assertLoopThread();
     auto ioLoop = m_threadPool->getNextLoop();
     if (ioLoop == nullptr) {
-        logger.alert("next eventloop is empty. error");
+        logger.alert("next eventLoop is empty. error");
         return;
     }
-    InetAddress locAddr(sockets::getLocalAddr(sockfd));
+    InetAddress locAddr(sockets::getLocalAddr(sockFd));
     ++m_nNexcConnId;
     std::string connName = FmtString("%-%#%").arg(m_strServerName).arg(locAddr.toIpPort()).arg(m_nNexcConnId).str();
     logger.info("TcpServer::newConnection [%s] - new co nnection [%s] from [%s]", m_strServerName, connName, peerAddress.toIpPort());
-    TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockfd, locAddr, peerAddress));
+    TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockFd, locAddr, peerAddress, arg));
     conn->setConnectionCallBack(connectionCallback);
     conn->setMessageCallBack(messageCallback);
     conn->setCloseCallBack(std::bind(&TcpServer::RemoveConnection, this, std::placeholders::_1));

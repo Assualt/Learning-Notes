@@ -365,21 +365,21 @@ Json::Json(string &&value)
 Json::Json(const char *value)
     : m_ptr(make_shared<JsonString>(value)) {
 }
-Json::Json(const Json::array &values)
-    : m_ptr(make_shared<JsonArray>(values)) {
+Json::Json(const Json::array &value)
+    : m_ptr(make_shared<JsonArray>(value)) {
 }
-Json::Json(Json::array &&values)
-    : m_ptr(make_shared<JsonArray>(move(values))) {
+Json::Json(Json::array &&value)
+    : m_ptr(make_shared<JsonArray>(move(value))) {
 }
 Json::Json(const Json::object &values)
     : m_ptr(make_shared<JsonObject>(values)) {
 }
-Json::Json(Json::object &&values)
-    : m_ptr(make_shared<JsonObject>(move(values))) {
+Json::Json(Json::object &&value)
+    : m_ptr(make_shared<JsonObject>(move(value))) {
 }
 
-Json::Json(time_t val)
-    : m_ptr(make_shared<JsonDateTime>(Timestamp::fromUnixTime(val))) {
+Json::Json(time_t value)
+    : m_ptr(make_shared<JsonDateTime>(Timestamp::fromUnixTime(value))) {
 }
 
 Json::Json(const Timestamp &val)
@@ -459,6 +459,7 @@ time_t JsonValue::datetime_value() const {
 }
 
 Json &JsonValue::operator[](const std::string &key) {
+    throw std::invalid_argument("such class doesn't implement such func");
 }
 
 void JsonValue::push_back(const Json &val) {

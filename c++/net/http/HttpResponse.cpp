@@ -92,5 +92,13 @@ void HttpResponse::printBodyBuffer() const {
         }
     }
     printf("\n");
-    printf("size:%d\n", size);
+    printf("size:%lu\n", size);
+}
+
+void HttpResponse::appendToBodyBuffer(void *data, size_t len) {
+    bodyBuffer_.append(data, len);
+}
+
+void HttpResponse::setBody(const Buffer &buf) {
+    bodyBuffer_.append(buf.peek(), buf.readableBytes());
 }

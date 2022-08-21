@@ -11,9 +11,9 @@ class InetAddress;
 
 class Acceptor : base::nonecopyable {
 public:
-    typedef std::function<void(int, const InetAddress &)> NewConnectionCallback;
+    typedef std::function<void(int, const InetAddress &, void *)> NewConnectionCallback;
 
-    Acceptor(EventLoop *loop, const InetAddress &listenAddress, bool reUsePort);
+    Acceptor(EventLoop *loop, const InetAddress &listenAddress, bool reUsePort, bool useSSL = false);
     ~Acceptor();
 
     void setNewConnectionCallback(const NewConnectionCallback &cb) {
@@ -35,7 +35,7 @@ public:
 private:
     void handleRead();
 
-    EventLoop *           m_pLoop;
+    EventLoop            *m_pLoop;
     Socket                m_nAcceptSocket;
     Channel               m_cAcceptChannel;
     NewConnectionCallback newConnectionCallback;

@@ -11,7 +11,7 @@ using namespace muduo::net;
 namespace rpc {
 class RpcServer {
 public:
-    RpcServer(EventLoop *eventLoop, const InetAddress &addr);
+    RpcServer(EventLoop *eventLoop, const InetAddress &addr, bool useSSL);
 
     bool initEx(int threadNum);
 

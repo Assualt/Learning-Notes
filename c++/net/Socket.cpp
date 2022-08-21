@@ -10,8 +10,12 @@
 namespace muduo {
 namespace net {
 
-Socket::Socket(int sockFd)
+Socket::Socket(int sockFd, void *arg)
     : sockFd_(sockFd) {
+    if (arg != nullptr) {
+        sslConn_              = std::make_unique<SSL_Connection>();
+        sslConn_->m_ptrHandle = reinterpret_cast<SSL *>(arg);
+    }
 }
 
 Socket::~Socket() {
@@ -75,13 +79,11 @@ void Socket::setReusePort(bool on) {
         logger.error("set SO_REUSE PORT failed.");
     }
 #else
-    if (on) {
-        logger.info("SO_REUSEPORT is not supported.");
-    }
+    LOG_IF(on).info("SO_REUSEPORT is not supported.");
 #endif
 }
 
-int Socket::accept(InetAddress *remoteAddr) {
+std::pair<int, void *> Socket::accept(InetAddress *remoteAddr) {
     struct sockaddr_in6 addr;
     socklen_t           len;
     bzero(&addr, sizeof addr);
@@ -89,7 +91,32 @@ int Socket::accept(InetAddress *remoteAddr) {
     if (connFd >= 0) {
         remoteAddr->setSockAddrInet6(addr);
     }
-    return connFd;
+
+#ifndef USE_SSL
+    return {connFd, nullptr};
+#else
+    if (sslConn_ == nullptr) {
+        return {connFd, nullptr};
+    }
+
+    SSL *ssl = nullptr;
+    ssl      = SSL_new(sslConn_->m_ptrContext);
+    if (SSL_set_fd(ssl, connFd) != 1) {
+        ERR_print_errors_fp(stderr);
+        sockets::close(connFd);
+        logger.info("tls/ssl set fd fail.");
+        return {-1, nullptr};
+    }
+
+    auto ret = SSL_accept(ssl);
+    if (ret != 1) {
+        ERR_print_errors_fp(stderr);
+        logger.info("tls/ssl handle shake fail. ret:%d", SSL_get_error(ssl, ret));
+        sockets::close(connFd);
+        return {-1, nullptr};
+    }
+    return {connFd, ssl};
+#endif
 }
 
 void Socket::shutdownWrite() {
@@ -117,7 +144,9 @@ bool Socket::connect(const InetAddress &addr, int timeout) {
         return false;
     }
 
-    struct timeval tm { .tv_sec = timeout, .tv_usec = 0 };
+    struct timeval tm {
+        .tv_sec = timeout, .tv_usec = 0
+    };
     fd_set writeSet;
     FD_ZERO(&writeSet);
     FD_SET(sockFd_, &writeSet);
@@ -192,13 +221,13 @@ uint32_t Socket::read(Buffer &buf) {
 
         buf.append(buffer, nRead);
         nTotal += nRead;
-//                printf("nRead ======> %d\n", nRead);
-//                for (auto idx = 0; idx < nRead; idx++) {
-//                    printf("%c", buffer[idx] & 0xFF);
-//                    if (buffer[idx] == '\n' && idx > 1 && buffer[idx-1] == 0xd) {
-//                        printf("\n");
-//                    }
-//                }
+        //                printf("nRead ======> %d\n", nRead);
+        //                for (auto idx = 0; idx < nRead; idx++) {
+        //                    printf("%c", buffer[idx] & 0xFF);
+        //                    if (buffer[idx] == '\n' && idx > 1 && buffer[idx-1] == 0xd) {
+        //                        printf("\n");
+        //                    }
+        //                }
 
         if (nRead < sizeof(buffer)) {
             break;
@@ -235,16 +264,23 @@ void Socket::sslDisConnect() {
     if (sslConn_->m_ptrHandle) {
         SSL_shutdown(sslConn_->m_ptrHandle);
         SSL_free(sslConn_->m_ptrHandle);
+        sslConn_->m_ptrHandle = nullptr;
     }
-    if (sslConn_->m_ptrContext)
+    if (sslConn_->m_ptrContext) {
         SSL_CTX_free(sslConn_->m_ptrContext);
+        sslConn_->m_ptrContext = nullptr;
+    }
 #endif
 }
 
-bool Socket::switchToSSL() {
+bool Socket::switchToSSL(bool isClient) {
 #ifdef USE_SSL
-    sslConn_               = std::make_unique<SSL_Connection>();
-    sslConn_->m_ptrContext = SSL_CTX_new(TLS_client_method());
+    sslConn_ = std::make_unique<SSL_Connection>();
+    if (isClient) {
+        sslConn_->m_ptrContext = SSL_CTX_new((TLS_client_method()));
+    } else {
+        sslConn_->m_ptrContext = SSL_CTX_new((SSLv23_server_method()));
+    }
     if (sslConn_->m_ptrContext == nullptr) {
         sslDisConnect();
         ERR_print_errors_fp(stderr);
@@ -264,12 +300,15 @@ bool Socket::switchToSSL() {
         ERR_print_errors_fp(stderr);
         return false;
     }
+
     // Initiate SSL handshake
-    if (SSL_connect(sslConn_->m_ptrHandle) != 1) {
+    if (isClient && SSL_connect(sslConn_->m_ptrHandle) != 1) {
         ERR_print_errors_fp(stderr);
         sslDisConnect();
         return false;
     }
+
+    logger.info("switch to ssl success");
     return true;
 #else
     return false;
@@ -297,6 +336,42 @@ int32_t Socket::setWriteTimeout(int seconds) {
     };
 
     return setsockopt(sockFd_, SOL_SOCKET, SO_SNDTIMEO, (const void *)&val, sizeof(val));
+}
+
+bool Socket::initSSLServer(const std::string &certPath, const std::string &keyPath) {
+#ifndef USE_SSL
+    return false;
+#else
+    auto ret = initSSL();
+    if (!ret) {
+        logger.info("init ssl error");
+        return ret;
+    }
+
+    ret = switchToSSL(false);
+    if (!ret) {
+        ERR_print_errors_fp(stderr);
+        sslDisConnect();
+        return ret;
+    }
+
+    auto code = SSL_CTX_use_certificate_file(sslConn_->m_ptrContext, certPath.c_str(), SSL_FILETYPE_PEM);
+    if (code < 0) {
+        ERR_print_errors_fp(stderr);
+        sslDisConnect();
+        return false;
+    }
+
+    code = SSL_CTX_use_PrivateKey_file(sslConn_->m_ptrContext, keyPath.c_str(), SSL_FILETYPE_PEM);
+    if (code < 0) {
+        ERR_print_errors_fp(stderr);
+        sslDisConnect();
+        return false;
+    }
+
+    code = SSL_CTX_check_private_key(sslConn_->m_ptrContext);
+    return (code == 0);
+#endif
 }
 
 } // namespace net

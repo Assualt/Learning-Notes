@@ -81,7 +81,7 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime) {
                     // FIXME:
                     setContentLengthType();
                     if ((m_lenType == kContentLength) && (m_contentLength == 0)) {
-                        m_state = kGotAll;
+                        m_state = kGotEnd;
                         hasMore = false;
                     } else {
                         m_state = kExpectBody;
@@ -94,7 +94,9 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime) {
         } else if (m_state == kExpectBody) {
             // FIXME:
             parseBodyPart(buf);
-            m_state = kGotAll;
+            hasMore = false;
+        } else if (m_state == kGotAll) {
+            parseBodyPart(buf);
             hasMore = false;
         }
     }
@@ -123,11 +125,22 @@ void HttpContext::parseBodyPart(Buffer *buf) {
     } else if (m_lenType == kContentChunked) {
         logger.info("parse buffer with chunked");
         parseBodyByChunkedBuffer(buf);
+        m_state = kGotEnd;
     }
 }
 
 void HttpContext::parseBodyByContentLength(Buffer *buf) {
-    m_request.setPostParams(std::string(buf->peek(), buf->peek() + buf->readableBytes()));
+    auto reqLen = atol(m_request.get(ContentLength).c_str());
+    if (reqLen == 0) {
+        m_state = kGotEnd;
+        return;
+    }
+    m_request.appendBodyBuffer(buf->peek(), buf->readableBytes());
+    auto recvLen = m_request.getBodySize();
+    logger.info("content length:%d recv length:%d", reqLen, recvLen);
+    if (recvLen >= reqLen) {
+        m_state = kGotEnd;
+    }
 }
 void HttpContext::parseBodyByChunkedBuffer(Buffer *buf) {
     while (true) {

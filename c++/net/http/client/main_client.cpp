@@ -8,7 +8,7 @@
 #define UserAgent_Default "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
 
 using namespace muduo::base;
-cmdline::parser cmdParse(int argc, char **argv) {
+cmdline::parser cmdParse(int, char **) {
     cmdline::parser cmdParser;
     cmdParser.add("help", 'h', "This is a simple http client which support http/https");
     cmdParser.add("version", 'v', "show version of client cpp");

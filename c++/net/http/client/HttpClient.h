@@ -58,6 +58,12 @@ public:
         this->setHeader(Cookie, strCookie);
     }
 
+    void SaveResultToFile(const std::string &resultFile, const HttpResponse &res) {
+        std::ofstream fout(resultFile);
+        fout.write(res.getBodyBuf().peek(), res.getBodyBuf().readableBytes());
+        fout.close();
+    }
+
     void setBasicAuthUserPass(const std::string &user, const std::string &passwd) {
         std::stringstream ss;
         ss << user << ":" << passwd;

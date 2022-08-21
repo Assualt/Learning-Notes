@@ -51,6 +51,9 @@ public:
     void                      appendBodyBuffer(const void *buf, size_t size);
     const muduo::net::Buffer &getBodyBuffer() const;
 
+    long getBodySize() {
+        return m_bodyBuffer.readableBytes();
+    }
     // request 请求解析时候的 query参数解析
     std::map<std::string, std::string> &GetRequestQueryMap() {
         return m_urlQueryMap;
@@ -63,11 +66,11 @@ public:
 
     friend std::ostream &operator<<(std::ostream &os, const HttpRequest &obj) {
         os << "> " << obj.m_strRequestType << " " << obj.m_strRequestPath << " " << obj.m_strHttpVersion << CTRL;
+        os << "> Host: " << obj.m_strRequestHost << CTRL;
         for (auto &item : obj.m_vRequestHeader)
             os << "> " << item.first << ": " << item.second << CTRL;
         if (!obj.m_strRangeBytes.empty())
             os << "Range: " << obj.m_strRangeBytes << CTRL;
-        os << "> Host: " << obj.m_strRequestHost << CTRL;
         os << CTRL;
         if (!obj.m_strPostParams.empty()) {
             os << obj.m_strPostParams << CTRL;

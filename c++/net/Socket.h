@@ -21,7 +21,7 @@ class InetAddress;
 class Buffer;
 class Socket : nonecopyable {
 public:
-    explicit Socket(int sockFd);
+    explicit Socket(int sockFd, void *arg = nullptr);
     ~Socket();
 
 public:
@@ -37,7 +37,7 @@ public:
 
     bool connect(const InetAddress &addr, int timeout);
 
-    int accept(InetAddress *remoteAddress);
+    std::pair<int, void *> accept(InetAddress *remoteAddress);
 
     void close();
 
@@ -71,9 +71,11 @@ public:
 
     void shutdownWrite();
 
-    bool switchToSSL();
+    bool switchToSSL(bool isClient = true);
 
     bool initSSL();
+
+    bool initSSLServer(const std::string &certPath, const std::string &keyPath);
 
     void sslDisConnect();
 

@@ -7,11 +7,14 @@
 using namespace muduo::base;
 using namespace muduo::net;
 
-Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddress, bool reUsePort)
+Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddress, bool reUsePort, bool useSSL)
     : m_pLoop(loop)
     , m_nAcceptSocket(sockets::createNonblockingOrDie(listenAddress.family()))
     , m_cAcceptChannel(loop, m_nAcceptSocket.fd())
     , m_bListening(false) {
+    if (useSSL) {
+        m_nAcceptSocket.initSSLServer("cert.pem", "privkey.pem");
+    }
     m_nAcceptSocket.setReuseAddr(true);
     m_nAcceptSocket.setReusePort(reUsePort);
     m_nAcceptSocket.bindAddress(listenAddress);
@@ -43,12 +46,13 @@ void Acceptor::handleRead() {
     m_pLoop->assertLoopThread();
     InetAddress peerAddress;
     // FIXME loop until no more
-    int connFd = m_nAcceptSocket.accept(&peerAddress);
+
+    auto [ connFd, ctx ] = m_nAcceptSocket.accept(&peerAddress);
     if (connFd >= 0) {
         string hostPort = peerAddress.toIpPort();
         logger.info("accept connected fd:%d, host:%s", connFd, hostPort);
         if (newConnectionCallback) {
-            newConnectionCallback(connFd, peerAddress);
+            newConnectionCallback(connFd, peerAddress, ctx);
         } else {
             sockets::close(connFd);
             logger.info("no handle new connection callback. close it instead");
@@ -58,6 +62,7 @@ void Acceptor::handleRead() {
         // Read the section named "The special problem of
         // accept()ing when you can't" in libev's doc.
         // By Marc Lehmann, author of libev.
+
         if (errno == EMFILE) {
             ::close(m_nIdleFd);
             m_nIdleFd = ::accept(m_cAcceptChannel.fd(), NULL, NULL);

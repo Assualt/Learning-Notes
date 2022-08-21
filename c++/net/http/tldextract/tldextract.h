@@ -11,9 +11,11 @@
 #include <unistd.h>
 #include <vector>
 
-#include "httpclient.hpp"
-#include "logging.h"
+#include "net/http/client/HttpClient.h"
+#include "base/Logging.h"
 
+using namespace muduo::net;
+using namespace muduo::base;
 using namespace std;
 #define PUNYCODE "xn--"
 #define PUNYPREFIX "//  xn--"
@@ -184,21 +186,21 @@ private:
     }
 
     bool downloadRemoteUrl(const std::string &destFileName) {
-        http::HttpClient client;
+        HttpClient client;
         client.setConnectTimeout(TLDExtract::remote_req_timeout);
         client.setAcceptEncoding("gzip, deflate, br");
         client.setAccept("*/*");
         client.setAcceptLanguage("zh-CN,zh;q=0.9");
         client.setUserAgent(USERAGENT);
-        client.setHttpVersion(http::utils::HTTP_1_1);
+        client.setHttpVersion("HTTP/1.1");
         for (auto &reqUrl : suffix_list_urls) {
-            http::HttpResult result = client.Get(reqUrl);
-            if (result.status_code() == 200) {
-                client.SaveResultToFile(destFileName);
+            auto result = client.Get(reqUrl);
+            if (result.getStatusCode() == HttpStatusCode::k200Ok) {
+                client.SaveResultToFile(destFileName, result);
                 logger.info("download file %s from %s success.", destFileName, reqUrl);
                 return true;
             }
-            logger.info("Download %d Error: %s, try another url %s", result.status_code(), result.error(), reqUrl);
+            logger.info("Download %d Error: %s, try another url %s", result.getStatusCode(), result.getStatusMessage(), reqUrl);
         }
         return false;
     }

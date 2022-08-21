@@ -120,18 +120,19 @@ int sockets::createNonblockingOrDie(const sa_family_t family) {
 }
 
 struct sockaddr_in6 sockets::getLocalAddr(int sockFd) {
-    struct sockaddr_in6 localaddr;
-    bzero(&localaddr, sizeof localaddr);
-    socklen_t addrLen = static_cast<socklen_t>(sizeof localaddr);
-    if (::getsockname(sockFd, (struct sockaddr *)(&localaddr), &addrLen) < 0) {
+    struct sockaddr_in6 localAddr;
+    bzero(&localAddr, sizeof localAddr);
+    socklen_t addrLen = static_cast<socklen_t>(sizeof localAddr);
+    if (::getsockname(sockFd, (struct sockaddr *)(&localAddr), &addrLen) < 0) {
         logger.warning("sockets::getLocalAddr");
     }
-    return localaddr;
+    return localAddr;
 }
 
 void sockets::shutdownWrite(int sockFd) {
-    if (::shutdown(sockFd, SHUT_WR) < 0) {
-        logger.error("shut down sockFd error :%d", sockFd);
+    auto ret = ::shutdown(sockFd, SHUT_WR);
+    if (ret < 0) {
+        logger.error("shut down sockFd error :%d, ret:%d errno:%d", sockFd, ret, errno);
     }
 }
 

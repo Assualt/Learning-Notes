@@ -1,5 +1,6 @@
 #pragma once
 #include "base/json/json.h"
+#include <functional>
 #include <iostream>
 #include <mariadb/mysql.h>
 #include <memory>
@@ -16,11 +17,15 @@ enum SqlError {
     MYSQL_QUERY_FAIL,
     MYSQL_QUERY_NULL_FIELD,
     MYSQL_PING_FAIL,
+    MYSQL_DB_NOT_FOUND,
+    MYSQL_CREATE_DB_FAILED,
+    MYSQL_CREATE_TABLE_FAILED,
     MYSQL_SWITCH_DB_FAIL,
     MYSQL_COMMIT_FAIL,
     MYSQL_ROLLBACK_FAIL,
 };
 
+using QueryCallback = std::function<void(const json::Json &)>;
 class MysqlClient {
 public:
     explicit MysqlClient(const std::string &dbName, const std::string &host = "127.0.0.1", size_t port = 3306, const std::string &user = "root", const std::string &pass = "",
@@ -35,11 +40,15 @@ public:
         return m_strErrMsg;
     }
     std::pair<SqlError, json::Json> Query(const std::string &strSql);
-    std::pair<SqlError, int>        Execute(const std::string &mysql);
-    void                            ShowTables();
+    std::pair<SqlError, long long>  Execute(const std::string &mysql);
+    std::pair<SqlError, json::Json> ShowTables();
+    std::pair<SqlError, json::Json> ShowTable(const std::string &tableName);
     SqlError                        SwitchBD(const std::string &dbName);
     SqlError                        CommitTransaction();
     SqlError                        Rollback();
+    SqlError                        CreateTable(const std::string &strSql);
+
+    SqlError NewDB(const std::string &dbName);
 
 private:
     std::string m_strHost{"127.0.0.1"};
@@ -51,6 +60,7 @@ private:
 
     MYSQL      *driver_{nullptr};
     std::string m_strErrMsg;
+    bool        m_bIsConnected{false};
 };
 
 } // namespace db

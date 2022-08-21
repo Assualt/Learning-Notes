@@ -12,8 +12,9 @@ HttpResponse HttpClient::Post(const string &url, const Buffer &body, bool needRe
     return Request(ReqType::Type_POST, url, body, needRedirect, verbose);
 }
 
-HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &reqUrl, const Buffer &buff, bool, bool verbose) {
+HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &url, const Buffer &buff, bool needRedirect, bool verbose) {
     HttpResponse resp(false);
+    std::string reqUrl = url;
     if (!conn_.connect(reqUrl)) {
         logger.info("connect the url:%s error", reqUrl);
         return resp;
@@ -25,6 +26,7 @@ HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &reqUrl,
         request_.setRequestType("POST");
     }
 
+request:
     size_t writeBytes = conn_.send(GetRequestBuffer(reqUrl));
     if (writeBytes <= 0) {
         logger.info("send data to server failed. write bytes:%d", writeBytes);
@@ -47,6 +49,12 @@ HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &reqUrl,
         std::cout << resp;
     }
 
+    if (resp.getStatusCode() == HttpStatusCode::k302MovedPermanently && needRedirect) {
+        reqUrl = resp.getHeader(Location);
+        logger.info("begin to redirect url:%s ", reqUrl);
+        goto request;
+    }
+
     return resp;
 }
 
@@ -58,28 +66,41 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
         return resp;
     }
 
-    if (context.gotAll()) {
-        HttpRequest req = context.request();
-        for (auto &item : req.GetRequestHeader()) {
-            resp.addHeader(item.first, item.second);
+    if (!context.gotEnd()) {
+        int32_t size = 0;
+        while (true) {
+            if (context.gotEnd()) {
+                break;
+            }
+            auto nRead = conn_.recv(buffer);
+            if (nRead <= 0) {
+                logger.info("recv buf length is nullptr");
+                break;
+            }
+            context.parseRequest(&buffer, Timestamp());
+            size += nRead;
         }
+        logger.info("read left size with body %d, totalSize:%d", size, context.request().getBodySize());
+    }
 
-        resp.setStatusMessage(static_cast<HttpStatusCode>(req.getStatusCode()), req.getHttpVersion(), req.getStatusMessage());
-
-        if (req.get(ContentType).find("text/") != std::string::npos) {
-            auto encodingType = req.get(ContentEncoding);
-            if (strcasecmp(encodingType.c_str(), "gzip") == 0) {
-                auto           buf = req.getBodyBuffer();
-                MyStringBuffer in, out;
-                in.sputn(buf.peek(), buf.readableBytes());
-                ZlibStream::GzipDecompress(in, out);
-                resp.setBody(out.toString());
+    HttpRequest req = context.request();
+    for (auto &item : req.GetRequestHeader()) {
+        resp.addHeader(item.first, item.second);
+    }
+    resp.setStatusMessage(static_cast<HttpStatusCode>(req.getStatusCode()), req.getHttpVersion(), req.getStatusMessage());
+    if (req.get(ContentType).find("text/") != std::string::npos) {
+        auto encodingType = req.get(ContentEncoding);
+        if (strcasecmp(encodingType.c_str(), "gzip") == 0) {
+            auto           buf = req.getBodyBuffer();
+            MyStringBuffer in, out;
+            in.sputn(buf.peek(), buf.readableBytes());
+            ZlibStream::GzipDecompress(in, out);
+            resp.setBody(out.toString());
+        } else {
+            if (!req.getPostParams().empty()) {
+                resp.setBody(req.getPostParams());
             } else {
-                if (!req.getPostParams().empty()) {
-                    resp.setBody(req.getPostParams());
-                } else {
-                    resp.setBody(std::string(req.getBodyBuffer().peek(), req.getBodyBuffer().readableBytes()));
-                }
+                resp.setBody(req.getBodyBuffer());
             }
         }
     }

@@ -10,7 +10,7 @@ int main(int argc, char const *argv[]) {
     log.addLogHandle(new StdOutLogHandle);
 
     EventLoop loop;
-    RpcServer server(&loop, InetAddress(8000));
+    RpcServer server(&loop, InetAddress(22087), false);
     server.start();
     loop.loop();
     return 0;

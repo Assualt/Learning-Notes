@@ -4,7 +4,7 @@ int main(int argc, char const *argv[]) {
     db::SqlPrepareStatement st("insert into test(id,name,desc) values(%,'%','%')");
 
     st.assignValue(12).assignValue("xhou").assignValue("description ok...");
-    std::cout << st.getFullExecuteSql() << std::endl;
+    std::cout << "execute:" << st.getFullExecuteSql() << std::endl;
 
     db::SqliteClient client;
 

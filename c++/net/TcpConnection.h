@@ -8,6 +8,7 @@
 #include <bits/shared_ptr.h>
 #include <iostream>
 #include <memory>
+
 namespace muduo {
 namespace net {
 
@@ -18,7 +19,7 @@ enum class TcpState : uint8_t { DisConnected, Connecting, Connected, DisConnecti
 
 class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
 public:
-    TcpConnection(EventLoop *loop, const std::string &name, int sockfd, const InetAddress &locAddr, const InetAddress &peerAddr);
+    TcpConnection(EventLoop *loop, const std::string &name, int sockFd, const InetAddress &locAddr, const InetAddress &peerAddr, void *ssl = nullptr);
 
     ~TcpConnection();
 

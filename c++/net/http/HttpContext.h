@@ -20,6 +20,7 @@ public:
         kExpectHeaders,
         kExpectBody,
         kGotAll,
+        kGotEnd,
     };
 
     enum HttpRequestBodyLenType { kContentLength, kContentChunked };
@@ -38,6 +39,10 @@ public:
 
     bool gotAll() const {
         return m_state == kGotAll;
+    }
+
+    bool gotEnd() const {
+        return m_state == kGotEnd;
     }
 
     void reset() {

@@ -3,12 +3,11 @@
 std::string HttpRequest::toStringHeader() const {
     std::stringstream ss;
     ss << m_strRequestType << " " << m_strRequestPath << " " << m_strHttpVersion << CTRL;
+    ss << "Host: " << m_strRequestHost << CTRL;
     for (auto &item : m_vRequestHeader)
         ss << item.first << ": " << item.second << CTRL;
     if (!m_strRangeBytes.empty())
         ss << "Range: " << m_strRangeBytes << CTRL;
-    ss << "Host: " << m_strRequestHost << CTRL;
-
     if (!m_strPostParams.empty())
         ss << CTRL << m_strPostParams;
     ss << CTRL;
@@ -64,7 +63,7 @@ std::string HttpRequest::getPostParams() const {
     return m_strPostParams;
 }
 void HttpRequest::setPostParams(const std::string &strPostParams) {
-    m_strPostParams = strPostParams;
+    m_strPostParams.append(strPostParams);
 }
 std::string HttpRequest::getRequestPath() const {
     return m_strRequestPath;

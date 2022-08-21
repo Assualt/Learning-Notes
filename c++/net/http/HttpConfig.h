@@ -65,7 +65,7 @@ enum EncodingType {
 enum HttpStatusCode : uint32_t {
     kUnknown,
     k200Ok               = 200,
-    k301MovedPermanently = 301,
+    k302MovedPermanently = 302,
     k400BadRequest       = 400,
     k401NotAuth          = 401,
     k404NotFound         = 404,

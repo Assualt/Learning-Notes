@@ -9,6 +9,7 @@ TcpClient::TcpClient(bool useSsl)
     socket_ = std::make_unique<Socket>(fd_);
     if (useSsl) {
         socket_->initSSL();
+        logger.info("use ssl to connect ...");
     }
 }
 
@@ -33,7 +34,11 @@ void TcpClient::close() {
 }
 
 bool TcpClient::connect(const InetAddress &address) {
-    return socket_->connect(address, connectTimeOut_);
+    bool ret = socket_->connect(address, connectTimeOut_);
+    if (ret && useSsl_) {
+        return socket_->switchToSSL();
+    }
+    return ret;
 }
 
 int32_t TcpClient::sendRequest(const Buffer &buffer) {
