@@ -4,11 +4,11 @@
 #include "base/nonecopyable.h"
 
 #include <cassert>
+#include <cstdio>
 #include <iosfwd>
 #include <iostream>
 #include <limits>
 #include <list>
-#include <cstdio>
 #include <utility>
 
 namespace muduo::base {
@@ -19,13 +19,13 @@ class StreamBase;
 
 typedef unsigned char tbyte;
 //! Exception about the operations of Stream
-DECLARE_EXCEPTION(StreamException, Exception);
+DECLARE_EXCEPTION(StreamException, Exception)
 
 //! The Status of stream
 class StreamStatus : private nonecopyable {
 public:
     enum seek_dir {
-        seek_begin = SEEK_SET, //!< begin from the start
+        seek_begin                = SEEK_SET, //!< begin from the start
         seek_cur [[maybe_unused]] = SEEK_CUR, //!< begin from current position
         seek_end [[maybe_unused]] = SEEK_END  //!< begin from the end
     };
@@ -54,7 +54,7 @@ public:
     //! Destructor
     virtual ~StreamStatus() = default;
 
-    //! check the result code is whethere ok
+    //! check the result code is whether ok
     //! return true while nResult is neither nERRORS nor nEOS
     static inline bool resultIsOK(size_t nResult) {
         return (nResult + 1 > 1);
@@ -143,8 +143,8 @@ public:
         typedef tbyte                     value_type;
         typedef size_t                    difference_type;
         typedef size_t                    distance_type; // retained
-        typedef tbyte *                   pointer;
-        typedef const tbyte &             reference;
+        typedef tbyte                    *pointer;
+        typedef const tbyte              &reference;
 
         explicit iterator(ReadStreamBuffer &iBuffer)
             : m_pBuffer(&iBuffer) {
@@ -160,7 +160,7 @@ public:
 
         ~iterator() = default;
 
-        const tbyte &operator*()const {
+        const tbyte &operator*() const {
             return *m_pBuffer->getBegin();
         }
         inline iterator &operator++() {
@@ -173,7 +173,7 @@ public:
             ++(*this);
             return it;
         }
-        inline const tbyte *operator&()const {
+        inline const tbyte *operator&() const {
             return m_pBuffer->getBegin();
         }
         inline bool operator==(const iterator &it) const {
@@ -279,7 +279,7 @@ public:
     void release();
 
 protected:
-    ReadStream * m_pParent;
+    ReadStream  *m_pParent;
     size_t       m_nCacheSize;
     const tbyte *m_lpReadBegin;
     const tbyte *m_lpReadEnd;
@@ -291,12 +291,12 @@ protected:
 //! The class manager the output stream buffer
 class WriteStreamBuffer : protected nonecopyable {
 public:
-    class write_iterator {
+    class [[maybe_unused]] write_iterator {
     public:
         typedef std::forward_iterator_tag iterator_category;
         typedef tbyte                     value_type;
-        typedef tbyte *                   pointer;
-        typedef const tbyte &             reference;
+        typedef tbyte                    *pointer;
+        typedef const tbyte              &reference;
 
         explicit write_iterator(WriteStreamBuffer &iBuffer)
             : m_pBuffer(&iBuffer) {
@@ -313,7 +313,7 @@ public:
         tbyte &operator*() {
             return *m_pBuffer->getBegin();
         }
-        tbyte operator*()const {
+        tbyte operator*() const {
             return *m_pBuffer->getBegin();
         }
 
@@ -424,9 +424,9 @@ public:
 
 protected:
     WriteStream *m_pParent;
-    tbyte *      m_lpWriteBegin;
-    tbyte *      m_lpWriteEnd;
-    tbyte *      m_lpBufferBegin;
+    tbyte       *m_lpWriteBegin;
+    tbyte       *m_lpWriteEnd;
+    tbyte       *m_lpBufferBegin;
     friend class WriteStream;
 };
 
@@ -457,7 +457,8 @@ public:
             throw StreamException(FmtString("read data (%)byte(s) error!").arg(nSize).str());
     }
 
-    //! Virtual Read function. Returns the number of bytes read, which may be less than nSize if there are fewer than count bytes left.
+    //! Virtual Read function. Returns the number of bytes read, which may be less than nSize if there are fewer than
+    //! count bytes left.
     virtual size_t read(void *lpBuf, size_t nSize) = 0;
     //! Clear the input buffer of the stream, and return the count of bytes which is clear
     virtual size_t clearInput() {
@@ -470,13 +471,15 @@ public:
     virtual off_t tellg();
 
 protected:
-    inline void getReadBufferImp(const ReadStreamBuffer &buf, const tbyte *&pBuffer, size_t &nSize, const tbyte *&pReadBegin, const tbyte *&pReadEnd) {
+    inline void getReadBufferImp(const ReadStreamBuffer &buf, const tbyte *&pBuffer, size_t &nSize,
+                                 const tbyte *&pReadBegin, const tbyte *&pReadEnd) {
         pBuffer    = buf.m_lpBufferBegin;
         nSize      = buf.m_nCacheSize;
         pReadBegin = buf.m_lpReadBegin;
         pReadEnd   = buf.m_lpReadEnd;
     }
-    inline void setReadBufferImp(ReadStreamBuffer &buf, const tbyte *pBuffer, size_t nSize, const tbyte *pReadBegin, const tbyte *pReadEnd) {
+    inline void setReadBufferImp(ReadStreamBuffer &buf, const tbyte *pBuffer, size_t nSize, const tbyte *pReadBegin,
+                                 const tbyte *pReadEnd) {
         buf.m_lpBufferBegin = pBuffer;
         buf.m_nCacheSize    = nSize;
         buf.m_lpReadBegin   = pReadBegin;
@@ -549,7 +552,8 @@ public:
     }
 
 protected:
-    inline void getWriteBufferImp(const WriteStreamBuffer &buf, tbyte *&pBuffer, tbyte *&pBufferEnd, tbyte *&pWritePos) {
+    inline void getWriteBufferImp(const WriteStreamBuffer &buf, tbyte *&pBuffer, tbyte *&pBufferEnd,
+                                  tbyte *&pWritePos) {
         pBuffer    = buf.m_lpBufferBegin;
         pWritePos  = buf.m_lpWriteBegin;
         pBufferEnd = buf.m_lpWriteEnd;
@@ -585,11 +589,13 @@ public:
         return tellg();
     }
 
-    static size_t copyStreamToStream(ReadStream *pSrc, WriteStream *pTar, size_t nCopyData, size_t nCachSize = 4 * 1024);
+    static size_t copyStreamToStream(ReadStream *pSrc, WriteStream *pTar, size_t nCopyData,
+                                     size_t nCachSize = 4 * 1024);
     static size_t copyStreamToStream(ReadStreamBuffer &buf, WriteStream *pTar, size_t nCopyData);
     static size_t copyStreamToStream(ReadStream *pSrc, WriteStreamBuffer &buf, size_t nCopyData);
 
-    static size_t copyStreamToStreamBuffer(ReadStream *pSrc, WriteStream *pTar, size_t nCopyData, size_t nCachSize = 4 * 1024);
+    static size_t copyStreamToStreamBuffer(ReadStream *pSrc, WriteStream *pTar, size_t nCopyData,
+                                           size_t nCachSize = 4 * 1024);
 
 protected:
     //! Constructor, used by the derived class
@@ -611,4 +617,4 @@ inline size_t WriteStreamBuffer::getNext() {
     return m_pParent->flushWriteBuffer(*this, false);
 }
 
-} // namespace muduo
+} // namespace muduo::base

@@ -114,7 +114,8 @@ public:
             ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
         } else if (nLevel == 2) { // raw
             ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
-            // ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_COMPRESSION);
+            // ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL,
+            // Z_DEFAULT_COMPRESSION);
         } else if (nLevel == 1) { // gzip
             ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY);
         } else {

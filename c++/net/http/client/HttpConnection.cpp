@@ -8,9 +8,7 @@
 using namespace muduo::base;
 using namespace muduo::net;
 
-void HttpConnection::setTimeOut(int seconds) {
-    timedOut_ = seconds;
-}
+void HttpConnection::setTimeOut(int seconds) { timedOut_ = seconds; }
 
 bool HttpConnection::connect(const std::string &url) {
     HttpUrl u(url);
@@ -37,12 +35,15 @@ int32_t HttpConnection::recv(muduo::net::Buffer &respBuf) {
     return client_->recvResponse(respBuf);
 }
 
+void HttpConnection::showTlsInfo() {
+    client_->showTlsInfo();
+}
+
 bool HttpConnection::connect(const HttpUrl &url) {
     connectUrl_ = url.fullUrl;
     auto netloc = url.host;
     auto port   = url.port;
     if (url.scheme == "https") {
-        port    = 443;
         useSsl_ = true;
     }
 

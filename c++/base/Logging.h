@@ -74,7 +74,7 @@ public:
     template <class... Args> void exception(const char *messageFmt, Args &&...arg) {
         this->LogMessage(Except, messageFmt, arg...);
         auto callstack = GetBackCallStack();
-        this->LogMessage(Except, callstack.c_str());
+        this->LogMessage(Except, "%s%s", "\n", callstack);
     }
 
     std::string getLevelName(LogLevel nLevel);
@@ -118,7 +118,7 @@ protected:
         bool        finished = false;
         std::string keyPrefix;
         int         filledInteger = 0;
-        int         filledPointer  = 0;
+        int         filledPointer = 0;
         int         nBeginIndex;
         char        filledChar = ' ';
         while (!finished) {

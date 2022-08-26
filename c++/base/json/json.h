@@ -64,15 +64,17 @@ public:
     Json(Type type);
 
     // Implicit constructor: map-like objects (std::map, std::unordered_map, etc)
-    template <class M, typename std::enable_if<std::is_constructible<std::string, decltype(std::declval<M>().begin()->first)>::value &&
-                                                   std::is_constructible<Json, decltype(std::declval<M>().begin()->second)>::value,
-                                               int>::type = 0>
+    template <class M, typename std::enable_if<
+                           std::is_constructible<std::string, decltype(std::declval<M>().begin()->first)>::value &&
+                               std::is_constructible<Json, decltype(std::declval<M>().begin()->second)>::value,
+                           int>::type = 0>
     Json(const M &m)
         : Json(object(m.begin(), m.end())) {
     }
 
     // Implicit constructor: vector-like objects (std::list, std::vector, std::set, etc)
-    template <class V, typename std::enable_if<std::is_constructible<Json, decltype(*std::declval<V>().begin())>::value, int>::type = 0>
+    template <class V, typename std::enable_if<std::is_constructible<Json, decltype(*std::declval<V>().begin())>::value,
+                                               int>::type = 0>
     Json(const V &v)
         : Json(array(v.begin(), v.end())) {
     }
@@ -148,9 +150,11 @@ public:
         }
     }
     // Parse multiple objects, concatenated or separated by whitespace
-    static std::vector<Json> parse_multi(const std::string &in, std::string::size_type &parser_stop_pos, std::string &err, JsonParse strategy = JsonParse::STANDARD);
+    static std::vector<Json> parse_multi(const std::string &in, std::string::size_type &parser_stop_pos,
+                                         std::string &err, JsonParse strategy = JsonParse::STANDARD);
 
-    static inline std::vector<Json> parse_multi(const std::string &in, std::string &err, JsonParse strategy = JsonParse::STANDARD) {
+    static inline std::vector<Json> parse_multi(const std::string &in, std::string &err,
+                                                JsonParse strategy = JsonParse::STANDARD) {
         std::string::size_type parser_stop_pos;
         return parse_multi(in, parser_stop_pos, err, strategy);
     }
@@ -200,7 +204,7 @@ protected:
     virtual const Json         &operator[](size_t i) const;
     virtual const Json::object &object_items() const;
     virtual const Json         &operator[](const std::string &key) const;
-    virtual Json  &operator[](const std::string &key);
+    virtual Json               &operator[](const std::string &key);
     virtual void                push_back(const Json &val);
     virtual time_t              datetime_value() const;
     virtual ~JsonValue() = default;

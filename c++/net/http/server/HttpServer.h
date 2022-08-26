@@ -23,7 +23,7 @@ using SigHandleMap   = std::map<int, std::pair<SignalCallback, uintptr_t>>;
 
 class HttpServer : nonecopyable {
 public:
-    HttpServer(EventLoop *loop, const InetAddress &address);
+    HttpServer(EventLoop *loop, const InetAddress &address, bool useHttps = false);
 
 public:
     void                  SetRequestCallBack(CallBack cb);
@@ -33,9 +33,7 @@ public:
     void                  SetThreadNum(int num);
     void                  Start();
     void                  Exit();
-    static RequestMapper &getMapper() {
-        return m_mapper;
-    }
+    static RequestMapper &getMapper() { return m_mapper; }
 
     void RegSignalCallback(int sig, uintptr_t param, SignalCallback cb);
     void startScannerTask(const std::string &libsPath);

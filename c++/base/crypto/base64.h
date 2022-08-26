@@ -47,8 +47,10 @@ static int base64_decode_value(char value_in) {
     value_in -= 43;
     if (value_in < 0 || value_in >= decoding_size)
         return -1;
-    std::vector<int> decoding = {62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -2, -1, -1, -1, 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
-                                 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51};
+    std::vector<int> decoding = {62, -1, -1, -1, 63, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -2, -1,
+                                 -1, -1, 0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
+                                 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1, -1, 26, 27, 28, 29, 30, 31,
+                                 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51};
     return decoding[ (int)value_in ];
 }
 
@@ -57,7 +59,8 @@ static void base64_init_decodestate(base64_decodestate *state_in) {
     state_in->plainchar = 0;
 }
 
-static int base64_decode_block(const char *code_in, const int length_in, char *plaintext_out, base64_decodestate *state_in) {
+static int base64_decode_block(const char *code_in, const int length_in, char *plaintext_out,
+                               base64_decodestate *state_in) {
     const char *codechar  = code_in;
     char       *plainchar = plaintext_out;
     char        fragment;
@@ -211,7 +214,7 @@ struct decoder {
             return -1;
         }
         detail::base64_init_decodestate(&_state);
-        int  decodeLength    = decode(plaintext, len, output);
+        int decodeLength = decode(plaintext, len, output);
         detail::base64_init_decodestate(&_state);
         return decodeLength;
     }
@@ -266,7 +269,7 @@ struct encoder {
         char last_str[ 3 ] = {0};
         int  last_len      = encode_end(last_str);
         for (int idx = 0; idx < last_len; idx++) {
-            *(output + idx + codeLength) = last_str[idx];
+            *(output + idx + codeLength) = last_str[ idx ];
         }
         detail::base64_init_encodestate(&_state);
         return codeLength + last_len;

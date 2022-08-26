@@ -9,8 +9,7 @@ AlignConsecutiveAssignments: true
 # 连续声明时，对齐所有声明的变量名
 AlignConsecutiveDeclarations: true
 # 左对齐换行(使用反斜杠换行)的反斜杠 
-AlignEscapedNewlinesLeft: true
-# 水平对齐二元和三元表达式的操作数 
+# 水平对齐二元和三元表达式的操作数
 AlignOperands: true
 # 对齐连续的尾随的注释  
 AlignTrailingComments: true
@@ -29,7 +28,7 @@ AllowShortLoopsOnASingleLine: false
 # 总是在定义返回类型后换行(deprecated)   
 AlwaysBreakAfterDefinitionReturnType: None
 # 每行字符的限制，0表示没有限制  
-ColumnLimit: 200
+ColumnLimit: 120
 # 描述具有特殊意义的注释的正则表达式，它不应该被分割为多行或以其它方式改变
 CommentPragmas: '^ IWYU pragma:'
 # 语言: None Cpp Java Objc Protp
@@ -45,7 +44,7 @@ ObjCSpaceAfterProperty: true
 # OC block后面的缩进
 ObjCBlockIndentWidth: 4
 # 是否允许短方法单行
-AllowShortFunctionsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: All
 # 换行的时候对齐操作符
 #AlignOperands: true
 # 中括号两边空格 [] 

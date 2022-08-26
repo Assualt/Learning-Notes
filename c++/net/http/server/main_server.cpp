@@ -7,18 +7,19 @@ using namespace muduo;
 
 void RegisterSignalHandle(HttpServer &server) {
     auto handle = [](int sig, uintptr_t param) {
-        if ((sig == SIGSEGV) || (sig == SIGABRT)) {
+        if ((sig == SIGSEGV) || (sig == SIGABRT) || (sig == SIGINT) || (sig == SIGHUP)) {
             auto callstack = GetBackCallStack();
             logger.info("callstack is:\n%s", callstack);
+            auto server = reinterpret_cast<HttpServer *>(param);
+            server->Exit();
+            _exit(0);
         }
-        auto server = reinterpret_cast<HttpServer *>(param);
-        server->Exit();
-        _exit(0);
     };
     server.RegSignalCallback(SIGINT, reinterpret_cast<uintptr_t>(&server), handle);
     server.RegSignalCallback(SIGHUP, reinterpret_cast<uintptr_t>(&server), handle);
     server.RegSignalCallback(SIGSEGV, reinterpret_cast<uintptr_t>(&server), handle);
     server.RegSignalCallback(SIGABRT, reinterpret_cast<uintptr_t>(&server), handle);
+    server.RegSignalCallback(SIGPIPE, reinterpret_cast<uintptr_t>(&server), handle);
 }
 
 void InitObjPool() {
@@ -47,7 +48,8 @@ int main(int argc, char const *argv[]) {
     std::string strConfigPath = cmd.get<std::string>("config_path");
 
     auto &log = Logger::getLogger();
-    log.BasicConfig(static_cast<LogLevel>(nLevel), "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
+    log.BasicConfig(static_cast<LogLevel>(nLevel),
+                    "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
     log.setAppName("app");
     auto stdHandle  = std::make_shared<StdOutLogHandle>();
     auto fileHandle = std::make_shared<RollingFileLogHandle>(".", "http_server.log");
@@ -56,7 +58,7 @@ int main(int argc, char const *argv[]) {
     InitObjPool();
 
     EventLoop  loop;
-    HttpServer server(&loop, InetAddress(8100));
+    HttpServer server(&loop, InetAddress(8100), true);
     RegisterSignalHandle(server);
     server.SetThreadNum(threadNum);
     server.Start();

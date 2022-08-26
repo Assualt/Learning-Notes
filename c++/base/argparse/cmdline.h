@@ -71,7 +71,7 @@ template <typename Target, typename Source> Target lexical_cast(const Source &ar
 
 static inline std::string demangle(const std::string &name) {
     int         status = 0;
-    char *      p      = abi::__cxa_demangle(name.c_str(), 0, 0, &status);
+    char       *p      = abi::__cxa_demangle(name.c_str(), 0, 0, &status);
     std::string ret(p);
     free(p);
     return ret;
@@ -272,11 +272,15 @@ public:
         ordered.push_back(options[ name ]);
     }
 
-    template <class T> void add(const std::string &name, char short_name = 0, const std::string &desc = "", bool need = true, const T def = T()) {
+    template <class T>
+    void add(const std::string &name, char short_name = 0, const std::string &desc = "", bool need = true,
+             const T def = T()) {
         add(name, short_name, desc, need, def, default_reader<T>());
     }
 
-    template <class T, class F> void add(const std::string &name, char short_name = 0, const std::string &desc = "", bool need = true, const T def = T(), F reader = F()) {
+    template <class T, class F>
+    void add(const std::string &name, char short_name = 0, const std::string &desc = "", bool need = true,
+             const T def = T(), F reader = F()) {
         if (options.count(name))
             throw cmdline_error("multiple definition: " + name);
         options[ name ] = new option_with_value_with_reader<T, F>(name, short_name, need, def, desc, reader);
@@ -343,7 +347,7 @@ public:
             return false;
         }
 
-        if (buf.length() > 0)   
+        if (buf.length() > 0)
             args.push_back(buf);
 
         for (size_t i = 0; i < args.size(); i++)
@@ -695,8 +699,9 @@ private:
         }
 
     protected:
-        std::string full_description(const std::string &desc) {
-            return desc + " (" + detail::readable_typename<T>() + (need ? "" : " [=" + detail::default_value<T>(def) + "]") + ")";
+        std::string full_description(const std::string &description) {
+            return description + " (" + detail::readable_typename<T>() +
+                   (need ? "" : " [=" + detail::default_value<T>(def) + "]") + ")";
         }
 
         virtual T read(const std::string &s) = 0;
@@ -713,7 +718,8 @@ private:
 
     template <class T, class F> class option_with_value_with_reader : public option_with_value<T> {
     public:
-        option_with_value_with_reader(const std::string &name, char short_name, bool need, const T def, const std::string &desc, F reader)
+        option_with_value_with_reader(const std::string &name, char short_name, bool need, const T def,
+                                      const std::string &desc, F reader)
             : option_with_value<T>(name, short_name, need, def, desc)
             , reader(reader) {
         }

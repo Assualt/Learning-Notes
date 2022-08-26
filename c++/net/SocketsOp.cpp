@@ -67,29 +67,25 @@ int sockets::accept(int sockFd, struct sockaddr_in6 *addr) {
     return connFd;
 }
 
-ssize_t sockets::read(int sockFd, void *buf, size_t count) {
-    return ::read(sockFd, buf, count);
-}
+ssize_t sockets::read(int sockFd, void *buf, size_t count) { return ::read(sockFd, buf, count); }
 
-ssize_t sockets::readv(int sockFd, const struct iovec *iov, int iovCnt) {
-    return ::readv(sockFd, iov, iovCnt);
-}
+ssize_t sockets::readv(int sockFd, const struct iovec *iov, int iovCnt) { return ::readv(sockFd, iov, iovCnt); }
 
-ssize_t sockets::write(int sockFd, const void *buf, size_t nWrite) {
-    return ::write(sockFd, buf, nWrite);
-}
+ssize_t sockets::write(int sockFd, const void *buf, size_t nWrite) { return ::write(sockFd, buf, nWrite); }
 
 void sockets::close(int sockFd) {
     auto ret = ::close(sockFd);
     if (ret < 0) {
-        throw SocketException(FmtString("close fd:% failed. ret:% errmsg:%").arg(sockFd).arg(ret).arg(System::GetErrMsg(errno)).str());
+        throw SocketException(
+            FmtString("close fd:% failed. ret:% errmsg:%").arg(sockFd).arg(ret).arg(System::GetErrMsg(errno)).str());
     }
 }
 
 void sockets::bindOrDie(int sockFd, const struct sockaddr *addr) {
     int ret = ::bind(sockFd, (const sockaddr *)addr, static_cast<socklen_t>(sizeof(struct sockaddr)));
     if (ret < 0) {
-        logger.error("sockets::bindOrDie. sockFd is:%d ret:%d errno:%d msg:%s", sockFd, ret, errno, System::GetErrMsg(errno));
+        logger.error("sockets::bindOrDie. sockFd is:%d ret:%d errno:%d msg:%s", sockFd, ret, errno,
+                     System::GetErrMsg(errno));
         throw SocketException(FmtString("close fd:% failed.").arg(sockFd).str());
     }
 }
@@ -124,7 +120,7 @@ struct sockaddr_in6 sockets::getLocalAddr(int sockFd) {
     bzero(&localAddr, sizeof localAddr);
     socklen_t addrLen = static_cast<socklen_t>(sizeof localAddr);
     if (::getsockname(sockFd, (struct sockaddr *)(&localAddr), &addrLen) < 0) {
-        logger.warning("sockets::getLocalAddr");
+        logger.warning("sockets::getLocalAddr errmsg:%s", System::GetErrMsg(errno));
     }
     return localAddr;
 }

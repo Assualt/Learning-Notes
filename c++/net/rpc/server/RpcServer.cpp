@@ -27,6 +27,7 @@ void RpcServer::onMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timestam
         return;
     }
 
+    logger.info("recv buffer is ==> %s <==", buffer->peek());
     Buffer out;
     out.append("{\"name\":\"OK\"}");
 
@@ -36,5 +37,5 @@ void RpcServer::onMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timestam
 
 void RpcServer::start() {
     m_tcpServer->Start();
-    logger.info("HttpServer start ... at:%s", m_tcpServer->IpPort());
+    logger.info("RpcServer start ... at:%s", m_tcpServer->IpPort());
 }

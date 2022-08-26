@@ -12,7 +12,8 @@ using namespace std;
 namespace muduo {
 namespace net {
 void defaultConnectionCallback(const TcpConnectionPtr &conn) {
-    logger.info("Connection local address:[%s] -> peer address:[%s] ", conn->localAddress().toIpPort(), conn->peerAddress().toIpPort());
+    logger.info("Connection local address:[%s] -> peer address:[%s] ", conn->localAddress().toIpPort(),
+                conn->peerAddress().toIpPort());
 }
 
 void defaultMessageCallback(const TcpConnectionPtr &, Buffer *buf, Timestamp) {
@@ -20,11 +21,10 @@ void defaultMessageCallback(const TcpConnectionPtr &, Buffer *buf, Timestamp) {
     buf->retrieveAll();
 }
 
-void TcpServer::SetThreadNum(int threadNum) {
-    m_threadPool->SetThreadNum(threadNum);
-}
+void TcpServer::SetThreadNum(int threadNum) { m_threadPool->SetThreadNum(threadNum); }
 
-TcpServer::TcpServer(EventLoop *loop, const InetAddress &addr, const std::string &serverName, bool useSSL, AddressOption)
+TcpServer::TcpServer(EventLoop *loop, const InetAddress &addr, const std::string &serverName, bool useSSL,
+                     AddressOption)
     : m_pLoop(loop)
     , m_strServerName(serverName)
     , acceptor(new Acceptor(loop, addr, false, useSSL))
@@ -33,24 +33,30 @@ TcpServer::TcpServer(EventLoop *loop, const InetAddress &addr, const std::string
     , m_threadPool(new EventLoopThreadPool(loop, serverName))
     , m_nNexcConnId(1)
     , m_address(addr) {
-    acceptor->setNewConnectionCallback(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    acceptor->setNewConnectionCallback(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1,
+                                                 std::placeholders::_2, std::placeholders::_3));
 }
 
-std::string TcpServer::IpPort() {
-    return m_address.toIpPort();
-}
+std::string TcpServer::IpPort() { return m_address.toIpPort(); }
 
 void TcpServer::NewConnection(int sockFd, const InetAddress &peerAddress, void *arg) {
     m_pLoop->assertLoopThread();
     auto ioLoop = m_threadPool->getNextLoop();
     if (ioLoop == nullptr) {
         logger.alert("next eventLoop is empty. error");
+        // need free arg;
+#ifdef USE_SSL
+        if (arg != nullptr) {
+            SSL_shutdown(reinterpret_cast<SSL *>(arg));
+        }
+#endif
         return;
     }
     InetAddress locAddr(sockets::getLocalAddr(sockFd));
     ++m_nNexcConnId;
     std::string connName = FmtString("%-%#%").arg(m_strServerName).arg(locAddr.toIpPort()).arg(m_nNexcConnId).str();
-    logger.info("TcpServer::newConnection [%s] - new co nnection [%s] from [%s]", m_strServerName, connName, peerAddress.toIpPort());
+    logger.info("TcpServer::newConnection [%s] - new connection [%s] from [%s]", m_strServerName, connName,
+                peerAddress.toIpPort());
     TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockFd, locAddr, peerAddress, arg));
     conn->setConnectionCallBack(connectionCallback);
     conn->setMessageCallBack(messageCallback);
@@ -71,17 +77,11 @@ void TcpServer::RemoveConnectionInLoop(const TcpConnectionPtr &conn) {
     loop->queueInLoop(std::bind(&TcpConnection::connectDestory, conn));
 }
 
-void TcpServer::SetConnectionCallback(const ConnectionCallback &callback) {
-    connectionCallback = callback;
-}
+void TcpServer::SetConnectionCallback(const ConnectionCallback &callback) { connectionCallback = callback; }
 
-void TcpServer::SetMessageCallback(const MessageCallback &callback) {
-    messageCallback = callback;
-}
+void TcpServer::SetMessageCallback(const MessageCallback &callback) { messageCallback = callback; }
 
-void TcpServer::SetThreadInitCallback(const ThreadInitCallback &callback) {
-    threadInitCallback = callback;
-}
+void TcpServer::SetThreadInitCallback(const ThreadInitCallback &callback) { threadInitCallback = callback; }
 
 void TcpServer::Start() {
     m_threadPool->start(threadInitCallback);
@@ -89,12 +89,9 @@ void TcpServer::Start() {
     logger.info("All is ok........");
 }
 
-void TcpServer::Stop() {
-    acceptor->closeSocket();
-}
+void TcpServer::Stop() { acceptor->closeSocket(); }
 
-TcpServer::~TcpServer() {
-}
+TcpServer::~TcpServer() {}
 
 } // namespace net
 } // namespace muduo

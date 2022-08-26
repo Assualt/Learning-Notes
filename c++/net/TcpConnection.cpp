@@ -9,7 +9,8 @@ using namespace std;
 using namespace muduo::net;
 #define HIGH_WARTE_MARK (64 * 1024 * 1024)
 
-TcpConnection::TcpConnection(EventLoop *loop, const std::string &name, int sockFd, const InetAddress &locAddr, const InetAddress &peerAddr, void *ssl)
+TcpConnection::TcpConnection(EventLoop *loop, const std::string &name, int sockFd, const InetAddress &locAddr,
+                             const InetAddress &peerAddr, void *ssl)
     : m_pLoop(loop)
     , m_locAddr(locAddr)
     , m_peerAddr(peerAddr)
@@ -26,15 +27,13 @@ TcpConnection::TcpConnection(EventLoop *loop, const std::string &name, int sockF
     m_socket->setKeepAlive(false);
 }
 
-TcpConnection::~TcpConnection() {
-    m_socket->shutdownWrite();
-}
+TcpConnection::~TcpConnection() { m_socket->shutdownWrite(); }
 
 void TcpConnection::handleRead(const Timestamp &timeStamp) {
     m_pLoop->assertLoopThread();
-    int error;
-    //    ssize_t readNum = m_socket->read(m_input);
-    ssize_t readNum = m_input.readFd(m_channel->fd(), &error);
+    int     error;
+    ssize_t readNum = m_socket->read(m_input);
+    //    ssize_t readNum = m_input.readFd(m_channel->fd(), &error);
     if (readNum > 0) {
         m_messCallBack(shared_from_this(), &m_input, timeStamp);
     } else if (readNum == 0) {
@@ -49,8 +48,7 @@ void TcpConnection::handleRead(const Timestamp &timeStamp) {
 void TcpConnection::handleWrite() {
     m_pLoop->assertLoopThread();
     if (m_channel->isWriting()) {
-//        ssize_t writeBytes = m_socket->write((void *)m_output.peek(), m_output.readableBytes());
-        ssize_t writeBytes = sockets::write(m_channel->fd(), m_output.peek(), m_output.readableBytes());
+        ssize_t writeBytes = m_socket->write((void *)m_output.peek(), m_output.readableBytes());
         if (writeBytes) {
             m_output.retrieve(writeBytes);
             if (m_state == TcpState::DisConnecting) {
@@ -72,9 +70,7 @@ void TcpConnection::handleClose() {
     m_closeCallBack(shared_from_this());
 }
 
-void TcpConnection::handleError() {
-    m_pLoop->assertLoopThread();
-}
+void TcpConnection::handleError() { m_pLoop->assertLoopThread(); }
 
 void TcpConnection::connectEstablished() {
     m_pLoop->assertLoopThread();
@@ -144,7 +140,7 @@ void TcpConnection::sendInLoop(const void *data, size_t len) {
     }
     // if nothing in output queue, try writing directly
     if (!m_channel->isWriting() && m_output.readableBytes() == 0) {
-        nWrote = sockets::write(m_channel->fd(), data, len);
+        nWrote = m_socket->write(const_cast<void *>(data), len);
         if (nWrote >= 0) {
             remaining = len - nWrote;
             if (remaining == 0 && m_writecompCallBack) {

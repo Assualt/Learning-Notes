@@ -105,10 +105,12 @@ static void dump(const string &value, string &out) {
             char buf[ 8 ];
             snprintf(buf, sizeof buf, "\\u%04x", ch);
             out += buf;
-        } else if (static_cast<uint8_t>(ch) == 0xe2 && static_cast<uint8_t>(value[ i + 1 ]) == 0x80 && static_cast<uint8_t>(value[ i + 2 ]) == 0xa8) {
+        } else if (static_cast<uint8_t>(ch) == 0xe2 && static_cast<uint8_t>(value[ i + 1 ]) == 0x80 &&
+                   static_cast<uint8_t>(value[ i + 2 ]) == 0xa8) {
             out += "\\u2028";
             i += 2;
-        } else if (static_cast<uint8_t>(ch) == 0xe2 && static_cast<uint8_t>(value[ i + 1 ]) == 0x80 && static_cast<uint8_t>(value[ i + 2 ]) == 0xa9) {
+        } else if (static_cast<uint8_t>(ch) == 0xe2 && static_cast<uint8_t>(value[ i + 1 ]) == 0x80 &&
+                   static_cast<uint8_t>(value[ i + 2 ]) == 0xa9) {
             out += "\\u2029";
             i += 2;
         } else {
@@ -131,7 +133,7 @@ static void dump(const Json::array &values, string &out) {
 }
 
 static void dump(const Timestamp &stamp, string &out) {
-//    out += std::to_string(stamp.seconds());
+    //    out += std::to_string(stamp.seconds());
     out += "\"" + stamp.toFormattedString() + "\"";
 }
 
@@ -795,7 +797,8 @@ struct JsonParser final {
             return fail("invalid " + esc(str[ i ]) + " in number");
         }
 
-        if (str[ i ] != '.' && str[ i ] != 'e' && str[ i ] != 'E' && (i - start_pos) <= static_cast<size_t>(std::numeric_limits<int>::digits10)) {
+        if (str[ i ] != '.' && str[ i ] != 'e' && str[ i ] != 'E' &&
+            (i - start_pos) <= static_cast<size_t>(std::numeric_limits<int>::digits10)) {
             return std::atoi(str.c_str() + start_pos);
         }
 
@@ -949,7 +952,8 @@ Json Json::parse(const string &in, string &err, JsonParse strategy) {
 }
 
 // Documented in json.hpp
-vector<Json> Json::parse_multi(const string &in, std::string::size_type &parser_stop_pos, string &err, JsonParse strategy) {
+vector<Json> Json::parse_multi(const string &in, std::string::size_type &parser_stop_pos, string &err,
+                               JsonParse strategy) {
     JsonParser parser{in, 0, err, false, strategy};
     parser_stop_pos = 0;
     vector<Json> json_vec;

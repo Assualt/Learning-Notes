@@ -18,12 +18,9 @@ Socket::Socket(int sockFd, void *arg)
     }
 }
 
-Socket::~Socket() {
-}
+Socket::~Socket() {}
 
-int Socket::fd() {
-    return sockFd_;
-}
+int Socket::fd() { return sockFd_; }
 
 bool Socket::getTcpInfo(struct tcp_info *tcpInfo) const {
     socklen_t len = sizeof(*tcpInfo);
@@ -58,13 +55,9 @@ bool Socket::getTcpInfoString(std::string &infoString) const {
     return ok;
 }
 
-void Socket::bindAddress(const InetAddress &addr) {
-    sockets::bindOrDie(sockFd_, addr.getSockAddr());
-}
+void Socket::bindAddress(const InetAddress &addr) { sockets::bindOrDie(sockFd_, addr.getSockAddr()); }
 
-void Socket::listen() {
-    sockets::listenOrDie(sockFd_);
-}
+void Socket::listen() { sockets::listenOrDie(sockFd_); }
 
 void Socket::setReuseAddr(bool on) {
     int opt = on ? 1 : 0;
@@ -119,9 +112,7 @@ std::pair<int, void *> Socket::accept(InetAddress *remoteAddr) {
 #endif
 }
 
-void Socket::shutdownWrite() {
-    sockets::shutdownWrite(sockFd_);
-}
+void Socket::shutdownWrite() { sockets::shutdownWrite(sockFd_); }
 void Socket::setTcpNoDelay(bool on) {
     int opt = on ? 1 : 0;
     ::setsockopt(sockFd_, SOL_SOCKET, TCP_NODELAY, &opt, static_cast<socklen_t>(sizeof opt));
@@ -200,10 +191,15 @@ uint32_t Socket::read(Buffer &buf) {
     if (sockFd_ == -1) {
         return -1;
     }
+#ifdef USE_SSL
+    if (sslConn_ == nullptr || sslConn_->m_ptrHandle == nullptr) {
+        return 0;
+    }
+#endif
 
     char   buffer[ 8192 ] = {0};
-    int    nRead          = 0;
-    size_t nTotal         = 0;
+    int    nRead;
+    size_t nTotal = 0;
     while (true) {
         memset(buffer, 0, sizeof(buffer));
         if (sslConn_ == nullptr) {
@@ -239,7 +235,7 @@ uint32_t Socket::read(Buffer &buf) {
 
 bool Socket::initSSL() {
 #ifdef USE_SSL
-#if OPENSSL_VERSION_NUMBER < 0x10100003L
+#if OPENSSL_VERSION_NUMBER < 0x1010001fL
     OPENSSL_config(nullptr);
     // Register the error strings for libcrypto & libssl
     SSL_load_error_strings();
@@ -248,8 +244,10 @@ bool Socket::initSSL() {
     SSL_library_init();
 
     OpenSSL_add_all_algorithms();
+    return true;
 #else
-    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, nullptr);
+    OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CONFIG | OPENSSL_INIT_LOAD_CRYPTO_STRINGS,
+                     nullptr);
     ERR_clear_error();
 #endif
     return true;
@@ -263,7 +261,6 @@ void Socket::sslDisConnect() {
     }
     if (sslConn_->m_ptrHandle) {
         SSL_shutdown(sslConn_->m_ptrHandle);
-        SSL_free(sslConn_->m_ptrHandle);
         sslConn_->m_ptrHandle = nullptr;
     }
     if (sslConn_->m_ptrContext) {
@@ -279,13 +276,22 @@ bool Socket::switchToSSL(bool isClient) {
     if (isClient) {
         sslConn_->m_ptrContext = SSL_CTX_new((TLS_client_method()));
     } else {
-        sslConn_->m_ptrContext = SSL_CTX_new((SSLv23_server_method()));
+        sslConn_->m_ptrContext = SSL_CTX_new(TLS_method());
+        SSL_CTX_set_options(sslConn_->m_ptrContext, SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
+                                                        SSL_OP_NO_COMPRESSION |
+                                                        SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION);
     }
     if (sslConn_->m_ptrContext == nullptr) {
         sslDisConnect();
         ERR_print_errors_fp(stderr);
         return false;
     }
+
+    if (!isClient) {
+        logger.info("switch to ssl server ok");
+        return true;
+    }
+
     // Create an SSL struct for the connection
     sslConn_->m_ptrHandle = SSL_new(sslConn_->m_ptrContext);
     if (sslConn_->m_ptrHandle == nullptr) {
@@ -302,7 +308,7 @@ bool Socket::switchToSSL(bool isClient) {
     }
 
     // Initiate SSL handshake
-    if (isClient && SSL_connect(sslConn_->m_ptrHandle) != 1) {
+    if (SSL_connect(sslConn_->m_ptrHandle) != 1) {
         ERR_print_errors_fp(stderr);
         sslDisConnect();
         return false;
@@ -338,14 +344,14 @@ int32_t Socket::setWriteTimeout(int seconds) {
     return setsockopt(sockFd_, SOL_SOCKET, SO_SNDTIMEO, (const void *)&val, sizeof(val));
 }
 
-bool Socket::initSSLServer(const std::string &certPath, const std::string &keyPath) {
+bool Socket::initSSLServer(const std::string &certPath, const std::string &keyPath, const std::string &passWd) {
 #ifndef USE_SSL
     return false;
 #else
     auto ret = initSSL();
     if (!ret) {
         logger.info("init ssl error");
-        return ret;
+        return false;
     }
 
     ret = switchToSSL(false);
@@ -356,14 +362,18 @@ bool Socket::initSSLServer(const std::string &certPath, const std::string &keyPa
     }
 
     auto code = SSL_CTX_use_certificate_file(sslConn_->m_ptrContext, certPath.c_str(), SSL_FILETYPE_PEM);
-    if (code < 0) {
+    if (code != 1) {
         ERR_print_errors_fp(stderr);
         sslDisConnect();
         return false;
     }
 
+    if (!passWd.empty()) {
+        SSL_CTX_set_default_passwd_cb_userdata(sslConn_->m_ptrContext, (void *)passWd.c_str());
+    }
+
     code = SSL_CTX_use_PrivateKey_file(sslConn_->m_ptrContext, keyPath.c_str(), SSL_FILETYPE_PEM);
-    if (code < 0) {
+    if (code != 1) {
         ERR_print_errors_fp(stderr);
         sslDisConnect();
         return false;
@@ -371,6 +381,34 @@ bool Socket::initSSLServer(const std::string &certPath, const std::string &keyPa
 
     code = SSL_CTX_check_private_key(sslConn_->m_ptrContext);
     return (code == 0);
+#endif
+}
+
+void Socket::showTlsInfo() {
+#ifdef USE_SSL
+    if (sslConn_ == nullptr || sslConn_->m_ptrHandle == nullptr) {
+        return;
+    }
+
+    // 获取数字证书信息
+    auto cert = SSL_get_peer_certificate(sslConn_->m_ptrHandle);
+    if (cert == nullptr) {
+        return;
+    }
+
+    auto str = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0);
+    logger.info("subject:%s", str);
+
+    string startTime = reinterpret_cast<const char *>(X509_get0_notBefore(cert)->data);
+    string endTime   = reinterpret_cast<const char *>(X509_get0_notAfter(cert)->data);
+
+    logger.info("startTime:20%s endTime:20%s", startTime, endTime);
+
+    // issuer
+    auto issuer = X509_NAME_oneline(X509_get_issuer_name(cert), nullptr, 0);
+    logger.info("issuer:%s", issuer);
+
+    X509_free(cert);
 #endif
 }
 

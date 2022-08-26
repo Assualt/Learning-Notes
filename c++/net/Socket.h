@@ -75,9 +75,11 @@ public:
 
     bool initSSL();
 
-    bool initSSLServer(const std::string &certPath, const std::string &keyPath);
+    bool initSSLServer(const std::string &certPath, const std::string &keyPath, const std::string &passWd = "");
 
     void sslDisConnect();
+
+    void showTlsInfo();
 
 private:
     int sockFd_{-1};

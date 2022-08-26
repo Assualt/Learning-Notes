@@ -13,9 +13,7 @@ TcpClient::TcpClient(bool useSsl)
     }
 }
 
-TcpClient::~TcpClient() {
-    close();
-}
+TcpClient::~TcpClient() { close(); }
 
 void TcpClient::setTimeOut(int connectTimeout, int sendTimeOut, int recvTimeOut) {
     connectTimeOut_ = connectTimeout;
@@ -45,10 +43,12 @@ int32_t TcpClient::sendRequest(const Buffer &buffer) {
     return socket_->write((void *)buffer.peek(), buffer.readableBytes());
 }
 
-int32_t TcpClient::sendBuf(const char *buf, uint32_t size) {
-    return socket_->write((void *)buf, size);
-}
+int32_t TcpClient::sendBuf(const char *buf, uint32_t size) { return socket_->write((void *)buf, size); }
 
-int32_t TcpClient::recvResponse(Buffer &recvBuf) {
-    return socket_->read(recvBuf);
+int32_t TcpClient::recvResponse(Buffer &recvBuf) { return socket_->read(recvBuf); }
+
+void TcpClient::showTlsInfo() {
+#ifdef USE_SSL
+    socket_->showTlsInfo();
+#endif
 }

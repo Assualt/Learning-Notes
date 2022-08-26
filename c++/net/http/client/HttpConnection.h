@@ -17,6 +17,8 @@ public:
 
     int32_t recv(muduo::net::Buffer &respBuf);
 
+    void showTlsInfo();
+
 protected:
     bool connect(const HttpUrl &url);
 

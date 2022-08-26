@@ -12,21 +12,20 @@
 
 SigHandleMap  HttpServer::m_signalCallBack;
 RequestMapper HttpServer::m_mapper;
-HttpServer::HttpServer(EventLoop *loop, const InetAddress &address)
+HttpServer::HttpServer(EventLoop *loop, const InetAddress &address, bool useHttps)
     : m_pLoop(loop)
-    , m_pServer(new TcpServer(loop, address, "tcpServer")) {
+    , m_pServer(new TcpServer(loop, address, "tcpServer", useHttps)) {
     auto &accessLogger = Logger::getLogger("AccessLogger");
     accessLogger.BasicConfig(LogLevel::Debug, "%(message)", "access.log", "");
     m_httpLog.reset(new HttpLog(accessLogger));
     m_pServer->SetConnectionCallback([ this ](TcpConnectionPtr conn) { onConnect(conn); });
-    m_pServer->SetMessageCallback([ this ](const TcpConnectionPtr conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
+    m_pServer->SetMessageCallback(
+        [ this ](const TcpConnectionPtr conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
     m_httpLog->Init();
     m_hConfig.Init("/home/xhou");
 }
 
-void HttpServer::SetRequestCallBack(CallBack callback) {
-    m_requestCallBack = callback;
-}
+void HttpServer::SetRequestCallBack(CallBack callback) { m_requestCallBack = callback; }
 
 void HttpServer::onConnect(const TcpConnectionPtr &conn) {
     if (conn->isConnected()) {
@@ -48,14 +47,14 @@ void HttpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp 
         conn->send("HTTP/1.1 400 Bad Request\r\n\r\n", 29);
         conn->shutdown();
     }
-    if (context.gotAll()) {
+    if (context.gotAll() || context.gotEnd()) {
         onRequest(conn, context.request());
         context.reset();
     }
 }
 
 void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
-    bool          close      = true;
+    bool close = true;
     if (strcasecmp(request.get(Connection).c_str(), "keep-alive") == 0) {
         close = false;
     }
@@ -72,7 +71,8 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
         basicRequestPath += request.getRequestFilePath();
     }
 
-    auto objHandle  = m_mapper.findHandle(request.getRequestPath(), request.getRequestType(), request.GetRequestQueryMap());
+    auto objHandle =
+        m_mapper.findHandle(request.getRequestPath(), request.getRequestType(), request.GetRequestQueryMap());
     bool fileExists = utils::FileExists(basicRequestPath);
     if (!fileExists && objHandle.has_value()) {
         reinterpret_cast<IController *>(objHandle.value())->onRequest(request, response, m_hConfig);
@@ -93,8 +93,10 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
     conn->send(&buf);
 
     if (true) {
-        (*m_httpLog) << conn->localAddress().toIpPort() << " - [" << utils::requestTimeFmt() << "] \"" << request.getRequestType() << " " << request.getRequestPath() << " " << request.getHttpVersion()
-                     << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \"" << request.get(UserAgent) << "\"" << CTRL;
+        (*m_httpLog) << conn->localAddress().toIpPort() << " - [" << utils::requestTimeFmt() << "] \""
+                     << request.getRequestType() << " " << request.getRequestPath() << " " << request.getHttpVersion()
+                     << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \""
+                     << request.get(UserAgent) << "\"" << CTRL;
     }
     if (response.closeConnection()) {
         conn->shutdown();
@@ -124,7 +126,11 @@ void HttpServer::RegSignalCallback(int sig, uintptr_t param, SignalCallback cb) 
     }
 
     m_signalCallBack[ sig ] = {cb, param};
-    signal(sig, HttpServer::SignalHandler);
+    struct sigaction sa;
+    sa.sa_handler = HttpServer::SignalHandler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(sig, &sa, nullptr);
 }
 
 void HttpServer::SignalHandler(int sig) {

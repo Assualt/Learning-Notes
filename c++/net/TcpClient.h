@@ -22,6 +22,8 @@ public:
 
     void close();
 
+    void showTlsInfo();
+
     ~TcpClient();
 
 private:

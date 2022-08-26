@@ -20,6 +20,10 @@ HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &url, co
         return resp;
     }
 
+    if (verbose) {
+        conn_.showTlsInfo();
+    }
+
     if (type == Type_GET) {
         request_.setRequestType("GET");
     } else if (type == Type_POST) {

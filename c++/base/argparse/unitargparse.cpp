@@ -1,4 +1,4 @@
-#include "cmdline.hpp"
+#include "cmdline.h"
 #include <iostream>
 using namespace std;
 int main(int argc, char **argv) {
@@ -27,8 +27,6 @@ int main(int argc, char **argv) {
 
     for (size_t i = 0; i < a.rest().size(); i++)
         cout << "- " << a.rest()[ i ] << endl;
-
-    return 0;
 
     return 0;
 }
