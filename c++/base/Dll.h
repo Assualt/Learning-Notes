@@ -4,13 +4,15 @@
 namespace muduo::base {
 class DllHelper {
 public:
-    enum LOAD_TYPE { LOAD_LAZY = RTLD_LAZY, LOAD_NOW = RTLD_NOW, LOAD_NO_LOAD = RTLD_NOLOAD };
+    enum LOAD_TYPE {
+        LOAD_LAZY    = RTLD_LAZY,
+        LOAD_NOW     = RTLD_NOW,
+        LOAD_NO_LOAD = RTLD_NOLOAD,
+    };
 
 public:
     DllHelper() = default;
-    ~DllHelper() {
-        close();
-    }
+    ~DllHelper() { close(); }
 
 public:
     int open(const char *filename, LOAD_TYPE type);

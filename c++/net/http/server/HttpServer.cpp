@@ -12,6 +12,7 @@
 
 SigHandleMap  HttpServer::m_signalCallBack;
 RequestMapper HttpServer::m_mapper;
+
 HttpServer::HttpServer(EventLoop *loop, const InetAddress &address, bool useHttps)
     : m_pLoop(loop)
     , m_pServer(new TcpServer(loop, address, "tcpServer", useHttps)) {

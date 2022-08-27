@@ -27,17 +27,13 @@ InetAddress::InetAddress(uint16_t port, bool loopbackOnly, bool ipv6) {
 }
 
 InetAddress::InetAddress(const sockaddr_in &addr)
-    : m_uAddr(addr) {
-}
+    : m_uAddr(addr) {}
 
 InetAddress::InetAddress(const sockaddr_in6 &addr)
-    : addr6_(addr) {
-}
+    : addr6_(addr) {}
 
 std::string InetAddress::toIpPort() const {
     return FmtString("%:%").arg(inet_ntoa(m_uAddr.sin_addr)).arg(be16toh(m_uAddr.sin_port)).str();
 }
 
-const struct sockaddr *InetAddress::getSockAddr() const {
-    return (const struct sockaddr *)(&m_uAddr);
-}
+const struct sockaddr *InetAddress::getSockAddr() const { return (const struct sockaddr *)(&m_uAddr); }

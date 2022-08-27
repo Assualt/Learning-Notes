@@ -11,9 +11,10 @@ namespace muduo {
 namespace base {
 
 using Creator = std::function<muduo::base::Object *()>;
-#define REG_OBJECT(ClassName)                                                                                                                              \
-    static void __attribute((constructor)) __Register##ClassName() {                                                                                       \
-        ObjPool::Instance().Register(typeid(ClassName).hash_code(), typeid(ClassName).name(), []() { return reinterpret_cast<Object *>(new ClassName); }); \
+#define REG_OBJECT(ClassName)                                                                                          \
+    static void __attribute((constructor)) __Register##ClassName() {                                                   \
+        ObjPool::Instance().Register(typeid(ClassName).hash_code(), typeid(ClassName).name(),                          \
+                                     []() { return reinterpret_cast<Object *>(new ClassName); });                      \
     }
 class ObjPool final {
 public:
@@ -52,7 +53,8 @@ public:
     void PostInit() {
         std::vector<ConstructorStage> stages = {INIT_SELF, INIT_OTHER, INIT_FINISH};
         for (auto stage : stages) {
-            auto result = std::all_of(m_objMap.begin(), m_objMap.end(), [ &stage ](auto &item) { return item.second->AutoInit(stage); });
+            auto result = std::all_of(m_objMap.begin(), m_objMap.end(),
+                                      [ &stage ](auto &item) { return item.second->AutoInit(stage); });
             LOG_IF(result != true).info("auto init func failed in stage:%d result:%d", static_cast<int>(stage), result);
         }
     }
@@ -67,9 +69,7 @@ public:
         return (iter != m_objMap.end()) ? iter->second : nullptr;
     }
 
-    int size() {
-        return m_objMap.size();
-    }
+    int size() { return m_objMap.size(); }
 
 private:
     std::map<size_t, Creator>                 m_creators;

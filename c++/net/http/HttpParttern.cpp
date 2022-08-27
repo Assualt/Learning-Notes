@@ -51,7 +51,8 @@ bool RequestMapper::Key::tryRegexMatch(const std::string &pattern) {
     return false;
 }
 
-bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::string &reqType, std::map<std::string, std::string> &valMap, bool &allowed) {
+bool RequestMapper::Key::MatchFilter(const std::string &reqPath, const std::string &reqType,
+                                     std::map<std::string, std::string> &valMap, bool &allowed) {
     allowed = checkAllowed(reqType);
     if (!needVal_) {
         return (reqPath == pattern_) || (tryRegexMatch(reqPath));
@@ -93,7 +94,8 @@ void RequestMapper::addRequestObject(const Key &key, uintptr_t object) {
 }
 
 void RequestMapper::removeRequestObject(const std::string &pattern) {
-    auto iter = std::find_if(m_vRequestsMapper.begin(), m_vRequestsMapper.end(), [ &pattern ](auto &item) { return item.first.pattern_ == pattern; });
+    auto iter = std::find_if(m_vRequestsMapper.begin(), m_vRequestsMapper.end(),
+                             [ &pattern ](auto &item) { return item.first.pattern_ == pattern; });
     if (iter != m_vRequestsMapper.end()) {
         AutoLock lock(lock_);
         logger.debug("success delete key:%s object:%d", pattern, iter->second);
@@ -101,17 +103,20 @@ void RequestMapper::removeRequestObject(const std::string &pattern) {
     }
 }
 
-std::optional<uintptr_t> RequestMapper::findHandle(const std::string &reqPath, const std::string &reqType, std::map<std::string, std::string> &resultMap) {
+std::optional<uintptr_t> RequestMapper::findHandle(const std::string &reqPath, const std::string &reqType,
+                                                   std::map<std::string, std::string> &resultMap) {
     for (auto &iter : m_vRequestsMapper) {
         bool allowed = true;
         if (iter.first.MatchFilter(reqPath, reqType, resultMap, allowed)) {
-            logger.info("success request path:%s, handle path:%s, method:%s allow:%b", reqPath, iter.first.pattern_, reqType, allowed);
+            logger.info("success request path:%s, handle path:%s, method:%s allow:%b", reqPath, iter.first.pattern_,
+                        reqType, allowed);
             if (!allowed) {
                 return findHandle(PATTERN_METHOD_NOT_ALLOWED, "GET", resultMap);
             }
             return iter.second;
         }
-        logger.debug("failure request path:%s, handle path:%s, method:%s allow:%b", reqPath, iter.first.pattern_, reqType, allowed);
+        logger.debug("failure request path:%s, handle path:%s, method:%s allow:%b", reqPath, iter.first.pattern_,
+                     reqType, allowed);
     }
     return std::nullopt;
 }

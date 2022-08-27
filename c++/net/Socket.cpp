@@ -113,6 +113,7 @@ std::pair<int, void *> Socket::accept(InetAddress *remoteAddr) {
 }
 
 void Socket::shutdownWrite() { sockets::shutdownWrite(sockFd_); }
+
 void Socket::setTcpNoDelay(bool on) {
     int opt = on ? 1 : 0;
     ::setsockopt(sockFd_, SOL_SOCKET, TCP_NODELAY, &opt, static_cast<socklen_t>(sizeof opt));
@@ -217,13 +218,15 @@ uint32_t Socket::read(Buffer &buf) {
 
         buf.append(buffer, nRead);
         nTotal += nRead;
-        //                printf("nRead ======> %d\n", nRead);
-        //                for (auto idx = 0; idx < nRead; idx++) {
-        //                    printf("%c", buffer[idx] & 0xFF);
-        //                    if (buffer[idx] == '\n' && idx > 1 && buffer[idx-1] == 0xd) {
-        //                        printf("\n");
-        //                    }
-        //                }
+#if 0
+        printf("nRead ======> %d\n", nRead);
+        for (auto idx = 0; idx < nRead; idx++) {
+            printf("%c", buffer[ idx ] & 0xFF);
+            if (buffer[ idx ] == '\n' && idx > 1 && buffer[ idx - 1 ] == 0xd) {
+                printf("\n");
+            }
+        }
+#endif
 
         if (nRead < sizeof(buffer)) {
             break;

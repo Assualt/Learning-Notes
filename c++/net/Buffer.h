@@ -36,8 +36,7 @@ public:
     explicit Buffer(size_t nInitialSize = m_nInitialSize)
         : m_vBuffer(m_nCheapPrepend + nInitialSize)
         , m_nReadIndex(m_nCheapPrepend)
-        , m_nWriteIndex(m_nCheapPrepend) {
-    }
+        , m_nWriteIndex(m_nCheapPrepend) {}
 
     void   swap(Buffer &rhs);
     size_t readableBytes() const;

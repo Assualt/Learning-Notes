@@ -11,8 +11,7 @@ EventLoopThreadPool::EventLoopThreadPool(EventLoop *baseLoop, const std::string 
     , m_strName(arg)
     , m_bIsStarted(false)
     , m_nThreadNum(0)
-    , m_nNextNum(0) {
-}
+    , m_nNextNum(0) {}
 
 EventLoopThreadPool::~EventLoopThreadPool() {
     for (auto &loop : m_vLoops) {

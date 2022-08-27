@@ -24,7 +24,6 @@ public:
 private:
     EventLoop                 *m_pLoop{nullptr};
     std::unique_ptr<TcpServer> m_tcpServer{nullptr};
-
     std::unique_ptr<Acceptor> acceptor; // avoid revealing Acceptor
 };
 } // namespace rpc

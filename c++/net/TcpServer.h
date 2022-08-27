@@ -20,24 +20,33 @@ enum AddressOption { REUSE_PORT, NO_REUSE_PORT };
 class TcpServer : nonecopyable {
 public:
 public:
-    TcpServer(EventLoop *loop, const InetAddress &addr, const std::string &serverName, bool useSSL = false, AddressOption option = REUSE_PORT);
+    TcpServer(EventLoop *loop, const InetAddress &addr, const std::string &serverName, bool useSSL = false,
+              AddressOption option = REUSE_PORT);
     ~TcpServer();
 
 public:
-    std::string        IpPort();
+    std::string IpPort();
+
     const std::string &Name() const;
-    EventLoop         *getLoop() const;
+
+    EventLoop *getLoop() const;
 
     void SetThreadNum(int threadNum);
+
     void SetThreadInitCallback(const ThreadInitCallback &cb);
+
     void SetConnectionCallback(const ConnectionCallback &cb);
+
     void SetMessageCallback(const MessageCallback &cb);
 
     void Start();
+
     void Stop();
 
     void NewConnection(int sockFd, const InetAddress &peerAddress, void *);
+
     void RemoveConnection(const TcpConnectionPtr &conn);
+
     void RemoveConnectionInLoop(const TcpConnectionPtr &conn);
 
 private:
@@ -50,7 +59,7 @@ private:
     MessageCallback                         messageCallback;
     EventLoop                              *m_pLoop{nullptr};
     std::shared_ptr<EventLoopThreadPool>    m_threadPool;
-    int                                     m_nNexcConnId;
+    int                                     m_nNextConnId;
     InetAddress                             m_address;
 };
 

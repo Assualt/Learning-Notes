@@ -17,12 +17,5 @@ enum class MailState {
     STATE_REST,
 };
 
-enum class MailEvent {
-    EHLO,
-    HELO,
-    MAIL_FROM,
-    RCPT_TO,
-    DATA,
-    RESET
-};
-}
+enum class MailEvent { EHLO, HELO, MAIL_FROM, RCPT_TO, DATA, RESET };
+} // namespace mail

@@ -11,9 +11,11 @@
 
 using muduo::base::Timestamp;
 class HttpRequest {
+
 public:
-    HttpRequest() = default;
     typedef std::vector<std::pair<std::string, std::string>> ResourceMap;
+
+    HttpRequest() = default;
 
     template <class T> void setHeader(const std::string &key, const T &val) {
         std::string tmpVal = std::stringstream(val).str();
@@ -25,44 +27,63 @@ public:
             m_vRequestHeader.push_back(std::pair<std::string, std::string>(key, tmpVal));
         }
     }
-    std::string               toStringHeader() const;
-    const std::string         get(const std::string &key) const;
-    std::string               getRequestType() const;
-    void                      setRequestType(const std::string &strRequestType);
-    std::string               getHttpVersion() const;
-    void                      setHttpVersion(const std::string &strHttpVersion);
-    std::string               getPostParams() const;
-    void                      setPostParams(const std::string &strPostParams);
-    std::string               getRequestPath() const;
-    void                      setRequestPath(const std::string &strRequestPath);
-    std::string               getRequestFilePath() const;
-    void                      setRequestFilePath(const std::string &strRequestFilePath);
-    Timestamp                 getRecvTime() const;
-    void                      setRecvTime(const Timestamp &time);
-    std::string               getQuery() const;
-    void                      setQuery(const std::string &query);
-    std::string               getPath() const;
-    void                      setPath(const std::string &path);
-    std::string               getStatusMessage() const;
-    void                      setStatusMessage(const std::string &message);
-    int                       getStatusCode() const;
-    void                      setStatusCode(int statusCode);
-    void                      addHeader(const char *start, const char *colon, const char *end);
-    void                      appendBodyBuffer(const void *buf, size_t size);
+
+    std::string toStringHeader() const;
+
+    const std::string get(const std::string &key) const;
+
+    std::string getRequestType() const;
+
+    void setRequestType(const std::string &strRequestType);
+
+    std::string getHttpVersion() const;
+
+    void setHttpVersion(const std::string &strHttpVersion);
+
+    std::string getPostParams() const;
+
+    void setPostParams(const std::string &strPostParams);
+
+    std::string getRequestPath() const;
+
+    void setRequestPath(const std::string &strRequestPath);
+
+    std::string getRequestFilePath() const;
+
+    void setRequestFilePath(const std::string &strRequestFilePath);
+
+    Timestamp getRecvTime() const;
+
+    void setRecvTime(const Timestamp &time);
+
+    std::string getQuery() const;
+
+    void setQuery(const std::string &query);
+
+    std::string getPath() const;
+
+    void setPath(const std::string &path);
+
+    std::string getStatusMessage() const;
+
+    void setStatusMessage(const std::string &message);
+
+    int getStatusCode() const;
+
+    void setStatusCode(int statusCode);
+
+    void addHeader(const char *start, const char *colon, const char *end);
+
+    void appendBodyBuffer(const void *buf, size_t size);
+
     const muduo::net::Buffer &getBodyBuffer() const;
 
-    long getBodySize() {
-        return m_bodyBuffer.readableBytes();
-    }
+    long getBodySize() { return m_bodyBuffer.readableBytes(); }
     // request 请求解析时候的 query参数解析
-    std::map<std::string, std::string> &GetRequestQueryMap() {
-        return m_urlQueryMap;
-    }
+    std::map<std::string, std::string> &GetRequestQueryMap() { return m_urlQueryMap; }
 
     // request 请求的header列表
-    const ResourceMap &GetRequestHeader() {
-        return m_vRequestHeader;
-    }
+    const ResourceMap &GetRequestHeader() { return m_vRequestHeader; }
 
     friend std::ostream &operator<<(std::ostream &os, const HttpRequest &obj) {
         os << "> " << obj.m_strRequestType << " " << obj.m_strRequestPath << " " << obj.m_strHttpVersion << CTRL;
@@ -84,7 +105,8 @@ public:
     }
     void setParams(const std::map<std::string, std::string> &headerMap);
 
-    std::string                        getParams(const std::string &key) const;
+    std::string getParams(const std::string &key) const;
+
     std::map<std::string, std::string> getAllParams() const;
 
     bool setMethod(const char *start, const char *end);

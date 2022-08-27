@@ -5,8 +5,7 @@ namespace muduo::base {
 class CheckSumBase : public WriteStream {
 public:
     CheckSumBase()
-        : WriteStream(StreamBase::STATE_OPEN) {
-    }
+        : WriteStream(StreamBase::STATE_OPEN) {}
 
     virtual size_t getResultSize() const = 0;
 };
@@ -17,8 +16,7 @@ public:
         : CheckSumBase()
         , r_(55665)
         , c1_(52845)
-        , sum_(0) {
-    }
+        , sum_(0) {}
 
     virtual size_t write(const char *lpBuf, size_t nSize);
     virtual size_t flush();
@@ -38,8 +36,7 @@ class CRC32 : public CheckSumBase {
 public:
     CRC32()
         : CheckSumBase()
-        , sum_(UINT32_MAX) {
-    }
+        , sum_(UINT32_MAX) {}
 
     virtual size_t write(const void *lpBuf, size_t nSize);
     virtual size_t flush();

@@ -8,15 +8,17 @@ DECLARE_EXCEPTION(MutexLockException, Exception)
 class MutexLock final {
 public:
     MutexLock(const pthread_mutexattr_t *attr = nullptr);
+
     ~MutexLock();
 
 public:
-    void                    Lock();
-    void                    UnLock();
-    void                    TryLock();
-    inline pthread_mutex_t *GetLock() {
-        return &m_mLock;
-    }
+    void Lock();
+
+    void UnLock();
+
+    void TryLock();
+
+    inline pthread_mutex_t *GetLock() { return &m_mLock; }
 
 private:
     mutable pthread_mutex_t m_mLock;
@@ -45,9 +47,7 @@ public:
         m_lock.Lock();
     }
 
-    ~AutoLock() {
-        m_lock.UnLock();
-    }
+    ~AutoLock() { m_lock.UnLock(); }
 
 private:
     MutexLock &m_lock;

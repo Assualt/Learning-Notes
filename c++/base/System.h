@@ -9,9 +9,7 @@ namespace muduo {
 namespace base {
 namespace System {
 
-inline int mkdir(const std::string &path, int mode) {
-    return ::mkdir(path.c_str(), mode);
-}
+inline int mkdir(const std::string &path, int mode) { return ::mkdir(path.c_str(), mode); }
 
 inline int rename(const std::string &srcFilePath, const std::string &dstFileName) {
     return ::rename(srcFilePath.c_str(), dstFileName.c_str());
@@ -23,21 +21,13 @@ inline std::string GetCurrentThreadName() {
     return tempName;
 }
 
-inline void SetThreadName(const std::string &threadName) {
-    (void)::prctl(PR_SET_NAME, threadName.c_str());
-}
+inline void SetThreadName(const std::string &threadName) { (void)::prctl(PR_SET_NAME, threadName.c_str()); }
 
-inline long Tid() {
-    return syscall(SYS_gettid);
-}
+inline long Tid() { return syscall(SYS_gettid); }
 
-inline long Pid() {
-    return getpid();
-}
+inline long Pid() { return getpid(); }
 
-inline const char *GetErrMsg(int err) {
-    return strerror(err);
-}
+inline const char *GetErrMsg(int err) { return strerror(err); }
 
 } // namespace System
 } // namespace base

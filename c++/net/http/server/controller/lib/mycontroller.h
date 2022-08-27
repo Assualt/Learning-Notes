@@ -2,8 +2,7 @@
 class MyController : public IController {
 public:
     MyController()
-        : IController("[my controller]") {
-    }
+        : IController("[my controller]") {}
     virtual ~MyController() override = default;
     DECLARE_CONTROLLER
 };

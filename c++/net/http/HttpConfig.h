@@ -5,13 +5,13 @@
 #include <map>
 #include <set>
 
-#define PARAM_SETER_GETER(strParamName, valType)                                              \
-public:                                                                                       \
-    inline const valType &get##strParamName(void) const { return m_##strParamName; }          \
-    inline void           set##strParamName(const valType &n) { m_##strParamName = n; }       \
-    inline void           set##strParamName(valType &&n) { m_##strParamName = std::move(n); } \
-                                                                                              \
-protected:                                                                                    \
+#define PARAM_SETER_GETER(strParamName, valType)                                                                       \
+public:                                                                                                                \
+    inline const valType &get##strParamName(void) const { return m_##strParamName; }                                   \
+    inline void           set##strParamName(const valType &n) { m_##strParamName = n; }                                \
+    inline void           set##strParamName(valType &&n) { m_##strParamName = std::move(n); }                          \
+                                                                                                                       \
+protected:                                                                                                             \
     valType m_##strParamName;
 
 #define CTRL "\r\n"
@@ -130,6 +130,7 @@ using muduo::base::nonecopyable;
 class HttpConfig : nonecopyable {
 public:
     HttpConfig() = default;
+
     HttpConfig(const char *configPath);
 
     void Init(const std::string &path);

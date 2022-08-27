@@ -21,9 +21,7 @@ Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddress, bool reUse
     m_cAcceptChannel.setReadCallback(std::bind(&Acceptor::handleRead, this));
 }
 
-Acceptor::~Acceptor() {
-    closeSocket();
-}
+Acceptor::~Acceptor() { closeSocket(); }
 
 void Acceptor::closeSocket() {
     m_cAcceptChannel.disableAll();

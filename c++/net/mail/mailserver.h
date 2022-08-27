@@ -11,9 +11,7 @@ namespace mail {
 
 struct StringCaseCmp : std::binary_function<std::string, std::string, bool> {
 public:
-    bool operator()(const string &lhs, const string &rhs) const {
-        return strcasecmp(lhs.c_str(), rhs.c_str());
-    }
+    bool operator()(const string &lhs, const string &rhs) const { return strcasecmp(lhs.c_str(), rhs.c_str()); }
 };
 
 class MailServer {

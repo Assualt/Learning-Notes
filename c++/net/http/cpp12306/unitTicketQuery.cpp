@@ -16,15 +16,14 @@ static std::string _ltrim(const std::string &src, char ch) {
     temp.erase(temp.begin(), p);
     return temp;
 }
+
 static std::string _rtrim(const std::string &src, char ch) {
     string                   temp = src;
     string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [ &ch ](char c) { return ch != c; });
     temp.erase(p.base(), temp.end());
     return temp;
 }
-static std::string trim(const std::string &src, char ch = ' ') {
-    return _rtrim(_ltrim(src, ch), ch);
-}
+static std::string trim(const std::string &src, char ch = ' ') { return _rtrim(_ltrim(src, ch), ch); }
 
 static vector<string> splitToVector(const std::string &strVal, char ch) {
     std::vector<std::string> result;
@@ -47,6 +46,7 @@ static vector<string> splitToVector(const std::string &strVal, char ch) {
         result.push_back(temp);
     return result;
 }
+
 static std::string replace(const std::string &strVal, char src, char dest) {
     std::string result;
     for (auto i = 0; i < strVal.size(); i++) {
@@ -59,8 +59,11 @@ static std::string replace(const std::string &strVal, char src, char dest) {
     return result;
 }
 
-const std::string stationNameUrl      = "https://kyfw.12306.cn/otn/resources/js/framework/station_name.js?station_version=1.9167";
-const std::string LeftTicketUrl       = "https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date=%s&leftTicketDTO.from_station=%s&leftTicketDTO.to_station=%s&purpose_codes=%s";
+const std::string stationNameUrl =
+    "https://kyfw.12306.cn/otn/resources/js/framework/station_name.js?station_version=1.9167";
+const std::string LeftTicketUrl =
+    "https://kyfw.12306.cn/otn/leftTicket/"
+    "query?leftTicketDTO.train_date=%s&leftTicketDTO.from_station=%s&leftTicketDTO.to_station=%s&purpose_codes=%s";
 const std::string MainTicketUrl       = "https://kyfw.12306.cn";
 const std::string TicketQueryInitUrl  = "https://kyfw.12306.cn/otn/lcxxcx/init";
 const std::string TicketQueryDeviceID = "https://kyfw.12306.cn/otn/HttpZF/logdevice";
@@ -71,7 +74,8 @@ struct StationDetail {
     std::string m_strStationCode;
     std::string m_strStationPinYin;
     std::string m_strStationBrief;
-    StationDetail(int nStationNumber, const std::string &strChineseName, const std::string &strStationCode, const std::string &strStationPinYin, const std::string &strStationBrief) {
+    StationDetail(int nStationNumber, const std::string &strChineseName, const std::string &strStationCode,
+                  const std::string &strStationPinYin, const std::string &strStationBrief) {
         m_nStationNumber   = nStationNumber;
         m_strChineseName   = strChineseName;
         m_strStationCode   = strStationCode;
@@ -102,12 +106,14 @@ public:
     enum TravelerType { TYPE_CHILD, TYPE_ADULT };
     void initStationDetail(const std::string &strStationPath = "station_name.js");
 
-    void        QueryLeftTicket(const std::string &fromStation, const std::string &destStation, const std::string &travelDate, TravelerType type = TYPE_ADULT);
+    void QueryLeftTicket(const std::string &fromStation, const std::string &destStation, const std::string &travelDate,
+                         TravelerType type = TYPE_ADULT);
     std::string getStationCode(const std::string &stationName);
 
 private:
     int         SplitStringToStationDetail(const std::string &ss);
-    std::string formattedLeftTicketUrl(const std::string &fromStation, const std::string &destStation, const std::string &travelDate, TravelerType type);
+    std::string formattedLeftTicketUrl(const std::string &fromStation, const std::string &destStation,
+                                       const std::string &travelDate, TravelerType type);
     void        saveStationDetail(const std::string &strStationPath = "station_name.txt");
     void        LoadStationDetail(std::ifstream &fin);
 
@@ -217,12 +223,14 @@ void TicketQueryMgr::initStationDetail(const std::string &strStationPath) {
     }
 }
 
-void TicketQueryMgr::QueryLeftTicket(const std::string &fromStation, const std::string &destStation, const std::string &travelDate, TravelerType type) {
+void TicketQueryMgr::QueryLeftTicket(const std::string &fromStation, const std::string &destStation,
+                                     const std::string &travelDate, TravelerType type) {
     std::string reqUrl = formattedLeftTicketUrl(fromStation, destStation, travelDate, type);
     logger.info("begin to request url:%s", reqUrl);
     auto result = client_.Get(reqUrl, true, true);
     if (result.getStatusCode() != HttpStatusCode::k200Ok) {
-        logger.info("request %s url failed status_code:%d. errmsg:%s", reqUrl, result.getStatusCode(), result.getStatusMessage());
+        logger.info("request %s url failed status_code:%d. errmsg:%s", reqUrl, result.getStatusCode(),
+                    result.getStatusMessage());
     } else {
         logger.info("request %s url success.", reqUrl);
         logger.info("response Text:%s", result.getBodyBuf().readableBytes());
@@ -244,7 +252,8 @@ std::string TicketQueryMgr::getStationCode(const std::string &stationName) {
     return "";
 }
 
-std::string TicketQueryMgr::formattedLeftTicketUrl(const std::string &fromStation, const std::string &destStation, const std::string &travelDate, TravelerType type) {
+std::string TicketQueryMgr::formattedLeftTicketUrl(const std::string &fromStation, const std::string &destStation,
+                                                   const std::string &travelDate, TravelerType type) {
     // "https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date=%s&leftTicketDTO.from_station=%s&leftTicketDTO.to_station=%s&purpose_codes=%s";
     std::string baseString = "https://kyfw.12306.cn/otn/leftTicket/query?";
     baseString.append("leftTicketDTO.train_date=");
@@ -269,7 +278,8 @@ std::string TicketQueryMgr::formattedLeftTicketUrl(const std::string &fromStatio
 
 int main(int, char **) {
     auto &log = muduo::base::Logger::getLogger();
-    log.BasicConfig(static_cast<LogLevel>(Debug), "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
+    log.BasicConfig(static_cast<LogLevel>(Debug),
+                    "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
     log.setAppName("app");
     auto stdHandle = std::make_shared<StdOutLogHandle>();
     log.addLogHandle(stdHandle.get());

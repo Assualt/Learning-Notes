@@ -10,8 +10,7 @@ using namespace muduo::base::detail;
 ThreadContext::ThreadContext(ThreadFunc func, const std::string &name, pid_t *pid)
     : m_func(func)
     , m_strThreadName(name)
-    , m_nPid(pid) {
-}
+    , m_nPid(pid) {}
 
 void ThreadContext::Run() {
     System::SetThreadName(m_strThreadName);
@@ -36,8 +35,7 @@ Thread::Thread(ThreadFunc func, const std::string &name)
     , m_nThreadId(0)
     , m_nTid(0)
     , m_threadFunc(std::move(func))
-    , m_strFunName(name) {
-}
+    , m_strFunName(name) {}
 
 Thread::~Thread() {
     if (m_isStarted && !m_isJoined) {
@@ -85,18 +83,10 @@ int Thread::Join() {
     return pthread_join(m_nThreadId, nullptr);
 }
 
-bool Thread::IsStarted() {
-    return m_isStarted;
-}
+bool Thread::IsStarted() { return m_isStarted; }
 
-pid_t Thread::Tid() const {
-    return System::Tid();
-}
+pid_t Thread::Tid() const { return System::Tid(); }
 
-std::string Thread::Name() {
-    return System::GetCurrentThreadName();
-}
+std::string Thread::Name() { return System::GetCurrentThreadName(); }
 
-int Thread::NumCreated() {
-    return 0;
-}
+int Thread::NumCreated() { return 0; }

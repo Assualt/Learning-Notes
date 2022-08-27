@@ -34,6 +34,10 @@ add_executable(test_stream test_stream.cpp)
 target_link_libraries(test_stream gtest muduo_base dl)
 add_test(NAME test_stream COMMAND test_stream)
 
+add_executable(test_timer test_timer.cpp)
+target_link_libraries(test_timer muduo_base dl)
+add_test(NAME test_timer COMMAND test_timer)
+
 install(TARGETS test_logging DESTINATION bin)
 install(TARGETS test_range DESTINATION bin)
 install(TARGETS test_thread DESTINATION bin)

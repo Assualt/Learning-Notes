@@ -34,8 +34,6 @@ bool MailEnv::initMailEnv(ConfigureManager &config) {
     return Reload(config);
 }
 
-bool MailEnv::Reload(ConfigureManager &config) {
-    return true;
-}
+bool MailEnv::Reload(ConfigureManager &config) { return true; }
 
 } // namespace mail

@@ -26,9 +26,7 @@ DECLARE_EXCEPTION(LogException, Exception)
 enum LogLevel { Debug, Info, Except, Warn, Error, Fatal, Alert, Emergency };
 class Logger final {
 public:
-    ~Logger() {
-        m_vHandleList.clear();
-    }
+    ~Logger() { m_vHandleList.clear(); }
 
 public:
     struct FileAttribute {
@@ -37,11 +35,10 @@ public:
         std::string fileName;
     };
 
-    void SetAppendLF(bool val) {
-        m_MessageAppendCRLF = val;
-    }
+    void SetAppendLF(bool val) { m_MessageAppendCRLF = val; }
 
-    Logger &BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix, const char *fileFormat, const char *fileMode = "a+");
+    Logger &BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix,
+                        const char *fileFormat, const char *fileMode = "a+");
 
     template <class... Args> void debug(const char *messageFmt, Args &&...arg) {
         this->LogMessage(Debug, messageFmt, arg...);
@@ -88,13 +85,13 @@ public:
         m_mutexLock.UnLock();
     }
 
-    void setLevel(LogLevel nLevel) {
-        m_nLevel = nLevel;
-    }
+    void setLevel(LogLevel nLevel) { m_nLevel = nLevel; }
 
 protected:
     std::string getCurrentHourTime(bool showMicroSeconds);
-    void        getKeyString(const std::string &key, std::stringstream &ss, const std::string &message, LogLevel nLevel);
+
+    void getKeyString(const std::string &key, std::stringstream &ss, const std::string &message, LogLevel nLevel);
+
     std::string MessageFormat(const std::string &FormattedLogMessage, LogLevel nLevel);
 
     template <class... Args> void LogMessage(LogLevel nLevel, const char *messageFmt, Args &&...arg) {
@@ -133,7 +130,8 @@ protected:
                 bool bFindPointer = false;
                 bool FirstInteger = false;
                 for (size_t i = index + 1; i < result.size(); ++i) {
-                    if (result[ i ] == 's' || result[ i ] == 'd' || result[ i ] == 'f' || result[ i ] == 'c' || result[ i ] == 'x' || result[ i ] == 'o' || result[ i ] == 'b') {
+                    if (result[ i ] == 's' || result[ i ] == 'd' || result[ i ] == 'f' || result[ i ] == 'c' ||
+                        result[ i ] == 'x' || result[ i ] == 'o' || result[ i ] == 'b') {
                         keyPrefix.push_back(result[ i ]);
                         finished = true;
                     } else if ((result[ i ] >= '0' && result[ i ] <= '9') || result[ i ] == '.') {
@@ -177,8 +175,7 @@ protected:
             formatString(result, arg...);
         }
     }
-    void formatString(std::string &result) {
-    }
+    void formatString(std::string &result) {}
 
 public:
     static Logger &getLogger(const std::string &LoggerName = "") {
@@ -211,6 +208,6 @@ protected:
 
 #define logger LOG(APP)
 #define LOG_SYSTEM LOG(APP).setAppName("system")
-#define LOG_IF(func) \
-    if (func)        \
+#define LOG_IF(func)                                                                                                   \
+    if (func)                                                                                                          \
     LOG(APP)

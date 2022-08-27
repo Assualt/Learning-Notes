@@ -1,25 +1,23 @@
-#include "Format.h"
 #include "Mutex.h"
+#include "Format.h"
 using namespace muduo;
 using namespace muduo::base;
 
-#define CHECK_LOCK_NULL(pointer, val)      \
-    do {                                   \
-        if (pointer == nullptr) {          \
-            throw MutexLockException(val); \
-        }                                  \
+#define CHECK_LOCK_NULL(pointer, val)                                                                                  \
+    do {                                                                                                               \
+        if (pointer == nullptr) {                                                                                      \
+            throw MutexLockException(val);                                                                             \
+        }                                                                                                              \
     } while (0)
 
-#define CHECK_LOCK_RET(cond, val)          \
-    do {                                   \
-        if (cond) {                        \
-            throw MutexLockException(val); \
-        }                                  \
+#define CHECK_LOCK_RET(cond, val)                                                                                      \
+    do {                                                                                                               \
+        if (cond) {                                                                                                    \
+            throw MutexLockException(val);                                                                             \
+        }                                                                                                              \
     } while (0)
 
-MutexLock::MutexLock(const pthread_mutexattr_t *attr) {
-    pthread_mutex_init(&m_mLock, attr);
-}
+MutexLock::MutexLock(const pthread_mutexattr_t *attr) { pthread_mutex_init(&m_mLock, attr); }
 
 void MutexLock::Lock() {
     CHECK_LOCK_NULL(&m_mLock, "lock is not init, lock error");
@@ -39,13 +37,9 @@ void MutexLock::UnLock() {
     CHECK_LOCK_RET(ret != 0, FmtString("try % error, ret:%").arg("pthread_mutex_unlock").arg(ret).str());
 }
 
-MutexLock::~MutexLock() {
-    pthread_mutex_destroy(&m_mLock);
-}
+MutexLock::~MutexLock() { pthread_mutex_destroy(&m_mLock); }
 
-RWLock::RWLock(const pthread_rwlockattr_t *attr) {
-    pthread_rwlock_init(&m_rwLock, attr);
-}
+RWLock::RWLock(const pthread_rwlockattr_t *attr) { pthread_rwlock_init(&m_rwLock, attr); }
 
 void RWLock::RLock() {
     CHECK_LOCK_NULL(&m_rwLock, "lock is not init, lock error");
@@ -77,6 +71,4 @@ void RWLock::TryWLock() {
     CHECK_LOCK_RET(ret != 0, FmtString("try % error, ret:%").arg("pthread_rwlock_trywrlock").arg(ret).str());
 }
 
-RWLock::~RWLock() {
-    pthread_rwlock_destroy(&m_rwLock);
-}
+RWLock::~RWLock() { pthread_rwlock_destroy(&m_rwLock); }

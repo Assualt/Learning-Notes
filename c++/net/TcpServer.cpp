@@ -31,7 +31,7 @@ TcpServer::TcpServer(EventLoop *loop, const InetAddress &addr, const std::string
     , connectionCallback(defaultConnectionCallback)
     , messageCallback(defaultMessageCallback)
     , m_threadPool(new EventLoopThreadPool(loop, serverName))
-    , m_nNexcConnId(1)
+    , m_nNextConnId(1)
     , m_address(addr) {
     acceptor->setNewConnectionCallback(std::bind(&TcpServer::NewConnection, this, std::placeholders::_1,
                                                  std::placeholders::_2, std::placeholders::_3));
@@ -53,8 +53,8 @@ void TcpServer::NewConnection(int sockFd, const InetAddress &peerAddress, void *
         return;
     }
     InetAddress locAddr(sockets::getLocalAddr(sockFd));
-    ++m_nNexcConnId;
-    std::string connName = FmtString("%-%#%").arg(m_strServerName).arg(locAddr.toIpPort()).arg(m_nNexcConnId).str();
+    ++m_nNextConnId;
+    std::string connName = FmtString("%-%#%").arg(m_strServerName).arg(locAddr.toIpPort()).arg(m_nNextConnId).str();
     logger.info("TcpServer::newConnection [%s] - new connection [%s] from [%s]", m_strServerName, connName,
                 peerAddress.toIpPort());
     TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockFd, locAddr, peerAddress, arg));
@@ -91,7 +91,7 @@ void TcpServer::Start() {
 
 void TcpServer::Stop() { acceptor->closeSocket(); }
 
-TcpServer::~TcpServer() {}
+TcpServer::~TcpServer() = default;
 
 } // namespace net
 } // namespace muduo

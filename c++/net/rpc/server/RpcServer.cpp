@@ -7,7 +7,9 @@ RpcServer::RpcServer(EventLoop *loop, const InetAddress &addr, bool useSSL)
     : m_pLoop(loop)
     , m_tcpServer(new TcpServer(loop, addr, "RpcServer", useSSL)) {
     m_tcpServer->SetConnectionCallback([ this ](const TcpConnectionPtr &conn) { onConnection(conn); });
-    m_tcpServer->SetMessageCallback([ this ](const TcpConnectionPtr &conn, Buffer *buffer, Timestamp recvTime) { onMessage(conn, buffer, recvTime); });
+    m_tcpServer->SetMessageCallback([ this ](const TcpConnectionPtr &conn, Buffer *buffer, Timestamp recvTime) {
+        onMessage(conn, buffer, recvTime);
+    });
 }
 
 bool RpcServer::initEx(int threadNum) {

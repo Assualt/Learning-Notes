@@ -1,4 +1,5 @@
 #include "TcpClient.h"
+#include "SocketsOp.h"
 #include "base/Logging.h"
 using namespace muduo::net;
 using namespace muduo::base;

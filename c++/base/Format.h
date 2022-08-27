@@ -8,8 +8,7 @@ template <class typeStream> class FormatStream : public typeStream {
 public:
     FormatStream()
         : typeStream()
-        , m_lpszFormat(&g_nEndFlags) {
-    }
+        , m_lpszFormat(&g_nEndFlags) {}
 
     FormatStream &format(const char *lpszFormat) { // 此处不能使用lpszFormat为string类型,否则会出现错误
         flushFormat();
@@ -55,9 +54,7 @@ protected:
         }
         return *this;
     }
-    typeStream &getSelf() {
-        return *this;
-    }
+    typeStream &getSelf() { return *this; }
 
 protected:
     static char g_nEndFlags;
@@ -69,9 +66,7 @@ template <class typeStream> char FormatStream<typeStream>::g_nEndFlags = '\0';
 class FmtString : public FormatStream<std::stringstream> {
 
 public:
-    FmtString(const std::string &format) {
-        FormatStream::format(format.c_str());
-    }
+    FmtString(const std::string &format) { FormatStream::format(format.c_str()); }
 };
 
 } // namespace base

@@ -6,13 +6,11 @@ using namespace muduo::base;
 
 File::File() noexcept
     : m_nFd(-1)
-    , m_nOwnFd(false) {
-}
+    , m_nOwnFd(false) {}
 
 File::File(int fd, bool ownsFd) noexcept
     : m_nFd(fd)
-    , m_nOwnFd(ownsFd) {
-}
+    , m_nOwnFd(ownsFd) {}
 
 File::File(const char *name, int flags, mode_t mode) {
     m_nFd = ::open(name, flags, mode);
@@ -24,12 +22,10 @@ File::File(const char *name, int flags, mode_t mode) {
 }
 
 File::File(const std::string &name, int flags, mode_t mode)
-    : File(name.c_str(), flags, mode) {
-}
+    : File(name.c_str(), flags, mode) {}
 
 File::File(StringPiece name, int flags, mode_t mode)
-    : File(name.data(), flags, mode) {
-}
+    : File(name.data(), flags, mode) {}
 
 File::File(File &&rhs) noexcept
     : m_nFd(rhs.m_nFd)
@@ -43,9 +39,7 @@ File &File::operator=(File &&rhs) {
     return *this;
 }
 
-File::~File() {
-    CloseNoThrow();
-}
+File::~File() { CloseNoThrow(); }
 
 File File::Temporary() {
     FILE *tmpFile = tmpfile();
@@ -71,9 +65,7 @@ void File::Swap(File &other) noexcept {
     swap(m_nOwnFd, other.m_nOwnFd);
 }
 
-void swap(File &a, File &b) noexcept {
-    a.Swap(b);
-}
+void swap(File &a, File &b) noexcept { a.Swap(b); }
 
 File File::Dup() const {
     if (m_nFd == -1) {
@@ -98,21 +90,13 @@ bool File::CloseNoThrow() {
     return r == 0;
 }
 
-void File::Lock() {
-    DoLock(LOCK_EX);
-}
+void File::Lock() { DoLock(LOCK_EX); }
 
-bool File::TryLock() {
-    return DoTryLock(LOCK_EX);
-}
+bool File::TryLock() { return DoTryLock(LOCK_EX); }
 
-void File::LockShared() {
-    DoLock(LOCK_SH);
-}
+void File::LockShared() { DoLock(LOCK_SH); }
 
-bool File::TryLockShared() {
-    return DoTryLock(LOCK_SH);
-}
+bool File::TryLockShared() { return DoTryLock(LOCK_SH); }
 
 void File::DoLock(int op) {
     int ret = flock(m_nFd, op);
@@ -138,9 +122,7 @@ void File::UnLock() {
         throw FileException("flock() failed try_lock");
 }
 
-void File::UnLockShared() {
-    UnLock();
-}
+void File::UnLockShared() { UnLock(); }
 
 // Read
 std::string File::ReadLineByChar(char ch) {
@@ -160,10 +142,6 @@ std::string File::ReadLineByChar(char ch) {
     return lineString;
 }
 
-size_t File::ReadBytes(void *temp, size_t nBytes) {
-    return read(m_nFd, temp, nBytes);
-}
+size_t File::ReadBytes(void *temp, size_t nBytes) { return read(m_nFd, temp, nBytes); }
 
-int File::Fd() const {
-    return m_nFd;
-}
+int File::Fd() const { return m_nFd; }

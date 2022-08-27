@@ -57,8 +57,7 @@ public:
     // Implicit constructor: anything with a to_json() function.
     template <class T, class = decltype(&T::to_json)>
     Json(const T &t)
-        : Json(t.to_json()) {
-    }
+        : Json(t.to_json()) {}
 
     // 指定类型初始化
     Json(Type type);
@@ -69,15 +68,13 @@ public:
                                std::is_constructible<Json, decltype(std::declval<M>().begin()->second)>::value,
                            int>::type = 0>
     Json(const M &m)
-        : Json(object(m.begin(), m.end())) {
-    }
+        : Json(object(m.begin(), m.end())) {}
 
     // Implicit constructor: vector-like objects (std::list, std::vector, std::set, etc)
     template <class V, typename std::enable_if<std::is_constructible<Json, decltype(*std::declval<V>().begin())>::value,
                                                int>::type = 0>
     Json(const V &v)
-        : Json(array(v.begin(), v.end())) {
-    }
+        : Json(array(v.begin(), v.end())) {}
 
     // This prevents Json(some_pointer) from accidentally producing a bool. Use
     // Json(bool(some_pointer)) if that behavior is desired.
@@ -86,24 +83,12 @@ public:
     // Accessors
     Type type() const;
 
-    bool is_null() const {
-        return type() == NUL;
-    }
-    bool is_number() const {
-        return type() == NUMBER;
-    }
-    bool is_bool() const {
-        return type() == BOOL;
-    }
-    bool is_string() const {
-        return type() == STRING;
-    }
-    bool is_array() const {
-        return type() == ARRAY;
-    }
-    bool is_object() const {
-        return type() == OBJECT;
-    }
+    bool is_null() const { return type() == NUL; }
+    bool is_number() const { return type() == NUMBER; }
+    bool is_bool() const { return type() == BOOL; }
+    bool is_string() const { return type() == STRING; }
+    bool is_array() const { return type() == ARRAY; }
+    bool is_object() const { return type() == OBJECT; }
 
     // Return the enclosed value if this is a number, 0 otherwise. Note that json11 does not
     // distinguish between integer and non-integer numbers - number_value() and int_value()
@@ -161,18 +146,10 @@ public:
 
     bool operator==(const Json &rhs) const;
     bool operator<(const Json &rhs) const;
-    bool operator!=(const Json &rhs) const {
-        return !(*this == rhs);
-    }
-    bool operator<=(const Json &rhs) const {
-        return !(rhs < *this);
-    }
-    bool operator>(const Json &rhs) const {
-        return (rhs < *this);
-    }
-    bool operator>=(const Json &rhs) const {
-        return !(*this < rhs);
-    }
+    bool operator!=(const Json &rhs) const { return !(*this == rhs); }
+    bool operator<=(const Json &rhs) const { return !(rhs < *this); }
+    bool operator>(const Json &rhs) const { return (rhs < *this); }
+    bool operator>=(const Json &rhs) const { return !(*this < rhs); }
 
     /* has_shape(types, err)
      *

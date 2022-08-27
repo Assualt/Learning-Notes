@@ -18,95 +18,82 @@ public:
     Channel(EventLoop *loop, int fd);
     ~Channel();
 
-    void setReadCallback(ReadEventCallback cb) {
-        m_FReadCallback = std::move(cb);
-    }
-    void setWriteCallback(EventCallback cb) {
-        m_FWriteCallback = std::move(cb);
-    }
-    void setCloseCallback(EventCallback cb) {
-        m_FCloseCallback = std::move(cb);
-    }
-    void setErrorCallback(EventCallback cb) {
-        m_FErrorCallback = std::move(cb);
-    }
+    void setReadCallback(ReadEventCallback cb) { m_FReadCallback = std::move(cb); }
 
-    void setReadTimeOutCallback(EventCallback cb) {
-        m_ReadTimeoutCallback = std::move(cb);
-    }
+    void setWriteCallback(EventCallback cb) { m_FWriteCallback = std::move(cb); }
 
-    inline int fd() {
-        return m_nFD;
-    }
-    inline int events() {
-        return m_nEvents;
-    }
+    void setCloseCallback(EventCallback cb) { m_FCloseCallback = std::move(cb); }
 
-    inline void set_revents(int evt) {
-        m_nrecv_events = evt;
-    }
+    void setErrorCallback(EventCallback cb) { m_FErrorCallback = std::move(cb); }
 
-    EventLoop *getLoop() {
-        return m_pLoop;
-    }
+    void setReadTimeOutCallback(EventCallback cb) { m_ReadTimeoutCallback = std::move(cb); }
 
-    void setPollEvents(int event) {
-        m_nrecv_events = event;
-    }
+    inline int fd() { return m_nFD; }
+
+    inline int events() { return m_nEvents; }
+
+    inline void set_revents(int evt) { m_nrecv_events = evt; }
+
+    EventLoop *getLoop() { return m_pLoop; }
+
+    void setPollEvents(int event) { m_nrecv_events = event; }
 
     void handleEvent(const base::Timestamp &recvTime);
 
     EventLoop *ownerLoop();
 
     int fd() const;
+
     int events() const;
-    int index() const {
-        return m_nIndex;
-    }
-    void setIndex(int idx) {
-        m_nIndex = idx;
-    }
-    bool isNoneEvent() const {
-        return m_nEvents == kNoneEvent;
-    }
+
+    int index() const { return m_nIndex; }
+
+    void setIndex(int idx) { m_nIndex = idx; }
+
+    bool isNoneEvent() const { return m_nEvents == kNoneEvent; }
 
     void enableReading() {
         m_nEvents |= kReadEvent;
         update();
     }
+
     void disableReading() {
         m_nEvents &= ~kReadEvent;
         update();
     }
+
     void enableWriting() {
         m_nEvents |= kWriteEvent;
         update();
     }
+
     void disableWriting() {
         m_nEvents &= ~kWriteEvent;
         update();
     }
+
     void disableAll() {
         m_nEvents = kNoneEvent;
         update();
     }
-    bool isWriting() const {
-        return m_nEvents & kWriteEvent;
-    }
-    bool isReading() const {
-        return m_nEvents & kReadEvent;
-    }
+
+    bool isWriting() const { return m_nEvents & kWriteEvent; }
+
+    bool isReading() const { return m_nEvents & kReadEvent; }
 
     void remove();
 
     std::string reventsToString() const;
+
     std::string eventToString() const;
+
     std::string eventsToString(int fd, int ev) const;
 
     void doReadTimeOutFunc();
 
 protected:
     void update();
+
     void handleEventWithGuard(const base::Timestamp &recvTime);
 
 private:

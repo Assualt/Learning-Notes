@@ -11,8 +11,7 @@ using namespace muduo;
 using namespace muduo::net;
 
 PollPoller::PollPoller(EventLoop *loop)
-    : Poller(loop) {
-}
+    : Poller(loop) {}
 
 PollPoller::~PollPoller() = default;
 

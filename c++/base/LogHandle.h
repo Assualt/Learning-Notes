@@ -21,16 +21,13 @@ namespace base {
 
 class LogHandle {
 public:
-    virtual void writeData(const char *pData, size_t nSize) {
-    }
+    virtual void writeData(const char *pData, size_t nSize) {}
     virtual ~LogHandle() = default;
 };
 
 class StdOutLogHandle : public LogHandle {
 public:
-    virtual void writeData(const char *pData, size_t nSize) {
-        std::cout.write(pData, nSize).flush();
-    }
+    virtual void writeData(const char *pData, size_t nSize) { std::cout.write(pData, nSize).flush(); }
 };
 
 class RollingFileLogHandle : public LogHandle {
@@ -39,17 +36,14 @@ public:
         : LogHandle()
         , m_strFilePathDir(filePath)
         , m_strFilePrefix(filePrefix)
-        , m_strTimePostfix(timePostfix) {
-    }
+        , m_strTimePostfix(timePostfix) {}
 
     virtual void writeData(const char *data, size_t nLength) {
         changeAccessFile();
         fOutputStream.write(data, nLength).flush();
     }
 
-    ~RollingFileLogHandle() {
-        fOutputStream.close();
-    }
+    ~RollingFileLogHandle() { fOutputStream.close(); }
 
 protected:
     string getCurrentFileName() {
@@ -85,16 +79,15 @@ public:
     RollingFile2LogHandle(const char *filepath, const char *dirPrefix, const char *filePrefix)
         : m_strFileRootPath(filepath)
         , m_strFileDirPrefix(dirPrefix)
-        , m_strFilePrefix(filePrefix) {
-    }
+        , m_strFilePrefix(filePrefix) {}
 
     string CurrentFile(string &dirpath) {
         time_t     t(time(nullptr));
         struct tm *ttime = localtime(&t);
 
         stringstream ss, ss1;
-        ss << m_strFileDirPrefix << std::setw(4) << std::setfill('0') << ttime->tm_year + 1900 << "_" << std::setw(2) << std::setfill('0') << ttime->tm_mon << "_" << std::setw(2) << std::setfill('0')
-           << ttime->tm_mday;
+        ss << m_strFileDirPrefix << std::setw(4) << std::setfill('0') << ttime->tm_year + 1900 << "_" << std::setw(2)
+           << std::setfill('0') << ttime->tm_mon << "_" << std::setw(2) << std::setfill('0') << ttime->tm_mday;
 
         ss1 << m_strFilePrefix << std::setw(2) << std::setfill('0') << ttime->tm_hour << "_00_00.log";
 
@@ -119,9 +112,7 @@ public:
         fout.write(data, nLength).flush();
     }
 
-    ~RollingFile2LogHandle() {
-        fout.close();
-    }
+    ~RollingFile2LogHandle() { fout.close(); }
 
 private:
     string        m_strFileRootPath;

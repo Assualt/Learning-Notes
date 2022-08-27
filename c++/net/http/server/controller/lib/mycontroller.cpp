@@ -7,19 +7,15 @@ bool MyController::onGet(const HttpRequest &req, HttpResponse &res, const HttpCo
     return true;
 }
 
-bool MyController::onPost(const HttpRequest &, HttpResponse &res, const HttpConfig &cfg) {
-    return true;
-}
+bool MyController::onPost(const HttpRequest &, HttpResponse &res, const HttpConfig &cfg) { return true; }
 
-bool MyController::onPut(const HttpRequest &, HttpResponse &res, const HttpConfig &cfg) {
-    return true;
-}
+bool MyController::onPut(const HttpRequest &, HttpResponse &res, const HttpConfig &cfg) { return true; }
 
 extern "C" int mycontroller_Entry(std::string *pattern, int *method, bool *needVal, bool *useRegex, uintptr_t *obj) {
-    *pattern = "/my";
-    *method  = 0x1;
-    *needVal = false;
+    *pattern  = "/my";
+    *method   = 0x1;
+    *needVal  = false;
     *useRegex = false;
-    *obj     = reinterpret_cast<uintptr_t>(new MyController);
+    *obj      = reinterpret_cast<uintptr_t>(new MyController);
     return 0;
 }

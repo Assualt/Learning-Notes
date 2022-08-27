@@ -5,7 +5,7 @@ using namespace rpc;
 using namespace muduo::base;
 using namespace muduo::net;
 
-void handle_pipe(int sig) {}
+void handle_pipe(int) {}
 
 void RegisterSignalAction() {
     struct sigaction sa;
@@ -20,7 +20,8 @@ int main(int, char const **) {
     log.BasicConfig(LogLevel::Info, "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)",
                     "", "");
     log.setAppName("app");
-    log.addLogHandle(new StdOutLogHandle);
+    auto stdHandle = std::make_shared<StdOutLogHandle>();
+    log.addLogHandle(stdHandle.get());
 
     RegisterSignalAction();
 

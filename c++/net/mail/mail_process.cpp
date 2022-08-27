@@ -10,15 +10,13 @@
 using namespace muduo::base;
 using namespace mail;
 
-TIgnoreCaseSet MailProcess::m_SupportMethods{"helo", "ehlo", "starttls", "mail from", "rcpt to", "data", "vrfy", "expn", "help", "rset", "quit", "auth login"};
+TIgnoreCaseSet MailProcess::m_SupportMethods{"helo",   "ehlo", "starttls", "mail from", "rcpt to", "data",
+                                             "verify", "expn", "help",     "rset",      "quit",    "auth login"};
 
 MailProcess::MailProcess(MailContext &ctx)
-    : m_mailContext(ctx) {
-}
+    : m_mailContext(ctx) {}
 
-bool MailProcess::SupportCommand(const std::string &strMethod) {
-    return m_SupportMethods.count(strMethod);
-}
+bool MailProcess::SupportCommand(const std::string &strMethod) { return m_SupportMethods.count(strMethod); }
 
 bool MailProcess::isValidMailBox(const std::string &strMailBox) {
     size_t nPos   = strMailBox.find("@");
@@ -135,7 +133,7 @@ MAIL_STATE MailProcess::onAuthPass(const std::string &bufString, std::string &re
     replyString.assign("334 UGFzc3dvcmQ6\r\n");
     std::string strTempAuthUser = Utils::trimRight(bufString, std::string("\r\n"));
     strTempAuthUser             = Utils::trim(strTempAuthUser, std::string(" "));
-    std::string     result;
+    std::string result;
     result.resize(100);
     base64::decoder decoder;
     auto            decodeSize = decoder.decode_str(strTempAuthUser.c_str(), strTempAuthUser.size(), result.data());
@@ -151,8 +149,8 @@ MAIL_STATE MailProcess::onAuthPass(const std::string &bufString, std::string &re
 }
 
 MAIL_STATE MailProcess::onAuthEND(const std::string &bufString, std::string &replyString) {
-    std::string     strTempAuthPass = bufString.substr(0, bufString.size() - 2);
-    std::string     result;
+    std::string strTempAuthPass = bufString.substr(0, bufString.size() - 2);
+    std::string result;
     result.resize(100);
     base64::decoder decoder;
     auto            decodeSize = decoder.decode_str(strTempAuthPass.c_str(), strTempAuthPass.size(), result.data());
@@ -177,15 +175,16 @@ MAIL_STATE MailProcess::onAuthPLAIN(const std::string &bufString, std::string &r
         return DISCONNECT;
     }
     std::string DecodeUserPass;
-    int         nSize        = base64::decoder().decode_str(UserPass[ 2 ].c_str(), UserPass[ 2 ].size(), DecodeUserPass.data());
-    auto        tempUserPass = Utils::split(DecodeUserPass, '\0');
+    int  nSize = base64::decoder().decode_str(UserPass[ 2 ].c_str(), UserPass[ 2 ].size(), DecodeUserPass.data());
+    auto tempUserPass = Utils::split(DecodeUserPass, '\0');
     if (tempUserPass.size() < 2) {
         replyString.assign("502 Error.Syntax error.\r\n");
         return DISCONNECT;
     }
     m_mailContext.m_strAuthUser = tempUserPass[ tempUserPass.size() - 2 ];
     m_mailContext.m_strAuthPass = tempUserPass.back();
-    logger.debug("decode %s byte %d --> auth user:%s auth pass:%s", bufString, nSize, m_mailContext.m_strAuthUser, m_mailContext.m_strAuthPass);
+    logger.debug("decode %s byte %d --> auth user:%s auth pass:%s", bufString, nSize, m_mailContext.m_strAuthUser,
+                 m_mailContext.m_strAuthPass);
     replyString.assign("235 Authentication successful\r\n");
     m_bAuthPassed = true;
     return MAILFROM;

@@ -43,25 +43,17 @@ using std::vector;
  * it may not be orderable.
  */
 struct NullStruct {
-    bool operator==(NullStruct) const {
-        return true;
-    }
-    bool operator<(NullStruct) const {
-        return false;
-    }
+    bool operator==(NullStruct) const { return true; }
+    bool operator<(NullStruct) const { return false; }
 };
 
 /* * * * * * * * * * * * * * * * * * * *
  * Serialization
  */
 
-static void dump(NullStruct, string &out) {
-    out += "null";
-}
+static void dump(NullStruct, string &out) { out += "null"; }
 
-static void dump(time_t val, string &out) {
-    out += std::to_string(val);
-}
+static void dump(time_t val, string &out) { out += std::to_string(val); }
 
 static void dump(double value, string &out) {
     if (std::isfinite(value)) {
@@ -79,9 +71,7 @@ static void dump(int value, string &out) {
     out += buf;
 }
 
-static void dump(bool value, string &out) {
-    out += value ? "true" : "false";
-}
+static void dump(bool value, string &out) { out += value ? "true" : "false"; }
 
 static void dump(const string &value, string &out) {
     out += '"';
@@ -151,9 +141,7 @@ static void dump(const Json::object &values, string &out) {
     out += "}";
 }
 
-void Json::dump(string &out) const {
-    m_ptr->dump(out);
-}
+void Json::dump(string &out) const { m_ptr->dump(out); }
 
 /* * * * * * * * * * * * * * * * * * * *
  * Value wrappers
@@ -163,17 +151,13 @@ template <Json::Type tag, typename T> class Value : public JsonValue {
 protected:
     // Constructors
     explicit Value(const T &value)
-        : m_value(value) {
-    }
+        : m_value(value) {}
     explicit Value(T &&value)
-        : m_value(move(value)) {
-    }
+        : m_value(move(value)) {}
 
 protected:
     // Get type tag
-    Json::Type type() const override {
-        return tag;
-    }
+    Json::Type type() const override { return tag; }
 
     // Comparisons
     bool equals(const JsonValue *other) const override {
@@ -184,134 +168,93 @@ protected:
     }
 
     T    m_value;
-    void dump(string &out) const override {
-        json::dump(m_value, out);
-    }
+    void dump(string &out) const override { json::dump(m_value, out); }
 };
 
 class JsonDouble final : public Value<Json::NUMBER, double> {
-    double number_value() const override {
-        return m_value;
-    }
-    int int_value() const override {
-        return static_cast<int>(m_value);
-    }
-    bool equals(const JsonValue *other) const override {
-        return m_value == other->number_value();
-    }
-    bool less(const JsonValue *other) const override {
-        return m_value < other->number_value();
-    }
+    double number_value() const override { return m_value; }
+    int    int_value() const override { return static_cast<int>(m_value); }
+    bool   equals(const JsonValue *other) const override { return m_value == other->number_value(); }
+    bool   less(const JsonValue *other) const override { return m_value < other->number_value(); }
 
 public:
     explicit JsonDouble(double value)
-        : Value(value) {
-    }
+        : Value(value) {}
 };
 
 class JsonInt final : public Value<Json::NUMBER, int> {
-    double number_value() const override {
-        return m_value;
-    }
-    int int_value() const override {
-        return m_value;
-    }
-    bool equals(const JsonValue *other) const override {
-        return m_value == other->number_value();
-    }
-    bool less(const JsonValue *other) const override {
-        return m_value < other->number_value();
-    }
+    double number_value() const override { return m_value; }
+    int    int_value() const override { return m_value; }
+    bool   equals(const JsonValue *other) const override { return m_value == other->number_value(); }
+    bool   less(const JsonValue *other) const override { return m_value < other->number_value(); }
 
 public:
     explicit JsonInt(int value)
-        : Value(value) {
-    }
+        : Value(value) {}
 };
 
 class JsonBoolean final : public Value<Json::BOOL, bool> {
-    bool bool_value() const override {
-        return m_value;
-    }
+    bool bool_value() const override { return m_value; }
 
 public:
     explicit JsonBoolean(bool value)
-        : Value(value) {
-    }
+        : Value(value) {}
 };
 
 class JsonString final : public Value<Json::STRING, string> {
-    const string &string_value() const override {
-        return m_value;
-    }
+    const string &string_value() const override { return m_value; }
 
 public:
     explicit JsonString(const string &value)
-        : Value(value) {
-    }
+        : Value(value) {}
     explicit JsonString(string &&value)
-        : Value(move(value)) {
-    }
+        : Value(move(value)) {}
 };
 
 class JsonArray final : public Value<Json::ARRAY, Json::array> {
-    const Json::array &array_items() const override {
-        return m_value;
-    }
-    const Json &operator[](size_t i) const override;
+    const Json::array &array_items() const override { return m_value; }
+    const Json        &operator[](size_t i) const override;
 
     void push_back(const Json &val) override;
 
 public:
     explicit JsonArray(const Json::array &value)
-        : Value(value) {
-    }
+        : Value(value) {}
     explicit JsonArray(Json::array &&value)
-        : Value(move(value)) {
-    }
+        : Value(move(value)) {}
 };
 
 class JsonDateTime final : public Value<Json::DATETIME, Timestamp> {
 public:
-    time_t datetime_value() const override {
-        return m_value.seconds();
-    }
+    time_t datetime_value() const override { return m_value.seconds(); }
 
     explicit JsonDateTime(Timestamp val)
-        : Value(val) {
-    }
+        : Value(val) {}
 
     explicit JsonDateTime(JsonDateTime &value)
-        : Value(value) {
-    }
+        : Value(value) {}
 
     explicit JsonDateTime(JsonDateTime &&value)
-        : Value(std::move(value)) {
-    }
+        : Value(std::move(value)) {}
 };
 
 class JsonObject final : public Value<Json::OBJECT, Json::object> {
-    const Json::object &object_items() const override {
-        return m_value;
-    }
-    const Json &operator[](const string &key) const override;
+    const Json::object &object_items() const override { return m_value; }
+    const Json         &operator[](const string &key) const override;
 
     Json &operator[](const string &key) override;
 
 public:
     explicit JsonObject(const Json::object &value)
-        : Value(value) {
-    }
+        : Value(value) {}
     explicit JsonObject(Json::object &&value)
-        : Value(move(value)) {
-    }
+        : Value(move(value)) {}
 };
 
 class JsonNull final : public Value<Json::NUL, NullStruct> {
 public:
     JsonNull()
-        : Value({}) {
-    }
+        : Value({}) {}
 };
 
 /* * * * * * * * * * * * * * * * * * * *
@@ -324,8 +267,7 @@ struct Statics {
     const string                     empty_string;
     const vector<Json>               empty_vector;
     const map<string, Json>          empty_map;
-    Statics() {
-    }
+    Statics() {}
 };
 
 static const Statics &statics() {
@@ -344,49 +286,35 @@ static const Json &static_null() {
  */
 
 Json::Json() noexcept
-    : m_ptr(statics().null) {
-}
+    : m_ptr(statics().null) {}
 Json::Json(std::nullptr_t) noexcept
-    : m_ptr(statics().null) {
-}
+    : m_ptr(statics().null) {}
 Json::Json(double value)
-    : m_ptr(make_shared<JsonDouble>(value)) {
-}
+    : m_ptr(make_shared<JsonDouble>(value)) {}
 Json::Json(int value)
-    : m_ptr(make_shared<JsonInt>(value)) {
-}
+    : m_ptr(make_shared<JsonInt>(value)) {}
 Json::Json(bool value)
-    : m_ptr(value ? statics().t : statics().f) {
-}
+    : m_ptr(value ? statics().t : statics().f) {}
 Json::Json(const string &value)
-    : m_ptr(make_shared<JsonString>(value)) {
-}
+    : m_ptr(make_shared<JsonString>(value)) {}
 Json::Json(string &&value)
-    : m_ptr(make_shared<JsonString>(move(value))) {
-}
+    : m_ptr(make_shared<JsonString>(move(value))) {}
 Json::Json(const char *value)
-    : m_ptr(make_shared<JsonString>(value)) {
-}
+    : m_ptr(make_shared<JsonString>(value)) {}
 Json::Json(const Json::array &value)
-    : m_ptr(make_shared<JsonArray>(value)) {
-}
+    : m_ptr(make_shared<JsonArray>(value)) {}
 Json::Json(Json::array &&value)
-    : m_ptr(make_shared<JsonArray>(move(value))) {
-}
+    : m_ptr(make_shared<JsonArray>(move(value))) {}
 Json::Json(const Json::object &values)
-    : m_ptr(make_shared<JsonObject>(values)) {
-}
+    : m_ptr(make_shared<JsonObject>(values)) {}
 Json::Json(Json::object &&value)
-    : m_ptr(make_shared<JsonObject>(move(value))) {
-}
+    : m_ptr(make_shared<JsonObject>(move(value))) {}
 
 Json::Json(time_t value)
-    : m_ptr(make_shared<JsonDateTime>(Timestamp::fromUnixTime(value))) {
-}
+    : m_ptr(make_shared<JsonDateTime>(Timestamp::fromUnixTime(value))) {}
 
 Json::Json(const Timestamp &val)
-    : m_ptr(make_shared<JsonDateTime>(val)) {
-}
+    : m_ptr(make_shared<JsonDateTime>(val)) {}
 
 Json::Json(Json::Type type) {
     switch (type) {
@@ -416,91 +344,46 @@ Json::Json(Json::Type type) {
  * Accessors
  */
 
-Json::Type Json::type() const {
-    return m_ptr->type();
-}
-double Json::number_value() const {
-    return m_ptr->number_value();
-}
-int Json::int_value() const {
-    return m_ptr->int_value();
-}
-bool Json::bool_value() const {
-    return m_ptr->bool_value();
-}
-const string &Json::string_value() const {
-    return m_ptr->string_value();
-}
-const vector<Json> &Json::array_items() const {
-    return m_ptr->array_items();
-}
-const map<string, Json> &Json::object_items() const {
-    return m_ptr->object_items();
-}
-const Json &Json::operator[](size_t i) const {
-    return (*m_ptr)[ i ];
-}
-const Json &Json::operator[](const string &key) const {
-    return (*m_ptr)[ key ];
-}
+Json::Type               Json::type() const { return m_ptr->type(); }
+double                   Json::number_value() const { return m_ptr->number_value(); }
+int                      Json::int_value() const { return m_ptr->int_value(); }
+bool                     Json::bool_value() const { return m_ptr->bool_value(); }
+const string            &Json::string_value() const { return m_ptr->string_value(); }
+const vector<Json>      &Json::array_items() const { return m_ptr->array_items(); }
+const map<string, Json> &Json::object_items() const { return m_ptr->object_items(); }
+const Json &Json::operator[](size_t i) const { return (*m_ptr)[ i ]; }
+const Json &Json::operator[](const string &key) const { return (*m_ptr)[ key ]; }
 
-Json &Json::operator[](const string &key) {
-    return (*m_ptr)[ key ];
-}
+Json &Json::operator[](const string &key) { return (*m_ptr)[ key ]; }
 
-void Json::push_back(const Json &val) {
-    m_ptr->push_back(val);
-}
+void Json::push_back(const Json &val) { m_ptr->push_back(val); }
 
-double JsonValue::number_value() const {
-    return 0;
-}
+double JsonValue::number_value() const { return 0; }
 
-time_t JsonValue::datetime_value() const {
-    return 0;
-}
+time_t JsonValue::datetime_value() const { return 0; }
 
 Json &JsonValue::operator[](const std::string &key) {
     throw std::invalid_argument("such class doesn't implement such func");
 }
 
-void JsonValue::push_back(const Json &val) {
-}
+void JsonValue::push_back(const Json &val) {}
 
-int JsonValue::int_value() const {
-    return 0;
-}
-bool JsonValue::bool_value() const {
-    return false;
-}
-const string &JsonValue::string_value() const {
-    return statics().empty_string;
-}
-const vector<Json> &JsonValue::array_items() const {
-    return statics().empty_vector;
-}
-const map<string, Json> &JsonValue::object_items() const {
-    return statics().empty_map;
-}
-const Json &JsonValue::operator[](size_t) const {
-    return static_null();
-}
-const Json &JsonValue::operator[](const string &) const {
-    return static_null();
-}
+int                      JsonValue::int_value() const { return 0; }
+bool                     JsonValue::bool_value() const { return false; }
+const string            &JsonValue::string_value() const { return statics().empty_string; }
+const vector<Json>      &JsonValue::array_items() const { return statics().empty_vector; }
+const map<string, Json> &JsonValue::object_items() const { return statics().empty_map; }
+const Json &JsonValue::operator[](size_t) const { return static_null(); }
+const Json &JsonValue::operator[](const string &) const { return static_null(); }
 
 const Json &JsonObject::operator[](const string &key) const {
     auto iter = m_value.find(key);
     return (iter == m_value.end()) ? static_null() : iter->second;
 }
 
-Json &JsonObject::operator[](const string &key) {
-    return m_value[ key ];
-}
+Json &JsonObject::operator[](const string &key) { return m_value[ key ]; }
 
-void JsonArray::push_back(const Json &val) {
-    m_value.push_back(val);
-}
+void JsonArray::push_back(const Json &val) { m_value.push_back(val); }
 
 const Json &JsonArray::operator[](size_t i) const {
     if (i >= m_value.size())
@@ -549,9 +432,7 @@ static inline string esc(char c) {
     return string(buf);
 }
 
-static inline bool in_range(long x, long lower, long upper) {
-    return (x >= lower && x <= upper);
-}
+static inline bool in_range(long x, long lower, long upper) { return (x >= lower && x <= upper); }
 
 namespace {
 /* JsonParser
@@ -572,9 +453,7 @@ struct JsonParser final {
      *
      * Mark this parse as failed.
      */
-    Json fail(string &&msg) {
-        return fail(move(msg), Json());
-    }
+    Json fail(string &&msg) { return fail(move(msg), Json()); }
 
     template <typename T> T fail(string &&msg, const T err_ret) {
         if (!failed)

@@ -93,9 +93,7 @@ void WriteStreamBuffer::release(void) {
     }
 }
 
-size_t WriteStreamBuffer::flush(void) {
-    return m_pParent->flushWriteBuffer(*this, true);
-}
+size_t WriteStreamBuffer::flush(void) { return m_pParent->flushWriteBuffer(*this, true); }
 
 void WriteStreamBuffer::swap(WriteStreamBuffer &buf) {
     if (this != &buf) {
@@ -108,13 +106,9 @@ void WriteStreamBuffer::swap(WriteStreamBuffer &buf) {
 
 //////////////////////////////////////////////////////////////////////////
 
-off_t ReadStream::tellg(void) {
-    return nOutOfRange;
-}
+off_t ReadStream::tellg(void) { return nOutOfRange; }
 
-off_t ReadStream::seekg(off_t /*nOffset*/, StreamStatus::seek_dir /*nSeekFrom*/) {
-    return nOutOfRange;
-}
+off_t ReadStream::seekg(off_t /*nOffset*/, StreamStatus::seek_dir /*nSeekFrom*/) { return nOutOfRange; }
 
 size_t ReadStream::loopRead(void *lpBuf, size_t nSize, size_t nHasReadSize) {
     size_t nRest = nSize - nHasReadSize;
@@ -169,13 +163,9 @@ void ReadStream::allocReadBuffer(ReadStreamBuffer &buf, size_t nSuggestSize) {
 
 //-------------------------------------------------------------------------------------
 
-off_t WriteStream::seekp(off_t nOffset, seek_dir nSeekFrom) {
-    return nOutOfRange;
-}
+off_t WriteStream::seekp(off_t nOffset, seek_dir nSeekFrom) { return nOutOfRange; }
 
-off_t WriteStream::tellp(void) {
-    return nOutOfRange;
-}
+off_t WriteStream::tellp(void) { return nOutOfRange; }
 
 size_t WriteStream::loopWrite(const void *lpBuf, size_t nSize, size_t nHasWrite) {
     size_t       nRest = nSize - nHasWrite;
@@ -295,7 +285,7 @@ size_t StreamBase::copyStreamToStream(ReadStream *pSrc, WriteStream *pTar, size_
     auto                     tmpSize    = std::min(nInputCacheSize, nCopyData);
     size_t                   nCacheSize = std::min(g_nMaxCacheSize, std::max(g_nMinCacheSize, tmpSize));
     std::shared_ptr<tbyte[]> auBuf(new tbyte[ nCacheSize ]);
-    tbyte *                  tp    = auBuf.get();
+    tbyte                   *tp    = auBuf.get();
     size_t                   nSave = nCopyData;
 
     while (nCopyData) {

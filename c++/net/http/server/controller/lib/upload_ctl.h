@@ -4,8 +4,7 @@
 class UploadController : public IController {
 public:
     UploadController()
-        : IController("[upload controller]") {
-    }
+        : IController("[upload controller]") {}
     virtual ~UploadController() override = default;
     DECLARE_CONTROLLER
 };

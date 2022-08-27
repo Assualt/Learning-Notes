@@ -59,9 +59,7 @@ public:
      * Return the file descriptor, or -1 if the file was closed.
      */
     int      Fd() const;
-    explicit operator bool() const {
-        return m_nFd != -1;
-    }
+    explicit operator bool() const { return m_nFd != -1; }
 
     /**
      * Duplicate file descriptor and return File that owns it.

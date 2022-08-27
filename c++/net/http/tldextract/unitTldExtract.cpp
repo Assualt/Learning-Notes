@@ -7,14 +7,16 @@ void Usage() {
 
 int main(int argc, char **argv) {
     auto &log = muduo::base::Logger::getLogger();
-    log.BasicConfig(static_cast<LogLevel>(Debug), "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
+    log.BasicConfig(static_cast<LogLevel>(Debug),
+                    "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
     log.setAppName("app");
     auto stdHandle = std::make_shared<StdOutLogHandle>();
     log.addLogHandle(stdHandle.get());
 
     cmdline::parser cmdParse;
     cmdParse.add<std::string>("url", 'u', "input url string", true);
-    cmdParse.add<bool>("private_domains", 'p', "extract url use private domains.", false, false, cmdline::oneof<bool>(true, false));
+    cmdParse.add<bool>("private_domains", 'p', "extract url use private domains.", false, false,
+                       cmdline::oneof<bool>(true, false));
     if (argc < 2) {
         std::cout << cmdParse.usage() << std::endl;
         return 0;

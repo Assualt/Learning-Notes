@@ -8,8 +8,7 @@ namespace muduo {
 namespace net {
 
 Poller::Poller(EventLoop *loop)
-    : m_pLoop(loop) {
-}
+    : m_pLoop(loop) {}
 
 bool Poller::hasChannel(Channel *channel) const {
     ChannelMap::const_iterator it = m_mChannels.find(channel->fd());
@@ -24,9 +23,7 @@ Poller *Poller::newDefaultPoller(EventLoop *loop) {
     }
 }
 
-void Poller::assertInLoopThread() {
-    m_pLoop->assertLoopThread();
-}
+void Poller::assertInLoopThread() { m_pLoop->assertLoopThread(); }
 
 Poller::ChannelList Poller::getEventTimeoutChannel() {
     ChannelList noEventList;

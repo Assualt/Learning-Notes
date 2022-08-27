@@ -19,56 +19,43 @@ enum class TcpState : uint8_t { DisConnected, Connecting, Connected, DisConnecti
 
 class TcpConnection : public std::enable_shared_from_this<TcpConnection> {
 public:
-    TcpConnection(EventLoop *loop, const std::string &name, int sockFd, const InetAddress &locAddr, const InetAddress &peerAddr, void *ssl = nullptr);
+    TcpConnection(EventLoop *loop, const std::string &name, int sockFd, const InetAddress &locAddr,
+                  const InetAddress &peerAddr, void *ssl = nullptr);
 
     ~TcpConnection();
 
 public:
     void handleRead(const Timestamp &tistamp);
+
     void handleWrite();
+
     void handleClose();
+
     void handleError();
+
     void connectEstablished();
+
     void connectDestory();
-    void setConnectionCallBack(ConnectionCallback cb) {
-        m_connCallBack = cb;
-    }
 
-    void setMessageCallBack(MessageCallback cb) {
-        m_messCallBack = cb;
-    }
+    void setConnectionCallBack(ConnectionCallback cb) { m_connCallBack = cb; }
 
-    void setWriteCompleteCallBack(WriteCompleteCallback cb) {
-        m_writecompCallBack = cb;
-    }
+    void setMessageCallBack(MessageCallback cb) { m_messCallBack = cb; }
 
-    void setHighWaterCallBack(HighWaterMarkCallback cb) {
-        m_hightwaterCallBack = cb;
-    }
+    void setWriteCompleteCallBack(WriteCompleteCallback cb) { m_writecompCallBack = cb; }
 
-    void setCloseCallBack(CloseCallback cb) {
-        m_closeCallBack = cb;
-    }
+    void setHighWaterCallBack(HighWaterMarkCallback cb) { m_hightwaterCallBack = cb; }
 
-    const InetAddress &localAddress() const {
-        return m_locAddr;
-    }
+    void setCloseCallBack(CloseCallback cb) { m_closeCallBack = cb; }
 
-    const InetAddress &peerAddress() const {
-        return m_peerAddr;
-    }
+    const InetAddress &localAddress() const { return m_locAddr; }
 
-    const std::string &name() const {
-        return m_strName;
-    }
+    const InetAddress &peerAddress() const { return m_peerAddr; }
 
-    EventLoop *getLoop() {
-        return m_pLoop;
-    }
+    const std::string &name() const { return m_strName; }
 
-    bool isConnected() {
-        return m_state == TcpState::Connected;
-    }
+    EventLoop *getLoop() { return m_pLoop; }
+
+    bool isConnected() { return m_state == TcpState::Connected; }
 
     void send(const void *message, int len);
 

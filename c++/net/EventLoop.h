@@ -26,6 +26,7 @@ public:
     typedef std::function<void()>  Functor;
     typedef std::vector<Channel *> ChannelList;
     EventLoop();
+
     ~EventLoop();
 
     // Loops forever
@@ -35,20 +36,28 @@ public:
     void quit();
 
     void updateChannel(Channel *channel);
+
     void removeChannel(Channel *channel);
+
     bool hasChannel(Channel *channel);
 
     void runInLoop(Functor callback);
+
     void queueInLoop(Functor cb);
+
     void assertLoopThread();
+
     void wakeup();
+
     void handleRead();
 
     bool isInLoopThread() const;
+
     void printActiveChannels() const;
 
 protected:
     void doPendingFunctors();
+
     void clearReadTimeoutChannel();
 
 protected:
@@ -59,7 +68,7 @@ protected:
     int m_nWakeUpFD;
 
     ChannelList              m_vActiveChannels;
-    Channel *                m_pCurrentChannel;
+    Channel                 *m_pCurrentChannel;
     Timestamp                m_tRecvTimeStamp;
     std::unique_ptr<Poller>  m_Poller;
     std::vector<Functor>     m_vPendingFunctors;

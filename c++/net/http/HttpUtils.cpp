@@ -16,14 +16,14 @@ std::string utils::_rtrim(const std::string &src, char ch) {
     return temp;
 }
 
-std::string utils::trim(const std::string &src, char ch) {
-    return _rtrim(_ltrim(src, ch), ch);
-}
+std::string utils::trim(const std::string &src, char ch) { return _rtrim(_ltrim(src, ch), ch); }
 
 size_t utils::chunkSize(const std::string &strChunkSize) {
     std::string temp;
     for (size_t i = 0; i < strChunkSize.size(); i++) {
-        if ((strChunkSize[ i ] >= '0' && strChunkSize[ i ] <= '9') || (strChunkSize[ i ] >= 'A' && strChunkSize[ i ] <= 'F') || (strChunkSize[ i ] >= 'a' && strChunkSize[ i ] <= 'f')) {
+        if ((strChunkSize[ i ] >= '0' && strChunkSize[ i ] <= '9') ||
+            (strChunkSize[ i ] >= 'A' && strChunkSize[ i ] <= 'F') ||
+            (strChunkSize[ i ] >= 'a' && strChunkSize[ i ] <= 'f')) {
             temp.push_back(strChunkSize[ i ]);
         } else {
             break;
@@ -130,9 +130,7 @@ bool utils::FileIsBinary(const std::string &filePath) {
     return true;
 }
 
-bool utils::FileExists(const std::string &filePath) {
-    return access(filePath.c_str(), F_OK) == 0;
-}
+bool utils::FileExists(const std::string &filePath) { return access(filePath.c_str(), F_OK) == 0; }
 
 std::string utils::toSizeString(off_t nSize) {
     std::string suffix = " B";
@@ -183,9 +181,7 @@ bool utils::endWith(const std::string &src, const char *backfix) {
     return src.substr(src.size() - strlen(backfix), strlen(backfix)) == backfix;
 }
 
-unsigned char UrlUtils::ToHex(unsigned char x) {
-    return x > 9 ? x + 55 : x + 48;
-}
+unsigned char UrlUtils::ToHex(unsigned char x) { return x > 9 ? x + 55 : x + 48; }
 
 unsigned char UrlUtils::FromHex(unsigned char x) {
     unsigned char y = 0;
@@ -202,7 +198,8 @@ std::string UrlUtils::UrlEncode(const std::string &str) {
     std::string strTemp = "";
     size_t      length  = str.length();
     for (size_t i = 0; i < length; i++) {
-        if (isalnum((unsigned char)str[ i ]) || (str[ i ] == '-') || (str[ i ] == '_') || (str[ i ] == '.') || (str[ i ] == '~'))
+        if (isalnum((unsigned char)str[ i ]) || (str[ i ] == '-') || (str[ i ] == '_') || (str[ i ] == '.') ||
+            (str[ i ] == '~'))
             strTemp.push_back(str[ i ]);
         else if (str[ i ] == ' ') {
             strTemp.append("%20");

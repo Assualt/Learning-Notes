@@ -12,15 +12,13 @@ bool UploadController::onPost(const HttpRequest &req, HttpResponse &res, const H
     return true;
 }
 
-bool UploadController::onPut(const HttpRequest &, HttpResponse &, const HttpConfig &cfg) {
-    return true;
-}
+bool UploadController::onPut(const HttpRequest &, HttpResponse &, const HttpConfig &cfg) { return true; }
 
 extern "C" int upload_Entry(std::string *pattern, int *method, bool *needVal, bool *useRegex, uintptr_t *obj) {
-    *pattern = "/upload";
-    *method  = 0x3;
-    *needVal = false;
+    *pattern  = "/upload";
+    *method   = 0x3;
+    *needVal  = false;
     *useRegex = false;
-    *obj     = reinterpret_cast<uintptr_t>(new UploadController);
+    *obj      = reinterpret_cast<uintptr_t>(new UploadController);
     return 0;
 }

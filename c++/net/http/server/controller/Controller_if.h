@@ -19,29 +19,26 @@ public:
     }
 
     IController(const std::string &name)
-        : name_(name) {
-    }
+        : name_(name) {}
 
     virtual ~IController() = default;
-    const std::string &getName() const {
-        return name_;
-    }
 
-    bool InitSelf() override {
-        return true;
-    }
-    bool InitOther() override {
-        return true;
-    }
-    bool InitFinish() override {
-        return true;
-    }
+    const std::string &getName() const { return name_; }
+
+    bool InitSelf() override { return true; }
+
+    bool InitOther() override { return true; }
+
+    bool InitFinish() override { return true; }
 
     virtual bool onRequest(const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) {
         std::map<std::string, Func> methodFuncs = {
-            {"get", [ this ](const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) { return this->onGet(req, res, cfg); }},
-            {"post", [ this ](const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) { return this->onPost(req, res, cfg); }},
-            {"put", [ this ](const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) { return this->onPut(req, res, cfg); }},
+            {"get", [ this ](const HttpRequest &req, HttpResponse &res,
+                             const HttpConfig &cfg) { return this->onGet(req, res, cfg); }},
+            {"post", [ this ](const HttpRequest &req, HttpResponse &res,
+                              const HttpConfig &cfg) { return this->onPost(req, res, cfg); }},
+            {"put", [ this ](const HttpRequest &req, HttpResponse &res,
+                             const HttpConfig &cfg) { return this->onPut(req, res, cfg); }},
         };
 
         logger.info("request path:%s controller name:%s type:%s", req.getRequestPath(), name_, req.getRequestType());
@@ -52,10 +49,13 @@ public:
         return onLost(req, res, cfg);
     }
 
-    virtual void onDump(std::ostream &)                                          = 0;
-    virtual bool onGet(const HttpRequest &, HttpResponse &, const HttpConfig &)  = 0;
+    virtual void onDump(std::ostream &) = 0;
+
+    virtual bool onGet(const HttpRequest &, HttpResponse &, const HttpConfig &) = 0;
+
     virtual bool onPost(const HttpRequest &, HttpResponse &, const HttpConfig &) = 0;
-    virtual bool onPut(const HttpRequest &, HttpResponse &, const HttpConfig &)  = 0;
+
+    virtual bool onPut(const HttpRequest &, HttpResponse &, const HttpConfig &) = 0;
 
 private:
     bool onLost(const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) {
@@ -69,21 +69,18 @@ private:
     std::string name_;
 };
 
-#define DECLARE_CONTROLLER                                                            \
-public:                                                                               \
-    bool InitSelf() override {                                                        \
-        return true;                                                                  \
-    }                                                                                 \
-    bool InitOther() override {                                                       \
-        return true;                                                                  \
-    }                                                                                 \
-    bool InitFinish() override {                                                      \
-        return true;                                                                  \
-    }                                                                                 \
-    void onDump(std::ostream &) override {                                            \
-        return;                                                                       \
-    }                                                                                 \
-                                                                                      \
-    bool onGet(const HttpRequest &, HttpResponse &, const HttpConfig &cfg) override;  \
-    bool onPost(const HttpRequest &, HttpResponse &, const HttpConfig &cfg) override; \
+#define DECLARE_CONTROLLER                                                                                             \
+public:                                                                                                                \
+    bool InitSelf() override { return true; }                                                                          \
+                                                                                                                       \
+    bool InitOther() override { return true; }                                                                         \
+                                                                                                                       \
+    bool InitFinish() override { return true; }                                                                        \
+                                                                                                                       \
+    void onDump(std::ostream &) override { return; }                                                                   \
+                                                                                                                       \
+    bool onGet(const HttpRequest &, HttpResponse &, const HttpConfig &cfg) override;                                   \
+                                                                                                                       \
+    bool onPost(const HttpRequest &, HttpResponse &, const HttpConfig &cfg) override;                                  \
+                                                                                                                       \
     bool onPut(const HttpRequest &, HttpResponse &, const HttpConfig &cfg) override;

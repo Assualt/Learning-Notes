@@ -23,9 +23,7 @@ public:
     ~BinaryStream(void);
 
     //! not the virtual function return the current get position
-    off_t tellpos(void) const {
-        return m_nCurPos;
-    }
+    off_t tellpos(void) const { return m_nCurPos; }
 
     //! Virtual function of the base class, return the current access position of data.
     virtual off_t tellg(void);
@@ -42,9 +40,7 @@ public:
     //! Clear all data in the storage
     void clear(void);
     //! Return true when the data is attach in this storage
-    bool isAttach(void) const {
-        return !checkExtStateBit(BUF_TYPE_AUTODELETE);
-    }
+    bool isAttach(void) const { return !checkExtStateBit(BUF_TYPE_AUTODELETE); }
     //! Attach any data.
     //! the storage will not auto-delete the data, if boReference == true
     void attach(void *lpBuffer, size_t nLength, TAutoDeleteFlag boAutoDel);
@@ -58,34 +54,20 @@ public:
     //! Reset the auto group up size. return the old value
     int resetAutoGroupUpSize(int nNewVal);
     //! Return the size of whole data
-    size_t size(void) const {
-        return m_nBufLen;
-    }
+    size_t size(void) const { return m_nBufLen; }
     //! reset the size of whole data
     void resetSize(size_t nSize, tbyte bFillter = 0);
     //! Return the size of data can be read
-    size_t rest_size(void) const {
-        return m_nBufLen - m_nCurPos;
-    }
+    size_t rest_size(void) const { return m_nBufLen - m_nCurPos; }
     //! Return the capacity space of the storage
-    size_t capacity(void) const {
-        return m_nBufMaxLen - m_nBufLen;
-    }
-    size_t capacity2(void) const {
-        return m_nBufMaxLen;
-    }
+    size_t capacity(void) const { return m_nBufMaxLen - m_nBufLen; }
+    size_t capacity2(void) const { return m_nBufMaxLen; }
     //! Return the whole space of the storage
-    size_t max_size(void) const {
-        return m_nBufMaxLen;
-    }
+    size_t max_size(void) const { return m_nBufMaxLen; }
     //! Return the data address from the begining of the storage
-    void *data(void) const {
-        return m_lpBuffer;
-    }
+    void *data(void) const { return m_lpBuffer; }
     //! Return the data address from the current access position of the storage
-    void *current_data(void) const {
-        return m_lpBuffer + m_nCurPos;
-    }
+    void *current_data(void) const { return m_lpBuffer + m_nCurPos; }
 
     //!	return the byte indicated by the index
     tbyte &operator[](size_t index);

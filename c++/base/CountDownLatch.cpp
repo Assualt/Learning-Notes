@@ -5,8 +5,7 @@ using namespace muduo::base;
 
 CountDownLatch::CountDownLatch(int count)
     : m_nCount(count)
-    , m_pCond(new Condition(m_mutex)) {
-}
+    , m_pCond(new Condition(m_mutex)) {}
 
 void CountDownLatch::Wait() {
     AutoLock myLock(m_mutex);

@@ -12,6 +12,7 @@ using muduo::base::Condition;
 using muduo::base::Logger;
 using muduo::base::MutexLock;
 using muduo::base::Thread;
+
 class HttpLog : muduo::base::nonecopyable {
 public:
     HttpLog(Logger &log);
@@ -26,6 +27,8 @@ public:
     }
 
     void LogTaskThread();
+
+private:
     void CheckLogBufferOverFlow();
 
 private:

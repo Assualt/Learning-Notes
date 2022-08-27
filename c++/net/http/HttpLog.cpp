@@ -8,8 +8,7 @@ using namespace muduo::base;
 static std::shared_ptr<LogHandle> RollFileHandler(new RollingFileLogHandle("./", "access.log"));
 
 HttpLog::HttpLog(Logger &log)
-    : m_pLogger(log) {
-}
+    : m_pLogger(log) {}
 
 HttpLog::~HttpLog() {
     m_pLogger.debug(m_sCmdInStream.str().c_str());

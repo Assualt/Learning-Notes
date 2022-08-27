@@ -49,86 +49,55 @@ public:
 
     //! Constructor
     StreamStatus()
-        : m_nState(STATE_CLOSE) {
-    }
+        : m_nState(STATE_CLOSE) {}
     //! Destructor
     virtual ~StreamStatus() = default;
 
     //! check the result code is whether ok
     //! return true while nResult is neither nERRORS nor nEOS
-    static inline bool resultIsOK(size_t nResult) {
-        return (nResult + 1 > 1);
-    }
+    static inline bool resultIsOK(size_t nResult) { return (nResult + 1 > 1); }
 
     //! check the result code is whether reach the end of stream
     //! return true while nResult is nEOS
-    static inline bool resultIsEndofStream(size_t nResult) {
-        return (nResult == nEOS);
-    }
+    static inline bool resultIsEndofStream(size_t nResult) { return (nResult == nEOS); }
 
     //! check the result code is whether error stream
     //! return true while nResult is nERRORS
-    static inline bool resultIsError(size_t nResult) {
-        return (nResult == nERRORS);
-    }
+    static inline bool resultIsError(size_t nResult) { return (nResult == nERRORS); }
 
     //! Return the state of the stream
-    [[nodiscard]] virtual typeState getState() const {
-        return static_cast<typeState>(m_nState);
-    }
+    [[nodiscard]] virtual typeState getState() const { return static_cast<typeState>(m_nState); }
 
     //! Return true when the stream is closed.
-    [[nodiscard]] bool closed() const {
-        return (getState() & STATE_MASK) == STATE_CLOSE;
-    }
+    [[nodiscard]] bool closed() const { return (getState() & STATE_MASK) == STATE_CLOSE; }
     //! Return true when the stream is opened.
-    [[nodiscard]] bool opened() const {
-        return (getState() & STATE_OPEN) != 0;
-    }
+    [[nodiscard]] bool opened() const { return (getState() & STATE_OPEN) != 0; }
     //! Return true when the stream is error.
-    [[nodiscard]] bool error() const {
-        return (getState() & STATE_ERR) != 0;
-    }
+    [[nodiscard]] bool error() const { return (getState() & STATE_ERR) != 0; }
     //! Return true when the stream is empty.
-    [[nodiscard]] bool eof() const {
-        return (getState() & STATE_EOF) != 0;
-    }
+    [[nodiscard]] bool eof() const { return (getState() & STATE_EOF) != 0; }
     //! Return true when can not read any thing from the stream.include eof,error or close
-    [[nodiscard]] bool fail() const {
-        return (getState() & (STATE_ERR | STATE_EOF)) != 0 || closed();
-    }
+    [[nodiscard]] bool fail() const { return (getState() & (STATE_ERR | STATE_EOF)) != 0 || closed(); }
 
 protected:
     typedef size_t typeFlags;
     //! Set the state of the stream.
-    void setState(typeState nState) {
-        m_nState = (m_nState & Ext_STATE_MASK) | static_cast<typeFlags>(nState);
-    }
+    void setState(typeState nState) { m_nState = (m_nState & Ext_STATE_MASK) | static_cast<typeFlags>(nState); }
     //! Set one of the states of the stream.
-    void setStateBit(typeState nState) {
-        m_nState |= static_cast<typeFlags>(nState);
-    }
+    void setStateBit(typeState nState) { m_nState |= static_cast<typeFlags>(nState); }
     //! Clear one of the states of the stream.
-    void clearStateBit(typeState nState) {
-        m_nState &= ~(static_cast<typeFlags>(nState));
-    }
+    void clearStateBit(typeState nState) { m_nState &= ~(static_cast<typeFlags>(nState)); }
     //! check the bit
     [[nodiscard]] bool checkExtStateBit(long nBits) const {
         nBits <<= Ext_STATE_OFFSET;
         return (static_cast<long>(m_nState) & nBits) == nBits;
     }
     //! set the ext bits
-    void setExtStateBit(long nBits) {
-        m_nState |= (nBits << Ext_STATE_OFFSET);
-    }
+    void setExtStateBit(long nBits) { m_nState |= (nBits << Ext_STATE_OFFSET); }
     //! clear the ext bits
-    void clearExtStateBit(long nBits) {
-        m_nState &= ~(nBits << Ext_STATE_OFFSET);
-    }
+    void clearExtStateBit(long nBits) { m_nState &= ~(nBits << Ext_STATE_OFFSET); }
     //! clear all ext bites
-    void clearAllExtStateBit() {
-        m_nState &= STATE_MASK;
-    }
+    void clearAllExtStateBit() { m_nState &= STATE_MASK; }
 
 private:
     typeFlags m_nState;
@@ -147,22 +116,17 @@ public:
         typedef const tbyte              &reference;
 
         explicit iterator(ReadStreamBuffer &iBuffer)
-            : m_pBuffer(&iBuffer) {
-        }
+            : m_pBuffer(&iBuffer) {}
 
         explicit iterator(ReadStreamBuffer *pBuffer)
-            : m_pBuffer(pBuffer) {
-        }
+            : m_pBuffer(pBuffer) {}
 
         iterator(const iterator &it)
-            : m_pBuffer(it.m_pBuffer) {
-        }
+            : m_pBuffer(it.m_pBuffer) {}
 
         ~iterator() = default;
 
-        const tbyte &operator*() const {
-            return *m_pBuffer->getBegin();
-        }
+        const tbyte     &operator*() const { return *m_pBuffer->getBegin(); }
         inline iterator &operator++() {
             if (m_pBuffer->moveNext() == 0 && m_pBuffer->getNext() == 0)
                 m_pBuffer = nullptr;
@@ -173,15 +137,9 @@ public:
             ++(*this);
             return it;
         }
-        inline const tbyte *operator&() const {
-            return m_pBuffer->getBegin();
-        }
-        inline bool operator==(const iterator &it) const {
-            return (m_pBuffer == it.m_pBuffer);
-        }
-        inline bool operator!=(const iterator &it) const {
-            return !(*this == it);
-        }
+        inline const tbyte *operator&() const { return m_pBuffer->getBegin(); }
+        inline bool         operator==(const iterator &it) const { return (m_pBuffer == it.m_pBuffer); }
+        inline bool         operator!=(const iterator &it) const { return !(*this == it); }
 
     protected:
         ReadStreamBuffer *m_pBuffer;
@@ -189,12 +147,8 @@ public:
     typedef iterator const_iterator;
 
     //! return the begin/end of iterator
-    iterator begin() {
-        return iterator(this);
-    }
-    iterator end() {
-        return iterator(nullptr);
-    }
+    iterator begin() { return iterator(this); }
+    iterator end() { return iterator(nullptr); }
 
     //! default constructor
     ReadStreamBuffer()
@@ -202,15 +156,12 @@ public:
         , m_nCacheSize(0)
         , m_lpReadBegin(nullptr)
         , m_lpReadEnd(nullptr)
-        , m_lpBufferBegin(nullptr) {
-    }
+        , m_lpBufferBegin(nullptr) {}
     //! Init with the Input Stream and cache size
     ReadStreamBuffer(ReadStream *pParent, size_t nCacheSize);
 
     //! Destructor
-    ~ReadStreamBuffer() {
-        release();
-    }
+    ~ReadStreamBuffer() { release(); }
 
     //! init the buffer
     bool init(ReadStream *pParent, size_t nCacheSize);
@@ -219,30 +170,18 @@ public:
     //! seek the read position
     off_t seekg(off_t nOffset, StreamStatus::seek_dir nSeekFrom = StreamStatus::seek_dir::seek_begin);
     //! return the rest bytes in buffer
-    [[nodiscard]] inline size_t getRestCount() const {
-        return m_lpReadEnd - m_lpReadBegin;
-    }
+    [[nodiscard]] inline size_t getRestCount() const { return m_lpReadEnd - m_lpReadBegin; }
 
     //! return the buffer begin pos
-    [[nodiscard]] inline const tbyte *getBegin() const {
-        return m_lpReadBegin;
-    }
+    [[nodiscard]] inline const tbyte *getBegin() const { return m_lpReadBegin; }
     //! return the buffer end pos
-    inline const tbyte *getEnd() const {
-        return m_lpReadEnd;
-    }
+    inline const tbyte *getEnd() const { return m_lpReadEnd; }
     //! return the buffer begin pos
-    [[nodiscard]] inline const tbyte *getBuffer() const {
-        return m_lpBufferBegin;
-    }
+    [[nodiscard]] inline const tbyte *getBuffer() const { return m_lpBufferBegin; }
     //! return the total cache size
-    inline size_t getCacheSize() const {
-        return m_nCacheSize;
-    }
+    inline size_t getCacheSize() const { return m_nCacheSize; }
     //! reset the buffer begin pos
-    inline void setCurBegin(const tbyte *tBegin) {
-        m_lpReadBegin = tBegin;
-    }
+    inline void setCurBegin(const tbyte *tBegin) { m_lpReadBegin = tBegin; }
 
     inline int sgetc() {
         if (m_lpReadEnd == m_lpReadBegin && getNext() == 0)
@@ -271,9 +210,7 @@ public:
     void swap(ReadStreamBuffer &buf);
 
     //! get Stream source
-    inline ReadStream *geReadStream() const {
-        return m_pParent;
-    }
+    inline ReadStream *geReadStream() const { return m_pParent; }
 
     //! released all
     void release();
@@ -299,23 +236,15 @@ public:
         typedef const tbyte              &reference;
 
         explicit write_iterator(WriteStreamBuffer &iBuffer)
-            : m_pBuffer(&iBuffer) {
-        }
+            : m_pBuffer(&iBuffer) {}
         explicit write_iterator(WriteStreamBuffer *pBuffer)
-            : m_pBuffer(pBuffer) {
-        }
+            : m_pBuffer(pBuffer) {}
         write_iterator(const write_iterator &it)
-            : m_pBuffer(it.m_pBuffer) {
-        }
-        ~write_iterator() {
-        }
+            : m_pBuffer(it.m_pBuffer) {}
+        ~write_iterator() {}
 
-        tbyte &operator*() {
-            return *m_pBuffer->getBegin();
-        }
-        tbyte operator*() const {
-            return *m_pBuffer->getBegin();
-        }
+        tbyte &operator*() { return *m_pBuffer->getBegin(); }
+        tbyte  operator*() const { return *m_pBuffer->getBegin(); }
 
         write_iterator &operator++() {
             if (m_pBuffer->moveNext() == 0) {
@@ -330,12 +259,8 @@ public:
             ++(*this);
             return it;
         }
-        bool operator==(const write_iterator &it) const {
-            return (m_pBuffer == it.m_pBuffer);
-        }
-        bool operator!=(const write_iterator &it) const {
-            return !(*this == it);
-        }
+        bool operator==(const write_iterator &it) const { return (m_pBuffer == it.m_pBuffer); }
+        bool operator!=(const write_iterator &it) const { return !(*this == it); }
 
     protected:
         WriteStreamBuffer *m_pBuffer;
@@ -346,8 +271,7 @@ public:
         : m_pParent(nullptr)
         , m_lpWriteBegin(nullptr)
         , m_lpWriteEnd(nullptr)
-        , m_lpBufferBegin(nullptr) {
-    }
+        , m_lpBufferBegin(nullptr) {}
     //! constructor with output Stream and cache size
     WriteStreamBuffer(WriteStream *pParent, size_t nCacheSize);
     //! destructor
@@ -366,34 +290,20 @@ public:
     size_t seekp(off_t nOffset, StreamStatus::seek_dir nSeekFrom = StreamStatus::seek_dir::seek_begin);
 
     //! return the buffer begin pos
-    inline tbyte *getBegin() const {
-        return m_lpWriteBegin;
-    }
+    inline tbyte *getBegin() const { return m_lpWriteBegin; }
     //! return the buffer end pos
-    inline tbyte *getEnd() const {
-        return m_lpWriteEnd;
-    }
+    inline tbyte *getEnd() const { return m_lpWriteEnd; }
     //! reset the buffer begin pos
-    inline void setCurBegin(tbyte *tBegin) {
-        m_lpWriteBegin = tBegin;
-    }
+    inline void setCurBegin(tbyte *tBegin) { m_lpWriteBegin = tBegin; }
     //! return the buffer begin pos
-    inline tbyte *getBuffer() const {
-        return m_lpBufferBegin;
-    }
+    inline tbyte *getBuffer() const { return m_lpBufferBegin; }
     //! return the total cache size
-    inline size_t getCacheSize() const {
-        return m_lpWriteEnd - m_lpBufferBegin;
-    }
+    inline size_t getCacheSize() const { return m_lpWriteEnd - m_lpBufferBegin; }
 
     //! return the free buffer size can be writen
-    inline size_t getFreeSize() const {
-        return m_lpWriteEnd - m_lpWriteBegin;
-    }
+    inline size_t getFreeSize() const { return m_lpWriteEnd - m_lpWriteBegin; }
     //! return the data count in the buffer
-    inline size_t getDataInBuffer() const {
-        return m_lpWriteBegin - m_lpBufferBegin;
-    }
+    inline size_t getDataInBuffer() const { return m_lpWriteBegin - m_lpBufferBegin; }
 
     //! move the curset to next
     inline size_t moveNext() {
@@ -416,11 +326,9 @@ public:
     void swap(WriteStreamBuffer &buf);
 
     //! get Stream source
-    inline WriteStream *geWriteStream() const {
-        return m_pParent;
-    }
-    void   release();
-    size_t flush();
+    inline WriteStream *geWriteStream() const { return m_pParent; }
+    void                release();
+    size_t              flush();
 
 protected:
     WriteStream *m_pParent;
@@ -439,8 +347,7 @@ public:
         setState(nState);
     }
     //! Destructor
-    virtual ~ReadStream() {
-    }
+    virtual ~ReadStream() {}
 
     //! try to read nSize bytes into lpBuf, until reach the end of the stream of error occur
     inline size_t readBlock(void *lpBuf, size_t nSize) {
@@ -461,9 +368,7 @@ public:
     //! count bytes left.
     virtual size_t read(void *lpBuf, size_t nSize) = 0;
     //! Clear the input buffer of the stream, and return the count of bytes which is clear
-    virtual size_t clearInput() {
-        return 0;
-    }
+    virtual size_t clearInput() { return 0; }
 
     //! Virtual Seek function. Seek the read position, return the current postion if succeed, else return ERRORS
     virtual off_t seekg(off_t nOffset, StreamStatus::seek_dir nSeekFrom = seek_begin);
@@ -507,8 +412,7 @@ public:
     }
 
     //! Destructor
-    virtual ~WriteStream() {
-    }
+    virtual ~WriteStream() {}
 
     struct TWriteDataBlocks {
         const void *data;
@@ -537,9 +441,7 @@ public:
     virtual size_t write(const TWriteDataBlocks *pDatas, size_t n, size_t nOffset);
 
     //! Flush the output buffer of the stream, and return the count of bytes which is flush to stream
-    virtual size_t flush() {
-        return 0;
-    }
+    virtual size_t flush() { return 0; }
 
     //! Virtual Seek function. Seek the write position, return the current postion if succeed, else return ERRORS
     virtual off_t seekp(off_t nOffset, seek_dir nSeekFrom = seek_begin);
@@ -547,9 +449,7 @@ public:
     virtual off_t tellp();
 
     //! Truncate, reset the size of the stream
-    virtual bool truncate(off_t nSize) {
-        return false;
-    }
+    virtual bool truncate(off_t nSize) { return false; }
 
 protected:
     inline void getWriteBufferImp(const WriteStreamBuffer &buf, tbyte *&pBuffer, tbyte *&pBufferEnd,
@@ -581,13 +481,9 @@ public:
     ~StreamBase() override = default;
 
     //! Virtual Seek function. Seek the write position, return the current postion if succeed, else return ERRORS
-    off_t seekp(off_t nOffset, seek_dir nSeekFrom = seek_begin) override {
-        return seekg(nOffset, nSeekFrom);
-    }
+    off_t seekp(off_t nOffset, seek_dir nSeekFrom = seek_begin) override { return seekg(nOffset, nSeekFrom); }
     //! Virtual Tell function, return the current write postion if succeed, else return ERRORS
-    off_t tellp() override {
-        return tellg();
-    }
+    off_t tellp() override { return tellg(); }
 
     static size_t copyStreamToStream(ReadStream *pSrc, WriteStream *pTar, size_t nCopyData,
                                      size_t nCachSize = 4 * 1024);
@@ -601,8 +497,7 @@ protected:
     //! Constructor, used by the derived class
     explicit StreamBase(StreamStatus::typeState nState = STATE_CLOSE)
         : ReadStream(nState)
-        , WriteStream(nState) {
-    }
+        , WriteStream(nState) {}
 };
 
 //////////////////////////////////////////////////////////////////////////

@@ -14,14 +14,15 @@ bool UserController::onPost(const HttpRequest &request, HttpResponse &response, 
     for (auto &iter : kvalmap) {
         obj.insert(iter);
     }
-    json::Json retJson({{"ret", 200}, {"errmsg", ""}, {"data", json::Json(obj)}, {"postdata", request.getPostParams()}, 
-        {"query" , request.getQuery()}});
+    json::Json retJson({{"ret", 200},
+                        {"errmsg", ""},
+                        {"data", json::Json(obj)},
+                        {"postdata", request.getPostParams()},
+                        {"query", request.getQuery()}});
     response.setStatusMessage(HttpStatusCode::k200Ok, request.getHttpVersion(), "OK");
     response.addHeader(ContentType, "application/json");
     response.setBody(retJson.dump());
     return true;
 }
 
-bool UserController::onPut(const HttpRequest &, HttpResponse &res, const HttpConfig &cfg) {
-    return true;
-}
+bool UserController::onPut(const HttpRequest &, HttpResponse &res, const HttpConfig &cfg) { return true; }

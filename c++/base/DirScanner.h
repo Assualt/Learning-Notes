@@ -1,8 +1,8 @@
 #pragma once
 #include "Timestamp.h"
 #include "nonecopyable.h"
-#include <dirent.h>
 #include <cstdio>
+#include <dirent.h>
 #include <sys/stat.h>
 namespace muduo::base {
 
@@ -18,8 +18,7 @@ public:
         , m_nSize(0)
         , m_tCreate(0)
         , m_tModify(0)
-        , m_tRead(0) {
-    }
+        , m_tRead(0) {}
 
     //! copy constructor
     FileAttr(const FileAttr &rt)
@@ -29,8 +28,7 @@ public:
         , m_nSize(rt.m_nSize)
         , m_tCreate(rt.m_tCreate)
         , m_tModify(rt.m_tModify)
-        , m_tRead(rt.m_tRead) {
-    }
+        , m_tRead(rt.m_tRead) {}
 
     //! destrcutor
     ~FileAttr() = default;
@@ -55,9 +53,7 @@ public:
     }
 
     //! compare tow file name
-    bool operator==(const FileAttr &rt) const {
-        return m_strParent == rt.m_strParent && m_strName == rt.m_strName;
-    }
+    bool operator==(const FileAttr &rt) const { return m_strParent == rt.m_strParent && m_strName == rt.m_strName; }
 
     //! compare tow file name
     template <class typeFileAttr> bool operator==(const typeFileAttr &rt) const {
@@ -65,24 +61,19 @@ public:
     }
 
     //! set the parent directory path name
-    //! \param boExpandAllInfo	if boExpandAllInfo is true, expand all attribute information, such as create time, last access time, etc.
+    //! \param boExpandAllInfo	if boExpandAllInfo is true, expand all attribute information, such as create time, last
+    //! access time, etc.
     void SetParentPath(const std::string &strParent, bool boExpandAllInfo = true);
 
 public:
     //! return the file/directory name
-    const std::string &GetName() const {
-        return m_strName;
-    }
+    const std::string &GetName() const { return m_strName; }
 
     //! return the parent directory name
-    const std::string &SetPath() const {
-        return m_strParent;
-    }
+    const std::string &SetPath() const { return m_strParent; }
 
     //! return the file/directory full name
-    std::string GetFullName() const {
-        return std::string(m_strParent) += m_strName;
-    }
+    std::string GetFullName() const { return std::string(m_strParent) += m_strName; }
 
     std::string BriefName() const {
         std::string name = m_strName;
@@ -90,44 +81,28 @@ public:
     }
 
     //! return the file/directory type.
-    TFileFlags GetType() const {
-        return m_nFlags;
-    }
+    TFileFlags GetType() const { return m_nFlags; }
 
     //! return true when this is a file.
-    bool IsFile() const {
-        return (m_nFlags & type_FILE) != 0;
-    }
+    bool IsFile() const { return (m_nFlags & type_FILE) != 0; }
 
     //! return true when this is a link.
-    bool IsLink() const {
-        return (m_nFlags & type_Link) != 0;
-    }
+    bool IsLink() const { return (m_nFlags & type_Link) != 0; }
 
     //! return true when this is a directory.
-    bool IsDir() const {
-        return (m_nFlags & type_DIR) != 0;
-    }
+    bool IsDir() const { return (m_nFlags & type_DIR) != 0; }
 
     //! return the create time.
-    Timestamp GetCreateTime() const {
-        return m_tCreate;
-    }
+    Timestamp GetCreateTime() const { return m_tCreate; }
 
     //! return the last modify time.
-    Timestamp GetModifyTime() const {
-        return m_tModify;
-    }
+    Timestamp GetModifyTime() const { return m_tModify; }
 
     //! return the last access time.
-    Timestamp GetReadTime() const {
-        return m_tRead;
-    }
+    Timestamp GetReadTime() const { return m_tRead; }
 
     //! return the file size.
-    size_t GetSize() const {
-        return m_nSize;
-    }
+    size_t GetSize() const { return m_nSize; }
 
     //! swap tow TFileAttr
     void Swap(FileAttr &attr) {
@@ -164,4 +139,4 @@ protected:
     DIR *m_nHandle;
 };
 
-} // namespace muduo
+} // namespace muduo::base

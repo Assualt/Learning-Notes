@@ -31,39 +31,33 @@ public:
         : m_state(kExpectRequestLine)
         , m_lenType(kContentLength)
         , m_encodingType(kEncodingRaw)
-        , m_contentLength(-1) {
-    }
+        , m_contentLength(-1) {}
 
     // return false if any error
     bool parseRequest(Buffer *buf, Timestamp receiveTime);
 
-    bool gotAll() const {
-        return m_state == kGotAll;
-    }
+    bool gotAll() const { return m_state == kGotAll; }
 
-    bool gotEnd() const {
-        return m_state == kGotEnd;
-    }
+    bool gotEnd() const { return m_state == kGotEnd; }
 
     void reset() {
         m_state = kExpectRequestLine;
         HttpRequest dummy;
     }
 
-    const HttpRequest &request() const {
-        return m_request;
-    }
+    const HttpRequest &request() const { return m_request; }
 
-    HttpRequest &request() {
-        return m_request;
-    }
+    HttpRequest &request() { return m_request; }
 
 private:
     bool processRequestLine(const char *begin, const char *end);
+
     void setContentLengthType();
 
     void parseBodyPart(Buffer *buf);
+
     void parseBodyByContentLength(Buffer *buf);
+
     void parseBodyByChunkedBuffer(Buffer *buf);
 
 private:

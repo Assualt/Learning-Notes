@@ -26,15 +26,19 @@ namespace net {
 class PollPoller : public Poller {
 public:
     PollPoller(EventLoop *loop);
+
     ~PollPoller();
 
     Timestamp poll(int timeoutMs, ChannelList *activeChannels) override;
-    void      updateChannel(Channel *channel) override;
-    void      removeChannel(Channel *channel) override;
+
+    void updateChannel(Channel *channel) override;
+
+    void removeChannel(Channel *channel) override;
 
 private:
     void fillActiveChannels(int numEvents, ChannelList *activeChannels) const;
 
+private:
     typedef std::vector<struct pollfd> PollFdList;
     PollFdList                         pollfds_;
 };

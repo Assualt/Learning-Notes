@@ -4,7 +4,7 @@
 #include <memory.h>
 
 namespace muduo {
-int         maxTraceSize    = 100;
+int         maxTraceSize = 100;
 std::string GetSymbolName(const std::string &symbol) {
     return abi::__cxa_demangle(symbol.c_str(), nullptr, nullptr, nullptr);
 }

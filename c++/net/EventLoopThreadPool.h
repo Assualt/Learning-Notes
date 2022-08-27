@@ -16,9 +16,7 @@ public:
 
     EventLoopThreadPool(EventLoop *baseLoop, const std::string &arg);
     ~EventLoopThreadPool();
-    void SetThreadNum(int numThreads) {
-        m_nThreadNum = numThreads;
-    }
+    void SetThreadNum(int numThreads) { m_nThreadNum = numThreads; }
     void start(const ThreadInitFunc &func = ThreadInitFunc());
 
     EventLoop *getNextLoop();
@@ -26,10 +24,10 @@ public:
 
     std::vector<EventLoop *> getAllLoops();
     bool                     isStart();
-    const std::string &      name() const;
+    const std::string       &name() const;
 
 private:
-    EventLoop *                                   m_pBaseLoop;
+    EventLoop                                    *m_pBaseLoop;
     std::string                                   m_strName;
     bool                                          m_bIsStarted;
     int                                           m_nThreadNum;

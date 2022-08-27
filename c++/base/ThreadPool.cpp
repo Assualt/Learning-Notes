@@ -1,6 +1,6 @@
+#include "ThreadPool.h"
 #include "Format.h"
 #include "Logging.h"
-#include "ThreadPool.h"
 using namespace muduo;
 using namespace muduo::base;
 
@@ -9,8 +9,7 @@ ThreadPool::ThreadPool(const std::string &name)
     , m_bIsRunning(false)
     , m_nMaxQueueSize(0)
     , m_notEmptyCond(new Condition(m_mutex))
-    , m_notFullCond(new Condition(m_mutex)) {
-}
+    , m_notFullCond(new Condition(m_mutex)) {}
 
 ThreadPool::~ThreadPool() {
     if (m_bIsRunning) {
@@ -18,17 +17,11 @@ ThreadPool::~ThreadPool() {
     }
 }
 
-const std::string &ThreadPool::GetThreadName() const {
-    return m_strThreadPoolName;
-}
+const std::string &ThreadPool::GetThreadName() const { return m_strThreadPoolName; }
 
-void ThreadPool::SetThreadInitCallBack(const Task &callback) {
-    m_fThreadInitFunc = callback;
-}
+void ThreadPool::SetThreadInitCallBack(const Task &callback) { m_fThreadInitFunc = callback; }
 
-void ThreadPool::SetMaxQueueSize(int maxSize) {
-    m_nMaxQueueSize = maxSize;
-}
+void ThreadPool::SetMaxQueueSize(int maxSize) { m_nMaxQueueSize = maxSize; }
 
 void ThreadPool::Start(int numThreads) {
     m_vThreads.reserve(numThreads);
@@ -97,7 +90,7 @@ ThreadPool::Task ThreadPool::Take() {
 
 void ThreadPool::WaitQueueForever() {
     while (m_bIsRunning) {
-        int size = 0;
+        int size;
         {
             AutoLock lock(m_mutex);
             size = m_dQueue.size();
@@ -110,9 +103,7 @@ void ThreadPool::WaitQueueForever() {
     }
 }
 
-bool ThreadPool::IsFull() {
-    return m_nMaxQueueSize > 0 && m_dQueue.size() >= m_nMaxQueueSize;
-}
+bool ThreadPool::IsFull() { return m_nMaxQueueSize > 0 && m_dQueue.size() >= m_nMaxQueueSize; }
 
 void ThreadPool::RunInThread() {
     try {

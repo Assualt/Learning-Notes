@@ -29,9 +29,7 @@ BinaryStream::BinaryStream(void *lpszBuffer, size_t nSize)
     setGoodState();
 }
 
-BinaryStream::~BinaryStream(void) {
-    clear();
-}
+BinaryStream::~BinaryStream(void) { clear(); }
 
 void BinaryStream::clear(void) {
     if (m_lpBuffer != NULL && !isAttach())
@@ -99,9 +97,7 @@ void BinaryStream::resetSizeWithoutFill(size_t nSize) {
     m_nBufLen = nSize;
 }
 
-off_t BinaryStream::tellg(void) {
-    return m_nCurPos;
-}
+off_t BinaryStream::tellg(void) { return m_nCurPos; }
 
 off_t BinaryStream::seekg(off_t nPos, StreamStatus::seek_dir whence) {
     off_t newpos;
@@ -207,12 +203,9 @@ void BinaryStream::allocReadBuffer(ReadStreamBuffer &buf, size_t nSuggestSize) {
     setGoodState();
 }
 
-void BinaryStream::releaseReadBuffer(ReadStreamBuffer &) {
-}
+void BinaryStream::releaseReadBuffer(ReadStreamBuffer &) {}
 
-size_t BinaryStream::fillReadBuffer(ReadStreamBuffer &, size_t) {
-    return 0;
-}
+size_t BinaryStream::fillReadBuffer(ReadStreamBuffer &, size_t) { return 0; }
 
 void BinaryStream::allocWriteBuffer(WriteStreamBuffer &buf, size_t nSuggestSize) {
     reserve(m_nCurPos + nSuggestSize);

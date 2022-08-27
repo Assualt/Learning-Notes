@@ -12,9 +12,10 @@ HttpResponse HttpClient::Post(const string &url, const Buffer &body, bool needRe
     return Request(ReqType::Type_POST, url, body, needRedirect, verbose);
 }
 
-HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &url, const Buffer &buff, bool needRedirect, bool verbose) {
+HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &url, const Buffer &buff, bool needRedirect,
+                                 bool verbose) {
     HttpResponse resp(false);
-    std::string reqUrl = url;
+    std::string  reqUrl = url;
     if (!conn_.connect(reqUrl)) {
         logger.info("connect the url:%s error", reqUrl);
         return resp;
@@ -91,7 +92,8 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
     for (auto &item : req.GetRequestHeader()) {
         resp.addHeader(item.first, item.second);
     }
-    resp.setStatusMessage(static_cast<HttpStatusCode>(req.getStatusCode()), req.getHttpVersion(), req.getStatusMessage());
+    resp.setStatusMessage(static_cast<HttpStatusCode>(req.getStatusCode()), req.getHttpVersion(),
+                          req.getStatusMessage());
     if (req.get(ContentType).find("text/") != std::string::npos) {
         auto encodingType = req.get(ContentEncoding);
         if (strcasecmp(encodingType.c_str(), "gzip") == 0) {

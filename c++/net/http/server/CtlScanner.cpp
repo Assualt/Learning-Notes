@@ -9,9 +9,7 @@ using namespace muduo::base;
 
 using ControllerEntry = int (*)(std::string *, int *, bool *, bool *, uintptr_t *);
 
-void ControllerScanner::init(const std::string &path) {
-    libsPaths_ = path;
-}
+void ControllerScanner::init(const std::string &path) { libsPaths_ = path; }
 
 void ControllerScanner::startTask() {
     auto func = [ this ]() { this->TaskCallback(); };
@@ -29,7 +27,8 @@ void ControllerScanner::stopTask() {
 }
 
 bool ControllerScanner::needUpdate(const FileAttr &attr) {
-    auto itr = std::find_if(dllVectors_.begin(), dllVectors_.end(), [ &attr ](auto info) { return info.fullPath_ == attr.GetFullName(); });
+    auto itr = std::find_if(dllVectors_.begin(), dllVectors_.end(),
+                            [ &attr ](auto info) { return info.fullPath_ == attr.GetFullName(); });
 
     if (itr == dllVectors_.end()) {
         return true;
@@ -39,7 +38,8 @@ bool ControllerScanner::needUpdate(const FileAttr &attr) {
 }
 
 void ControllerScanner::update(const FileAttr &attr) {
-    auto itr = std::find_if(dllVectors_.begin(), dllVectors_.end(), [ &attr ](auto info) { return info.fullPath_ == attr.GetFullName(); });
+    auto itr = std::find_if(dllVectors_.begin(), dllVectors_.end(),
+                            [ &attr ](auto info) { return info.fullPath_ == attr.GetFullName(); });
 
     if (itr != dllVectors_.end()) {
         unRegisterHandle(*itr);
@@ -82,7 +82,8 @@ void ControllerScanner::update(const FileAttr &attr) {
     bool      useRegex;
     auto      ret = entry(&info.pattern_, &method, &needVal, &useRegex, &obj);
     HttpServer::getMapper().addRequestObject({info.pattern_, method, needVal, useRegex}, obj);
-    logger.info("success reg call func name:%s pattern:%s, method:%d, needVal:%b useRegex:%b obj:%x ret:%d", attr.BriefName(), info.pattern_, method, needVal, useRegex, obj, ret);
+    logger.info("success reg call func name:%s pattern:%s, method:%d, needVal:%b useRegex:%b obj:%x ret:%d",
+                attr.BriefName(), info.pattern_, method, needVal, useRegex, obj, ret);
 
     dllVectors_.push_back(std::move(info));
 }
@@ -94,8 +95,8 @@ void ControllerScanner::unRegisterHandle(DllInfo &info) {
 
 void ControllerScanner::TaskCallback() {
     while (!exit_) {
-        DirScanner                 scanner(libsPaths_.c_str());
-        FileAttr                   attr;
+        DirScanner scanner(libsPaths_.c_str());
+        FileAttr   attr;
         while (scanner.Fetch(attr)) {
             if (attr.IsDir() || attr.IsLink()) {
                 logger.debug("attr name %s skip, isdir:%b isLink:%b", attr.GetFullName(), attr.IsDir(), attr.IsLink());

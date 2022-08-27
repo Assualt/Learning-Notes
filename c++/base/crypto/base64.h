@@ -198,12 +198,9 @@ struct decoder {
     int                        _BUFFSIZE;
 
     decoder(int BUFFSIZE_in = BUFFSIZE)
-        : _BUFFSIZE(BUFFSIZE_in) {
-    }
+        : _BUFFSIZE(BUFFSIZE_in) {}
 
-    int decode(char value_in) {
-        return detail::base64_decode_value(value_in);
-    }
+    int decode(char value_in) { return detail::base64_decode_value(value_in); }
 
     int decode(const char *code_in, const int length_in, char *plaintext_out) {
         return detail::base64_decode_block(code_in, length_in, plaintext_out, &_state);
@@ -245,20 +242,15 @@ struct encoder {
     int                        _BUFFSIZE;
 
     encoder(int BUFFSIZE_in = BUFFSIZE)
-        : _BUFFSIZE(BUFFSIZE_in) {
-    }
+        : _BUFFSIZE(BUFFSIZE_in) {}
 
-    int encode(char value_in) {
-        return detail::base64_encode_value(value_in);
-    }
+    int encode(char value_in) { return detail::base64_encode_value(value_in); }
 
     int encode(const char *code_in, const int length_in, char *plaintext_out) {
         return detail::base64_encode_block(code_in, length_in, plaintext_out, &_state);
     }
 
-    int encode_end(char *plaintext_out) {
-        return detail::base64_encode_blockend(plaintext_out, &_state);
-    }
+    int encode_end(char *plaintext_out) { return detail::base64_encode_blockend(plaintext_out, &_state); }
 
     int encode_str(const char *plaintext, size_t len, char *output) {
         if (output == nullptr) {

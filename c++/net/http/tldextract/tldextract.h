@@ -11,8 +11,8 @@
 #include <unistd.h>
 #include <vector>
 
-#include "net/http/client/HttpClient.h"
 #include "base/Logging.h"
+#include "net/http/client/HttpClient.h"
 
 using namespace muduo::net;
 using namespace muduo::base;
@@ -23,7 +23,8 @@ using namespace std;
 #define ICANNEND "// ===END ICANN DOMAINS==="
 #define PRIVATESTART "// ===BEGIN PRIVATE DOMAINS==="
 #define PRIVATEEND "// ===END PRIVATE DOMAINS==="
-#define USERAGENT "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
+#define USERAGENT                                                                                                      \
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
 /**
  * Some useful tools like python tldextract .
  * This Tools achieved most iterfaces such as tldextract.extract()
@@ -37,19 +38,17 @@ struct utils {
 public:
     static std::string _ltrim(const std::string &src, char ch = ' ') {
         std::string           temp = src;
-        std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [&ch](char c) { return ch != c; });
+        std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [ &ch ](char c) { return ch != c; });
         temp.erase(temp.begin(), p);
         return temp;
     }
     static std::string _rtrim(const std::string &src, char ch = ' ') {
         string                   temp = src;
-        string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [&ch](char c) { return ch != c; });
+        string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [ &ch ](char c) { return ch != c; });
         temp.erase(p.base(), temp.end());
         return temp;
     }
-    static std::string trim(const std::string &src, char ch = ' ') {
-        return utils::_rtrim(utils::_ltrim(src, ch), ch);
-    }
+    static std::string trim(const std::string &src, char ch = ' ') { return utils::_rtrim(utils::_ltrim(src, ch), ch); }
     static std::vector<std::string> split(const std::string &src, char divider) {
         std::vector<std::string> result;
         std::string              temp;
@@ -65,7 +64,8 @@ public:
             result.push_back(utils::trim(temp));
         return result;
     }
-    static std::string join(const vector<std::string> &con, char ch, int start = 0, int end = -1, bool skipEmpty = true) {
+    static std::string join(const vector<std::string> &con, char ch, int start = 0, int end = -1,
+                            bool skipEmpty = true) {
         std::string result;
         if (end == -1 || (end && end < start))
             end = con.size();
@@ -78,12 +78,8 @@ public:
         }
         return result;
     }
-    static bool startswith(const std::string &src, const std::string &prefix) {
-        return src.find(prefix) == 0;
-    }
-    static bool endswith(const std::string &src, const std::string &prefix) {
-        return src.rfind(prefix) == 0;
-    }
+    static bool startswith(const std::string &src, const std::string &prefix) { return src.find(prefix) == 0; }
+    static bool endswith(const std::string &src, const std::string &prefix) { return src.rfind(prefix) == 0; }
 };
 struct ExtractResult {
 private:
@@ -95,17 +91,10 @@ public:
     ExtractResult(const std::string &subDomain, const std::string &domain, const std::string suffix)
         : m_strSubDomain(subDomain)
         , m_strDomain(domain)
-        , m_strSuffix(suffix) {
-    }
-    std::string SubDomain() const {
-        return m_strSubDomain;
-    }
-    std::string Domain() const {
-        return m_strDomain;
-    }
-    std::string Suffix() const {
-        return m_strSuffix;
-    }
+        , m_strSuffix(suffix) {}
+    std::string SubDomain() const { return m_strSubDomain; }
+    std::string Domain() const { return m_strDomain; }
+    std::string Suffix() const { return m_strSuffix; }
     std::string RegisterDomain() const {
         if (!m_strDomain.empty() && !m_strSuffix.empty())
             return m_strDomain + "." + m_strSuffix;
@@ -140,13 +129,12 @@ public:
 };
 class TLDExtract {
 public:
-    TLDExtract(bool psl_private_domains = false, const std::string &cache_files = cache_default, const std::string &tld_org_file = "/tmp/.public_suffix_list.dat") {
+    TLDExtract(bool psl_private_domains = false, const std::string &cache_files = cache_default,
+               const std::string &tld_org_file = "/tmp/.public_suffix_list.dat") {
         m_bIncludePrivateDomains = psl_private_domains;
         initSetting(cache_default, tld_org_file);
     }
-    ExtractResult extract(const std::string &url) {
-        return extractResult(url);
-    }
+    ExtractResult extract(const std::string &url) { return extractResult(url); }
 
 public:
     static std::set<std::string> suffix_list_urls;
@@ -154,9 +142,7 @@ public:
     static size_t                remote_req_timeout;
 
 public:
-    bool initOK() const {
-        return m_bInitOK;
-    }
+    bool initOK() const { return m_bInitOK; }
     void initSetting(const std::string &cache_file, const std::string &tld_org_file) {
         if (load_from_cache_file(cache_file) && !m_sdomainSet.empty())
             return;
@@ -200,7 +186,8 @@ private:
                 logger.info("download file %s from %s success.", destFileName, reqUrl);
                 return true;
             }
-            logger.info("Download %d Error: %s, try another url %s", result.getStatusCode(), result.getStatusMessage(), reqUrl);
+            logger.info("Download %d Error: %s, try another url %s", result.getStatusCode(), result.getStatusMessage(),
+                        reqUrl);
         }
         return false;
     }
@@ -234,7 +221,8 @@ private:
                 psl_private_domains_start = false;
                 break;
             }
-            if (utils::startswith(line, PUNYPREFIX) || utils::startswith(line, "//") && (icann_domain_start || psl_private_domains_start)) {
+            if (utils::startswith(line, PUNYPREFIX) ||
+                utils::startswith(line, "//") && (icann_domain_start || psl_private_domains_start)) {
                 std::string punydomain;
                 bool        ExistPunydomain = false;
                 if (utils::startswith(line, PUNYPREFIX)) {
@@ -258,7 +246,8 @@ private:
     }
     ExtractResult extractResult(const std::string &url) {
         std::string netloc = url;
-        if (utils::startswith(netloc, "http://") || utils::startswith(netloc, "https://") || utils::startswith(netloc, "ftp://"))
+        if (utils::startswith(netloc, "http://") || utils::startswith(netloc, "https://") ||
+            utils::startswith(netloc, "ftp://"))
             netloc = netloc.substr(netloc.find("://") + 3);
         if (netloc.find("/") != std::string::npos)
             netloc = netloc.substr(0, netloc.find("/"));

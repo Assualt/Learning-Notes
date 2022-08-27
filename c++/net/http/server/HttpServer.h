@@ -26,16 +26,24 @@ public:
     HttpServer(EventLoop *loop, const InetAddress &address, bool useHttps = false);
 
 public:
-    void                  SetRequestCallBack(CallBack cb);
-    void                  onConnect(const TcpConnectionPtr &conn);
-    void                  onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp recvTime);
-    void                  onRequest(const TcpConnectionPtr &conn, HttpRequest &req);
-    void                  SetThreadNum(int num);
-    void                  Start();
-    void                  Exit();
+    void SetRequestCallBack(CallBack cb);
+
+    void onConnect(const TcpConnectionPtr &conn);
+
+    void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp recvTime);
+
+    void onRequest(const TcpConnectionPtr &conn, HttpRequest &req);
+
+    void SetThreadNum(int num);
+
+    void Start();
+
+    void Exit();
+
     static RequestMapper &getMapper() { return m_mapper; }
 
     void RegSignalCallback(int sig, uintptr_t param, SignalCallback cb);
+
     void startScannerTask(const std::string &libsPath);
 
 private:

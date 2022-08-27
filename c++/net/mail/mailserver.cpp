@@ -24,7 +24,8 @@ void MailServer::initEx(const std::string &strConfigPath) {
 void MailServer::onConnection(const TcpConnectionPtr &conn) {
     if (conn->isConnected()) {
         logger.info("connection is ready. %s", conn->peerAddress().toIpPort());
-        std::string welMsg = Welcome_Message(MailEnv::getInstance().getPrimaryDomain(), MailEnv::getInstance().getBuildVersionDate());
+        std::string welMsg =
+            Welcome_Message(MailEnv::getInstance().getPrimaryDomain(), MailEnv::getInstance().getBuildVersionDate());
         conn->send(welMsg.c_str(), welMsg.size());
         if (mailCtx_.find(conn->name()) == mailCtx_.end()) {
             auto ctx      = MailContext();

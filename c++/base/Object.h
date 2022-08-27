@@ -3,7 +3,11 @@
 namespace muduo {
 namespace base {
 
-enum ConstructorStage { INIT_SELF, INIT_OTHER, INIT_FINISH };
+enum ConstructorStage {
+    INIT_SELF,
+    INIT_OTHER,
+    INIT_FINISH,
+};
 
 class Object : nonecopyable {
 public:
@@ -22,17 +26,11 @@ public:
 
     virtual bool InitSelf()  = 0;
     virtual bool InitOther() = 0;
-    virtual bool InitFinish() {
-        return true;
-    }
+    virtual bool InitFinish() { return true; }
 
 public:
-    virtual const char *toString() {
-        return "Object";
-    }
-    virtual bool equals(const Object &rhs) {
-        return true;
-    };
+    virtual const char *toString() { return "Object"; }
+    virtual bool        equals(const Object &rhs) { return true; };
 };
 
 } // namespace base

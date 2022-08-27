@@ -22,7 +22,7 @@ public:
 
     void close();
 
-    void showTlsInfo();
+    virtual void showTlsInfo();
 
     ~TcpClient();
 

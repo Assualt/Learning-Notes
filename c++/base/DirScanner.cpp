@@ -32,9 +32,7 @@ DirScanner::DirScanner(const char *pathName)
     }
 }
 
-DirScanner::~DirScanner() {
-    CloseHandle();
-}
+DirScanner::~DirScanner() { CloseHandle(); }
 
 void DirScanner::CloseHandle() {
     if (m_nHandle) {

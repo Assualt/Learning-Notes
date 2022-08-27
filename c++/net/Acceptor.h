@@ -14,23 +14,16 @@ public:
     typedef std::function<void(int, const InetAddress &, void *)> NewConnectionCallback;
 
     Acceptor(EventLoop *loop, const InetAddress &listenAddress, bool reUsePort, bool useSSL = false);
+
     ~Acceptor();
 
-    void setNewConnectionCallback(const NewConnectionCallback &cb) {
-        newConnectionCallback = cb;
-    }
+    void setNewConnectionCallback(const NewConnectionCallback &cb) { newConnectionCallback = cb; }
 
     void listen();
 
-    bool listening() const {
-        return m_bListening;
-    }
+    bool listening() const { return m_bListening; }
 
     void closeSocket();
-
-    // Deprecated, use the correct spelling one above.
-    // Leave the wrong spelling here in case one needs to grep it for error messages.
-    // bool listenning() const { return listening(); }
 
 private:
     void handleRead();

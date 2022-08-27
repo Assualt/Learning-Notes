@@ -1,5 +1,5 @@
 #pragma clang diagnostic push
-#pragma ide diagnostic ignored "OCUnusedGlobalDeclarationInspection"
+#pragma ide diagnostic   ignored "OCUnusedGlobalDeclarationInspection"
 #pragma once
 #include <algorithm>
 #include <cstring>
@@ -44,9 +44,7 @@ static FILE_TYPE getFileType(cstring file) {
     }
     return Type_Other;
 }
-static bool startWith(cstring src, cstring prefix) {
-    return src.substr(0, prefix.size()) == prefix;
-}
+static bool startWith(cstring src, cstring prefix) { return src.substr(0, prefix.size()) == prefix; }
 static bool endWith(cstring src, cstring backfix) {
     return src.substr(src.size() - backfix.size(), backfix.size()) == backfix;
 }
@@ -64,9 +62,7 @@ public:
 
 template <typename Target, typename Source> class lexical_cast_t<Target, Source, true> {
 public:
-    static Target cast(const Source &arg) {
-        return arg;
-    }
+    static Target cast(const Source &arg) { return arg; }
 };
 
 template <typename Source> class lexical_cast_t<std::string, Source, false> {

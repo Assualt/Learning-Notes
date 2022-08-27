@@ -16,9 +16,7 @@ int DllHelper::open(const char *filename, LOAD_TYPE) {
     return 0;
 }
 
-char *DllHelper::errMsg() const {
-    return dlerror();
-}
+char *DllHelper::errMsg() const { return dlerror(); }
 
 void *DllHelper::GetSymbol(const char *symbolName) {
     if (handle_ == nullptr) {

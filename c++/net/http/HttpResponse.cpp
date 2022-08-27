@@ -41,7 +41,8 @@ void HttpResponse::appendToBuffer(Buffer &output) const {
     }
 }
 
-void HttpResponse::setStatusMessage(HttpStatusCode statusCode, const std::string &httpVersion, const std::string &message, const std::string &strAcceptEncoding) {
+void HttpResponse::setStatusMessage(HttpStatusCode statusCode, const std::string &httpVersion,
+                                    const std::string &message, const std::string &strAcceptEncoding) {
     setStatusCode(statusCode);
     setStatusMessage(message);
     httpVersion_ = getHttpVersionByString(httpVersion);
@@ -63,7 +64,8 @@ void HttpResponse::setBodyStream(void *buf, size_t size, EncodingType type) {
     }
 
     chunkedBuffer(outBuffer);
-    logger.info("compress data with type:%d, compress data:%d, after:%d bodySize:%d", type, size, compress_length, bodyBuffer_.readableBytes());
+    logger.info("compress data with type:%d, compress data:%d, after:%d bodySize:%d", type, size, compress_length,
+                bodyBuffer_.readableBytes());
 }
 
 void HttpResponse::chunkedBuffer(MyStringBuffer &buffer) {
@@ -95,10 +97,6 @@ void HttpResponse::printBodyBuffer() const {
     printf("size:%lu\n", size);
 }
 
-void HttpResponse::appendToBodyBuffer(void *data, size_t len) {
-    bodyBuffer_.append(data, len);
-}
+void HttpResponse::appendToBodyBuffer(void *data, size_t len) { bodyBuffer_.append(data, len); }
 
-void HttpResponse::setBody(const Buffer &buf) {
-    bodyBuffer_.append(buf.peek(), buf.readableBytes());
-}
+void HttpResponse::setBody(const Buffer &buf) { bodyBuffer_.append(buf.peek(), buf.readableBytes()); }

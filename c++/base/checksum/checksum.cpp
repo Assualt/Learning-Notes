@@ -2,13 +2,9 @@
 
 using namespace muduo::base;
 
-size_t SimpleCheckSum::flush() {
-    return 0;
-}
+size_t SimpleCheckSum::flush() { return 0; }
 
-size_t SimpleCheckSum::getCheckSum() const {
-    return sum_;
-}
+size_t SimpleCheckSum::getCheckSum() const { return sum_; }
 
 size_t SimpleCheckSum::write(const char *lpBuf, size_t nSize) {
     const tbyte *tp    = reinterpret_cast<const tbyte *>(lpBuf);
@@ -27,9 +23,7 @@ void SimpleCheckSum::reset() {
     c1_  = 52845;
     c2_  = 22719;
 }
-size_t SimpleCheckSum::getResultSize() const {
-    return sizeof(sum_);
-}
+size_t SimpleCheckSum::getResultSize() const { return sizeof(sum_); }
 
 static const uint32_t crc_32_tab[] = {
     0x00000000UL, 0x77073096UL, 0xee0e612cUL, 0x990951baUL, 0x076dc419UL, 0x706af48fUL, 0xe963a535UL, 0x9e6495a3UL,
@@ -74,21 +68,13 @@ size_t CRC32::write(const void *lpBuf, size_t nSize) {
     return static_cast<int>(nSize);
 }
 
-size_t CRC32::flush() {
-    return 0;
-}
+size_t CRC32::flush() { return 0; }
 
-uint32_t CRC32::getChecksum() const {
-    return sum_ ^ UINT32_MAX;
-}
+uint32_t CRC32::getChecksum() const { return sum_ ^ UINT32_MAX; }
 
-size_t CRC32::getResultSize() const {
-    return sizeof(sum_);
-}
+size_t CRC32::getResultSize() const { return sizeof(sum_); }
 
-void CRC32::reset() {
-    sum_ = UINT32_MAX;
-}
+void CRC32::reset() { sum_ = UINT32_MAX; }
 
 //-------------------- MD5
 
@@ -116,23 +102,13 @@ static uint8_t PADDING[ 64 ] = {0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
                                 0,    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 // F, G, H and I are basic MD5 functions.
-inline uint32_t F(uint32_t x, uint32_t y, uint32_t z) {
-    return (((x) & (y)) | ((~x) & (z)));
-}
-inline uint32_t G(uint32_t x, uint32_t y, uint32_t z) {
-    return (((x) & (z)) | ((y) & (~z)));
-}
-inline uint32_t H(uint32_t x, uint32_t y, uint32_t z) {
-    return ((x) ^ (y) ^ (z));
-}
-inline uint32_t I(uint32_t x, uint32_t y, uint32_t z) {
-    return ((y) ^ ((x) | (~z)));
-}
+inline uint32_t F(uint32_t x, uint32_t y, uint32_t z) { return (((x) & (y)) | ((~x) & (z))); }
+inline uint32_t G(uint32_t x, uint32_t y, uint32_t z) { return (((x) & (z)) | ((y) & (~z))); }
+inline uint32_t H(uint32_t x, uint32_t y, uint32_t z) { return ((x) ^ (y) ^ (z)); }
+inline uint32_t I(uint32_t x, uint32_t y, uint32_t z) { return ((y) ^ ((x) | (~z))); }
 
 // ROTATE_LEFT rotates x left n bits.
-inline uint32_t ROTATE_LEFT(uint32_t x, uint32_t n) {
-    return (((x) << (n)) | ((x) >> (32 - (n))));
-}
+inline uint32_t ROTATE_LEFT(uint32_t x, uint32_t n) { return (((x) << (n)) | ((x) >> (32 - (n)))); }
 
 // FF, GG, HH, and II transformations for rounds 1, 2, 3, and 4.
 // Rotation is separate from addition to prevent recomputation.
@@ -166,8 +142,7 @@ MD5::MD5()
     reset();
 }
 
-MD5::~MD5() {
-}
+MD5::~MD5() {}
 
 void MD5::transform(uint32_t *state, const uint8_t *block) {
     uint32_t a = state[ 0 ], b = state[ 1 ], c = state[ 2 ], d = state[ 3 ], x[ 16 ];
@@ -343,14 +318,8 @@ size_t MD5::write(const void *lpBuf, size_t nSize) {
     return nSize;
 }
 
-const char *MD5::getMD5String() const {
-    return md5str_.c_str();
-}
+const char *MD5::getMD5String() const { return md5str_.c_str(); }
 
-const tbyte *MD5::getMD5Digest() const {
-    return md5digest_;
-}
+const tbyte *MD5::getMD5Digest() const { return md5digest_; }
 
-size_t MD5::getResultSize() const {
-    return 16;
-}
+size_t MD5::getResultSize() const { return 16; }

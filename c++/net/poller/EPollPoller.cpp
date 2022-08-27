@@ -1,11 +1,3 @@
-// Copyright 2010, Shuo Chen.  All rights reserved.
-// http://code.google.com/p/muduo/
-//
-// Use of this source code is governed by a BSD-style license
-// that can be found in the License file.
-
-// Author: Shuo Chen (chenshuo at chenshuo dot com)
-
 #include "net/poller/EPollPoller.h"
 
 #include "base/Logging.h"
@@ -43,9 +35,7 @@ EPollPoller::EPollPoller(EventLoop *loop)
     }
 }
 
-EPollPoller::~EPollPoller() {
-    ::close(epollfd_);
-}
+EPollPoller::~EPollPoller() { ::close(epollfd_); }
 
 Timestamp EPollPoller::poll(int timeoutMs, ChannelList *activeChannels) {
     int       numEvents  = ::epoll_wait(epollfd_, &*events_.begin(), static_cast<int>(events_.size()), timeoutMs);
@@ -176,7 +166,5 @@ const char *EPollPoller::operationToString(int op) {
             return "MOD";
         default:
             assert(false && "ERROR op");
-            return "Unknown Operation";
     }
-    return "Unknown Operation";
 }

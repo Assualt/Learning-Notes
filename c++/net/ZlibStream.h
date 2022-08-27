@@ -8,9 +8,7 @@ namespace net {
 
 class MyStringBuffer : public std::stringbuf {
 public:
-    void seekReadPos(ssize_t nPos) {
-        std::stringbuf::seekpos(nPos, std::ios_base::in);
-    }
+    void        seekReadPos(ssize_t nPos) { std::stringbuf::seekpos(nPos, std::ios_base::in); }
     std::string toString() {
         std::string temp;
         seekReadPos(0);
@@ -20,12 +18,9 @@ public:
         seekReadPos(0);
         return temp;
     }
-    void seekWritePos(ssize_t nPos) {
-        std::stringbuf::seekpos(nPos, std::ios_base::out);
-    }
-    void clear() {
-        std::stringbuf::setbuf((char *)"", std::streamsize(0));
-    }
+    void seekWritePos(ssize_t nPos) { std::stringbuf::seekpos(nPos, std::ios_base::out); }
+
+    void clear() { std::stringbuf::setbuf((char *)"", std::streamsize(0)); }
 
     size_t size() {
         seekReadPos(0);
@@ -154,13 +149,9 @@ public:
         return CompressWithZlib(buffer, size, out, 3);
     }
 
-    static uLongf GzipDecompress(MyStringBuffer &in, MyStringBuffer &out) {
-        return DecompressWithZlib(in, out, 1);
-    }
+    static uLongf GzipDecompress(MyStringBuffer &in, MyStringBuffer &out) { return DecompressWithZlib(in, out, 1); }
 
-    static uLongf DeflateDecompress(MyStringBuffer &in, MyStringBuffer &out) {
-        return DecompressWithZlib(in, out, 2);
-    }
+    static uLongf DeflateDecompress(MyStringBuffer &in, MyStringBuffer &out) { return DecompressWithZlib(in, out, 2); }
 
     static uLongf ZlibDeCompress(MyStringBuffer &in, MyStringBuffer &out) { // zlib
         return DecompressWithZlib(in, out, 3);

@@ -15,42 +15,26 @@ public:
     explicit HttpResponse(bool close)
         : statusCode_(kUnknown)
         , closeConnection_(close)
-        , encodingType_(HttpContentType::ContentRaw) {
-    }
+        , encodingType_(HttpContentType::ContentRaw) {}
 
-    void setStatusCode(HttpStatusCode code) {
-        statusCode_ = code;
-    }
+    void setStatusCode(HttpStatusCode code) { statusCode_ = code; }
 
-    void setStatusMessage(HttpStatusCode statusCode, const std::string &httpVersion, const std::string &message, const std::string &strAcceptEncoding = "");
+    void setStatusMessage(HttpStatusCode statusCode, const std::string &httpVersion, const std::string &message,
+                          const std::string &strAcceptEncoding = "");
 
-    void setStatusMessage(const std::string &message) {
-        statusMessage_ = message;
-    }
+    void setStatusMessage(const std::string &message) { statusMessage_ = message; }
 
-    std::string getStatusMessage() const {
-        return statusMessage_;
-    }
+    std::string getStatusMessage() const { return statusMessage_; }
 
-    std::string getBody() const {
-        return body_;
-    }
+    std::string getBody() const { return body_; }
 
-    const Buffer &getBodyBuf() const {
-        return bodyBuffer_;
-    }
+    const Buffer &getBodyBuf() const { return bodyBuffer_; }
 
-    void setCloseConnection(bool on) {
-        closeConnection_ = on;
-    }
+    void setCloseConnection(bool on) { closeConnection_ = on; }
 
-    bool closeConnection() const {
-        return closeConnection_;
-    }
+    bool closeConnection() const { return closeConnection_; }
 
-    void setContentType(const std::string &contentType) {
-        addHeader(ContentType, contentType);
-    }
+    void setContentType(const std::string &contentType) { addHeader(ContentType, contentType); }
 
     void printBodyBuffer() const;
 
@@ -76,9 +60,7 @@ public:
 
     void appendToBodyBuffer(void *data, size_t len);
 
-    HttpStatusCode getStatusCode() const {
-        return statusCode_;
-    }
+    HttpStatusCode getStatusCode() const { return statusCode_; }
 
     std::string getHeader(const std::string &str) {
         auto iter = headers_.find(str);
@@ -86,7 +68,8 @@ public:
     }
 
     friend std::ostream &operator<<(std::ostream &os, const HttpResponse &obj) {
-        os << "< " << getHttpVersionString(obj.httpVersion_) << " " << obj.statusCode_ << " " << obj.statusMessage_ << CTRL;
+        os << "< " << getHttpVersionString(obj.httpVersion_) << " " << obj.statusCode_ << " " << obj.statusMessage_
+           << CTRL;
         for (auto &item : obj.headers_)
             os << "< " << item.first << ": " << item.second << CTRL;
         os << CTRL;

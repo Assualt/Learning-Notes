@@ -35,9 +35,7 @@ int32_t HttpConnection::recv(muduo::net::Buffer &respBuf) {
     return client_->recvResponse(respBuf);
 }
 
-void HttpConnection::showTlsInfo() {
-    client_->showTlsInfo();
-}
+void HttpConnection::showTlsInfo() { client_->showTlsInfo(); }
 
 bool HttpConnection::connect(const HttpUrl &url) {
     connectUrl_ = url.fullUrl;

@@ -17,7 +17,8 @@ std::string stripFileName(const std::string &filename) {
     return filename.substr(filename.rfind("/") + 1);
 }
 
-Logger &Logger::BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix, const char *fileFormat, const char *) {
+Logger &Logger::BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix,
+                            const char *fileFormat, const char *) {
     if (messageFormat == nullptr) {
         throw LogException("invalid message format");
     }
@@ -43,7 +44,8 @@ std::string Logger::MessageFormat(const std::string &FormattedLogmessage, LogLev
                 getKeyString(strKey, ss, FormattedLogmessage, nLevel);
                 strKey.clear();
             }
-        } else if (m_strMessageFormat[ i ] == '%' && i + 1 < m_strMessageFormat.size() && m_strMessageFormat[ i + 1 ] == '(') {
+        } else if (m_strMessageFormat[ i ] == '%' && i + 1 < m_strMessageFormat.size() &&
+                   m_strMessageFormat[ i + 1 ] == '(') {
             strKey.push_back('(');
             bFindKey = true;
             i++;
@@ -58,7 +60,9 @@ std::string Logger::MessageFormat(const std::string &FormattedLogmessage, LogLev
 }
 
 std::string Logger::getLevelName(LogLevel nLevel) {
-    static std::map<LogLevel, std::string> levelMap = {{Debug, "Debug"}, {Info, "Info"}, {Warn, "Warning"}, {Error, "Error"}, {Alert, "Alert"}, {Fatal, "Fatal"}, {Emergency, "Emergency"}};
+    static std::map<LogLevel, std::string> levelMap = {{Debug, "Debug"},        {Info, "Info"},   {Warn, "Warning"},
+                                                       {Error, "Error"},        {Alert, "Alert"}, {Fatal, "Fatal"},
+                                                       {Emergency, "Emergency"}};
     if (levelMap.count(nLevel)) {
         return levelMap[ nLevel ];
     }
@@ -69,7 +73,8 @@ std::string Logger::getCurrentHourTime(bool showMicroSeconds) {
     time_t            tNow(time(nullptr));
     struct tm        *t = localtime(&tNow);
     std::stringstream ss;
-    ss << std::setfill('0') << std::setw(2) << t->tm_hour << ":" << std::setfill('0') << std::setw(2) << t->tm_min << ":" << std::setfill('0') << std::setw(2) << t->tm_sec;
+    ss << std::setfill('0') << std::setw(2) << t->tm_hour << ":" << std::setfill('0') << std::setw(2) << t->tm_min
+       << ":" << std::setfill('0') << std::setw(2) << t->tm_sec;
     if (!showMicroSeconds) {
         return ss.str();
     }
@@ -87,17 +92,20 @@ void Logger::getKeyString(const std::string &key, std::stringstream &ss, const s
         {"(thread)", [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << std::hex << pthread_self(); }},
         {"(tid)", [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << System::Tid(); }},
         {"(process)", [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << System::Pid(); }},
-        {"(levelname)", [ this ](std::stringstream &ss, const std::string &, LogLevel level) { ss << getLevelName(level); }},
-        {"(asctime)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << getCurrentHourTime(true); }},
+        {"(levelname)",
+         [ this ](std::stringstream &ss, const std::string &, LogLevel level) { ss << getLevelName(level); }},
+        {"(asctime)",
+         [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << getCurrentHourTime(true); }},
         {"(ctime)",
-         [](std::stringstream &ss, const std::string &msg, LogLevel) {
-             Timestamp t = Timestamp::now();
-             ss << t.toFormattedString();
-         }},
-        {"(lineno)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << std::dec << m_FileAttribute.lineNo; }},
-        {"(filename)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << stripFileName(m_FileAttribute.fileName); }},
-        {"(funcname)", [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << m_FileAttribute.funcName; }},
-        {"(threadName)", [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << System::GetCurrentThreadName(); }},
+         [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << Timestamp::now().toFormattedString(); }},
+        {"(lineno)", [ this ](std::stringstream &ss, const std::string &msg,
+                              LogLevel) { ss << std::dec << m_FileAttribute.lineNo; }},
+        {"(filename)", [ this ](std::stringstream &ss, const std::string &msg,
+                                LogLevel) { ss << stripFileName(m_FileAttribute.fileName); }},
+        {"(funcname)",
+         [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << m_FileAttribute.funcName; }},
+        {"(threadName)",
+         [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << System::GetCurrentThreadName(); }},
         {"(appname)",
          [ this ](std::stringstream &ss, const std::string &msg, LogLevel) {
              if (!m_strAppName.empty()) {

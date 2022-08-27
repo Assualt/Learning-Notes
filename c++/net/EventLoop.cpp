@@ -14,12 +14,13 @@ using muduo::net::Channel;
 __thread EventLoop *t_loopInThisThread = 0;
 constexpr int       kPollTimeMs        = 10000;
 constexpr int       kNoEventTimes      = 2;
-int                 createEventfd() {
-                    int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-                    if (evtfd < 0) {
-                        abort();
+
+int createEventfd() {
+    int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    if (evtfd < 0) {
+        abort();
     }
-                    return evtfd;
+    return evtfd;
 }
 
 EventLoop::EventLoop()
@@ -37,9 +38,7 @@ EventLoop::EventLoop()
     m_wakeupChannel->enableReading();
 }
 
-EventLoop::~EventLoop() {
-    ::close(m_nWakeUpFD);
-}
+EventLoop::~EventLoop() { ::close(m_nWakeUpFD); }
 
 void EventLoop::runInLoop(Functor cb) {
     if (m_nThreadId == CurrentThread::tid()) {
@@ -120,7 +119,8 @@ void EventLoop::removeChannel(Channel *channel) {
     // assert(channel->ownerLoop() == this);
     assertLoopThread();
     if (m_bEventHanding) {
-        assert(m_pCurrentChannel == channel || std::find(m_vActiveChannels.begin(), m_vActiveChannels.end(), channel) == m_vActiveChannels.end());
+        assert(m_pCurrentChannel == channel ||
+               std::find(m_vActiveChannels.begin(), m_vActiveChannels.end(), channel) == m_vActiveChannels.end());
     }
     m_Poller->removeChannel(channel);
 }
@@ -129,6 +129,7 @@ bool EventLoop::hasChannel(Channel *channel) {
     assertLoopThread();
     return m_Poller->hasChannel(channel);
 }
+
 void EventLoop::doPendingFunctors() {
     std::vector<Functor> funcs;
     m_bCallFuncs = true;
@@ -155,9 +156,7 @@ void EventLoop::printActiveChannels() const {
     }
 }
 
-bool EventLoop::isInLoopThread() const {
-    return m_nThreadId == CurrentThread::tid();
-}
+bool EventLoop::isInLoopThread() const { return m_nThreadId == CurrentThread::tid(); }
 
 } // namespace net
 } // namespace muduo
