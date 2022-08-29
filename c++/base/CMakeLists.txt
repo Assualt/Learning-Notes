@@ -2,6 +2,7 @@ set(muduo_base_objects
     Backtrace.cpp
     Condition.cpp
     Configure.cpp
+    Conv.cpp
     CountDownLatch.cpp
     Date.cpp
     Dll.cpp
@@ -14,6 +15,7 @@ set(muduo_base_objects
     ThreadPool.cpp
     Timestamp.cpp
     checksum/checksum.cpp
+    Unicode.cpp
     crypto/base64.cpp
     json/json.cpp
     stream/StreamBase.cpp
