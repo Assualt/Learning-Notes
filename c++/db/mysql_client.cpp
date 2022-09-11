@@ -10,7 +10,8 @@
 using namespace db;
 using namespace muduo::base;
 
-MysqlClient::MysqlClient(const std::string &dbName, const std::string &host, size_t port, const std::string &user, const std::string &pass, const std::string &charset)
+MysqlClient::MysqlClient(const std::string &dbName, const std::string &host, size_t port, const std::string &user,
+                         const std::string &pass, const std::string &charset)
     : m_strHost(host)
     , m_nPort(port)
     , m_strUser(user)
@@ -38,8 +39,10 @@ SqlError MysqlClient::connect() {
         mysql_options(driver_, MYSQL_SET_CHARSET_NAME, m_strDefaultCharSet.c_str());
     }
 
-    if (mysql_real_connect(driver_, m_strHost.c_str(), m_strUser.c_str(), m_strPassWord.c_str(), m_strDatabaseName.c_str(), m_nPort, nullptr, 0) == nullptr) {
-        logger.info("connect with %s:%d use user:%s passwd:%s database:%s failed with err:%d", m_strHost, m_nPort, m_strUser, m_strPassWord, m_strDatabaseName, mysql_errno(driver_));
+    if (mysql_real_connect(driver_, m_strHost.c_str(), m_strUser.c_str(), m_strPassWord.c_str(),
+                           m_strDatabaseName.c_str(), m_nPort, nullptr, 0) == nullptr) {
+        logger.info("connect with %s:%d use user:%s passwd:%s database:%s failed with err:%d", m_strHost, m_nPort,
+                    m_strUser, m_strPassWord, m_strDatabaseName, mysql_errno(driver_));
         m_strErrMsg = mysql_error(driver_);
         if (mysql_errno(driver_) == 1049) {
             return MYSQL_DB_NOT_FOUND;
@@ -64,7 +67,8 @@ SqlError MysqlClient::CreateTable(const std::string &strSql) {
 
 SqlError MysqlClient::NewDB(const std::string &dbName) {
     if (!m_bIsConnected) {
-        if (mysql_real_connect(driver_, m_strHost.c_str(), m_strUser.c_str(), m_strPassWord.c_str(), nullptr, m_nPort, nullptr, 0) == nullptr) {
+        if (mysql_real_connect(driver_, m_strHost.c_str(), m_strUser.c_str(), m_strPassWord.c_str(), nullptr, m_nPort,
+                               nullptr, 0) == nullptr) {
             logger.info("reconnect to db failed with err:%d", mysql_errno(driver_));
             m_strErrMsg = mysql_error(driver_);
             return MYSQL_CONNECT_FAIL;
@@ -93,13 +97,11 @@ void MysqlClient::close() {
     }
 }
 
-MysqlClient::~MysqlClient() {
-    close();
-}
+MysqlClient::~MysqlClient() { close(); }
 
 std::pair<SqlError, json::Json> MysqlClient::Query(const std::string &strSql) {
     auto ret = mysql_real_query(driver_, strSql.c_str(), strSql.size());
-    if (ret != 0) {
+    if (ret != MYSQL_SUCCESS) {
         logger.warning("sql query failed. sql:%s ret:%d", strSql, ret);
         m_strErrMsg = mysql_error(driver_);
         return {MYSQL_QUERY_FAIL, {}};
@@ -112,8 +114,9 @@ std::pair<SqlError, json::Json> MysqlClient::Query(const std::string &strSql) {
         return {MYSQL_QUERY_FETCH_FAIL, {}};
     }
 
-    auto                                                  fieldNum = mysql_num_fields(res);
-    MYSQL_FIELD                                          *f;
+    auto         fieldNum = mysql_num_fields(res);
+    MYSQL_FIELD *f;
+
     std::vector<std::pair<std::string, enum_field_types>> fieldInfo;
     while ((f = mysql_fetch_field(res))) {
         fieldInfo.push_back({f->org_name, f->type});
@@ -170,9 +173,7 @@ SqlError MysqlClient::SwitchBD(const std::string &dbName) {
     return (ret ? MYSQL_SWITCH_DB_FAIL : MYSQL_SUCCESS);
 }
 
-std::pair<SqlError, json::Json> MysqlClient::ShowTables() {
-    return Query("show tables");
-}
+std::pair<SqlError, json::Json> MysqlClient::ShowTables() { return Query("show tables"); }
 
 std::pair<SqlError, json::Json> MysqlClient::ShowTable(const std::string &tableName) {
     return Query("desc " + tableName);

@@ -18,7 +18,7 @@ std::string utils::_rtrim(const std::string &src, char ch) {
 
 std::string utils::trim(const std::string &src, char ch) { return _rtrim(_ltrim(src, ch), ch); }
 
-size_t utils::chunkSize(const std::string &strChunkSize) {
+long utils::chunkSize(const std::string &strChunkSize) {
     std::string temp;
     for (size_t i = 0; i < strChunkSize.size(); i++) {
         if ((strChunkSize[ i ] >= '0' && strChunkSize[ i ] <= '9') ||
@@ -31,6 +31,7 @@ size_t utils::chunkSize(const std::string &strChunkSize) {
     }
     if (temp.empty())
         return -1;
+//    printf("chunk str is==>%s\n", temp.c_str());
     return std::stoi(temp, nullptr, 16);
 }
 std::vector<std::string> utils::split(const std::string &src, char divider) {

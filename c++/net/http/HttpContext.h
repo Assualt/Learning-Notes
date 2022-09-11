@@ -66,4 +66,5 @@ private:
     HttpRequestBodyEncoding m_encodingType;
     HttpRequest             m_request;
     long                    m_contentLength;
+    long                    m_chunkLeftSize{0};
 };

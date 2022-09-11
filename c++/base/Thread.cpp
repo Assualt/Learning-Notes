@@ -1,6 +1,7 @@
 #include "Thread.h"
 #include "Format.h"
 #include "Logging.h"
+#include "ProcInfo.h"
 #include "System.h"
 
 using namespace muduo;
@@ -21,6 +22,9 @@ void *Thread::StartThread(void *arg) {
     if (arg == nullptr) {
         return nullptr;
     }
+
+    // Reg default get the callstack of current thread sigaction
+    ProcInfo::RegDefaultGetThreadAction();
     ThreadContext *_au = static_cast<ThreadContext *>(arg);
     _au->Run();
     delete _au;
@@ -64,6 +68,7 @@ void Thread::Start() {
         throw Exception("thread is started! Run Failed");
     }
     m_isStarted            = true;
+
     ThreadContext *context = new ThreadContext(m_threadFunc, m_strFunName, &m_nTid);
     auto           ret     = pthread_create(&m_nThreadId, nullptr, &Thread::StartThread, context);
     if (ret != 0) {

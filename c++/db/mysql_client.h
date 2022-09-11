@@ -28,17 +28,16 @@ enum SqlError {
 using QueryCallback = std::function<void(const json::Json &)>;
 class MysqlClient {
 public:
-    explicit MysqlClient(const std::string &dbName, const std::string &host = "127.0.0.1", size_t port = 3306, const std::string &user = "root", const std::string &pass = "",
+    explicit MysqlClient(const std::string &dbName, const std::string &host = "127.0.0.1", size_t port = 3306,
+                         const std::string &user = "root", const std::string &pass = "",
                          const std::string &charset = "utf8");
     ~MysqlClient();
 
 public:
-    SqlError    Ping();
-    SqlError    connect();
-    void        close();
-    std::string getErrMsg() const {
-        return m_strErrMsg;
-    }
+    SqlError                        Ping();
+    SqlError                        connect();
+    void                            close();
+    std::string                     getErrMsg() const { return m_strErrMsg; }
     std::pair<SqlError, json::Json> Query(const std::string &strSql);
     std::pair<SqlError, long long>  Execute(const std::string &mysql);
     std::pair<SqlError, json::Json> ShowTables();

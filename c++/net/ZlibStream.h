@@ -1,6 +1,7 @@
 #pragma once
 #include "Buffer.h"
 #include <sstream>
+#include <stdio.h>
 #include <zlib.h>
 #define MAX_BUF_SIZE 8192
 namespace muduo {
@@ -60,19 +61,20 @@ public:
         char inBuf[ MAX_BUF_SIZE ]  = {0};
         char outBuf[ MAX_BUF_SIZE ] = {0};
         int  left = 0, size = 0;
-
         do {
             memset(inBuf, 0, MAX_BUF_SIZE);
             size_t nRead = in.sgetn(inBuf, MAX_BUF_SIZE);
             if (nRead == 0) {
                 break;
             }
-            strm.next_in = (Bytef *)inBuf;
+            strm.avail_in = nRead;
+            strm.next_in  = (Bytef *)inBuf;
             do {
                 strm.avail_out = MAX_BUF_SIZE;
                 strm.next_out  = (Bytef *)outBuf;
                 ret            = inflate(&strm, Z_NO_FLUSH);
-                if (ret != Z_STREAM_ERROR) {
+
+                if (ret == Z_STREAM_ERROR) {
                     inflateEnd(&strm);
                     return -2;
                 }

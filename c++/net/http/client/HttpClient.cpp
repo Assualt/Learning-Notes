@@ -97,10 +97,11 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
     if (req.get(ContentType).find("text/") != std::string::npos) {
         auto encodingType = req.get(ContentEncoding);
         if (strcasecmp(encodingType.c_str(), "gzip") == 0) {
-            auto           buf = req.getBodyBuffer();
+            auto buf = req.getBodyBuffer();
             MyStringBuffer in, out;
             in.sputn(buf.peek(), buf.readableBytes());
-            ZlibStream::GzipDecompress(in, out);
+            auto ret = ZlibStream::GzipDecompress(in, out);
+            logger.info("gzip decode length is %d", ret);
             resp.setBody(out.toString());
         } else {
             if (!req.getPostParams().empty()) {
@@ -109,6 +110,8 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
                 resp.setBody(req.getBodyBuffer());
             }
         }
+    } else {
+        resp.setBody(req.getBodyBuffer());
     }
 
     return resp;

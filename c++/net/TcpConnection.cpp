@@ -19,11 +19,11 @@ TcpConnection::TcpConnection(EventLoop *loop, const std::string &name, int sockF
     , m_socket(new Socket(sockFd, ssl))
     , m_channel(new Channel(loop, sockFd)) {
 
-    m_channel->setReadCallback(std::bind(&TcpConnection::handleRead, this, std::placeholders::_1));
-    m_channel->setWriteCallback(std::bind(&TcpConnection::handleWrite, this));
-    m_channel->setCloseCallback(std::bind(&TcpConnection::handleClose, this));
-    m_channel->setErrorCallback(std::bind(&TcpConnection::handleError, this));
-    m_channel->setReadTimeOutCallback(std::bind(&TcpConnection::shutdown, this));
+    m_channel->setReadCallback([ this ](const auto &time) { return handleRead(time); });
+    m_channel->setWriteCallback([ this ]() { return handleWrite(); });
+    m_channel->setCloseCallback([ this ]() { return handleClose(); });
+    m_channel->setErrorCallback([ this ]() { return handleError(); });
+    m_channel->setReadTimeOutCallback([ this ]() { return shutdown(); });
     m_socket->setKeepAlive(false);
 }
 
@@ -31,7 +31,7 @@ TcpConnection::~TcpConnection() { m_socket->shutdownWrite(); }
 
 void TcpConnection::handleRead(const Timestamp &timeStamp) {
     m_pLoop->assertLoopThread();
-    int     error;
+    int     error   = 0;
     ssize_t readNum = m_socket->read(m_input);
     //    ssize_t readNum = m_input.readFd(m_channel->fd(), &error);
     if (readNum > 0) {

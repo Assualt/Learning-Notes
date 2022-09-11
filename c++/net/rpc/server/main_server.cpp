@@ -26,7 +26,7 @@ int main(int, char const **) {
     RegisterSignalAction();
 
     EventLoop loop;
-    RpcServer server(&loop, InetAddress(22087), true);
+    RpcServer server(&loop, InetAddress(22087), false);
     server.initEx(10);
     server.start();
     loop.loop();

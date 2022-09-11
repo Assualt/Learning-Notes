@@ -7,7 +7,7 @@ using namespace muduo;
 
 void RegisterSignalHandle(HttpServer &server) {
     auto handle = [](int sig, uintptr_t param) {
-        if ((sig == SIGSEGV) || (sig == SIGABRT) || (sig == SIGINT) || (sig == SIGHUP)) {
+        if ((sig == SIGSEGV) || (sig == SIGABRT) || (sig == SIGINT) || (sig == SIGHUP) || (sig == SIGTERM)) {
             auto callstack = GetBackCallStack();
             logger.info("callstack is:\n%s", callstack);
             auto server = reinterpret_cast<HttpServer *>(param);
@@ -20,6 +20,7 @@ void RegisterSignalHandle(HttpServer &server) {
     server.RegSignalCallback(SIGSEGV, reinterpret_cast<uintptr_t>(&server), handle);
     server.RegSignalCallback(SIGABRT, reinterpret_cast<uintptr_t>(&server), handle);
     server.RegSignalCallback(SIGPIPE, reinterpret_cast<uintptr_t>(&server), handle);
+    server.RegSignalCallback(SIGTERM, reinterpret_cast<uintptr_t>(&server), handle);
 }
 
 void InitObjPool() {

@@ -1,5 +1,6 @@
 #include "RpcServer.h"
 #include "base/Logging.h"
+#include "base/ProcInfo.h"
 #include "net/TcpConnection.h"
 using namespace rpc;
 
@@ -19,7 +20,7 @@ bool RpcServer::initEx(int threadNum) {
 
 void RpcServer::onConnection(const TcpConnectionPtr &conn) {
     if (conn->isConnected()) {
-        logger.info("connection is ready. %s shutdown in right now", conn->peerAddress().toIpPort());
+        logger.info("connection is ready. %s", conn->peerAddress().toIpPort());
     }
 }
 

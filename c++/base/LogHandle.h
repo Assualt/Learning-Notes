@@ -81,18 +81,18 @@ public:
         , m_strFileDirPrefix(dirPrefix)
         , m_strFilePrefix(filePrefix) {}
 
-    string CurrentFile(string &dirpath) {
+    string CurrentFile(string &dirPath) {
         time_t     t(time(nullptr));
-        struct tm *ttime = localtime(&t);
+        struct tm *lTime = localtime(&t);
 
         stringstream ss, ss1;
-        ss << m_strFileDirPrefix << std::setw(4) << std::setfill('0') << ttime->tm_year + 1900 << "_" << std::setw(2)
-           << std::setfill('0') << ttime->tm_mon << "_" << std::setw(2) << std::setfill('0') << ttime->tm_mday;
+        ss << m_strFileDirPrefix << std::setw(4) << std::setfill('0') << lTime->tm_year + 1900 << "_" << std::setw(2)
+           << std::setfill('0') << lTime->tm_mon << "_" << std::setw(2) << std::setfill('0') << lTime->tm_mday;
 
-        ss1 << m_strFilePrefix << std::setw(2) << std::setfill('0') << ttime->tm_hour << "_00_00.log";
+        ss1 << m_strFilePrefix << std::setw(2) << std::setfill('0') << lTime->tm_hour << "_00_00.log";
 
-        dirpath     = FmtString("%/%").arg(m_strFileRootPath).arg(ss.str()).str();
-        string file = FmtString("%/%").arg(dirpath).arg(ss1.str()).str();
+        dirPath     = FmtString("%/%").arg(m_strFileRootPath).arg(ss.str()).str();
+        string file = FmtString("%/%").arg(dirPath).arg(ss1.str()).str();
         return file;
     }
 

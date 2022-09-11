@@ -38,18 +38,18 @@ bool Socket::getTcpInfoString(std::string &infoString) const {
     bool            ok = getTcpInfo(&tcpInfo);
     if (ok) {
         std::stringstream ss;
-        ss << "unrecovered=" << tcpInfo.tcpi_retransmits << " ";
+        ss << "unRecovered=" << tcpInfo.tcpi_retransmits << " ";
         ss << "rto=" << tcpInfo.tcpi_rto << " ";
         ss << "ato=" << tcpInfo.tcpi_ato << " ";
         ss << "snd_mss=" << tcpInfo.tcpi_snd_mss << " ";
         ss << "rcv_mss=" << tcpInfo.tcpi_rcv_mss << " ";
         ss << "lost=" << tcpInfo.tcpi_lost << " ";
-        ss << "retrans=" << tcpInfo.tcpi_retrans << " ";
+        ss << "reTrans=" << tcpInfo.tcpi_retrans << " ";
         ss << "rtt=" << tcpInfo.tcpi_rtt << " ";
-        ss << "rttvar=" << tcpInfo.tcpi_rttvar << " ";
-        ss << "sshthresh=" << tcpInfo.tcpi_snd_ssthresh << " ";
+        ss << "rttVar=" << tcpInfo.tcpi_rttvar << " ";
+        ss << "sshThresh=" << tcpInfo.tcpi_snd_ssthresh << " ";
         ss << "cwnd=" << tcpInfo.tcpi_snd_cwnd << " ";
-        ss << "total_retrans=" << tcpInfo.tcpi_total_retrans;
+        ss << "total_reTrans=" << tcpInfo.tcpi_total_retrans;
         infoString = ss.str();
     }
     return ok;
@@ -192,11 +192,6 @@ uint32_t Socket::read(Buffer &buf) {
     if (sockFd_ == -1) {
         return -1;
     }
-#ifdef USE_SSL
-    if (sslConn_ == nullptr || sslConn_->m_ptrHandle == nullptr) {
-        return 0;
-    }
-#endif
 
     char   buffer[ 8192 ] = {0};
     int    nRead;
@@ -207,7 +202,11 @@ uint32_t Socket::read(Buffer &buf) {
             nRead = sockets::read(sockFd_, buffer, sizeof(buffer));
         } else {
 #ifdef USE_SSL
-            nRead = SSL_read(sslConn_->m_ptrHandle, buffer, sizeof(buffer));
+            if (sslConn_ != nullptr && sslConn_->m_ptrHandle != nullptr) {
+                nRead = SSL_read(sslConn_->m_ptrHandle, buffer, sizeof(buffer));
+            } else {
+                nRead = sockets::read(sockFd_, buffer, sizeof(buffer));
+            }
 #else
             nRead = sockets::read(sockFd_, buffer, sizeof(buffer));
 #endif
@@ -218,10 +217,10 @@ uint32_t Socket::read(Buffer &buf) {
 
         buf.append(buffer, nRead);
         nTotal += nRead;
-#if 0
-        printf("nRead ======> %d\n", nRead);
+#if 1
+        printf("\n Read ======> %d\n", nRead);
         for (auto idx = 0; idx < nRead; idx++) {
-            printf("%c", buffer[ idx ] & 0xFF);
+            printf("%02x ", buffer[ idx ] & 0xFF);
             if (buffer[ idx ] == '\n' && idx > 1 && buffer[ idx - 1 ] == 0xd) {
                 printf("\n");
             }

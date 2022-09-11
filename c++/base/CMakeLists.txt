@@ -14,6 +14,7 @@ set(muduo_base_objects
     Thread.cpp
     ThreadPool.cpp
     Timestamp.cpp
+    ProcInfo.cpp
     checksum/checksum.cpp
     Unicode.cpp
     crypto/base64.cpp

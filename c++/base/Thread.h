@@ -40,7 +40,8 @@ public:
     std::string Name();
 
 public:
-    static int   NumCreated();
+    static int NumCreated();
+
     static void *StartThread(void *arg);
 
 private:

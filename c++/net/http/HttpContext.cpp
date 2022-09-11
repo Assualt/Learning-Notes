@@ -125,7 +125,6 @@ void HttpContext::parseBodyPart(Buffer *buf) {
     } else if (m_lenType == kContentChunked) {
         logger.info("parse buffer with chunked");
         parseBodyByChunkedBuffer(buf);
-        m_state = kGotEnd;
     }
 }
 
@@ -144,18 +143,47 @@ void HttpContext::parseBodyByContentLength(Buffer *buf) {
 }
 void HttpContext::parseBodyByChunkedBuffer(Buffer *buf) {
     while (true) {
+        if (m_chunkLeftSize != 0) {
+            if (m_chunkLeftSize < buf->readableBytes()) {
+                m_request.appendBodyBuffer(buf->peek(), m_chunkLeftSize);
+                buf->retrieveUntil(buf->peek() + m_chunkLeftSize + 2);
+                logger.info("recv left chunked size %d", m_chunkLeftSize);
+                m_chunkLeftSize = 0;
+            } else {
+                m_request.appendBodyBuffer(buf->peek(), buf->readableBytes());
+                buf->retrieveUntil(buf->peek() + buf->readableBytes());
+                m_chunkLeftSize -= buf->readableBytes();
+                break;
+            }
+        }
+
         const char *crlf = buf->findCRLF();
         if (crlf == nullptr) {
             break;
         }
-        size_t nBytes = utils::chunkSize(std::string(buf->peek(), crlf));
-        logger.info("recv chunked size:%#x", nBytes);
-        buf->retrieveUntil(crlf + 2);
-        if ((nBytes == 0) || (buf->readableBytes() < nBytes)) {
+        long nBytes = utils::chunkSize(std::string(buf->peek(), crlf));
+        if (static_cast<int>(nBytes) == -1) {
             break;
         }
-        m_request.appendBodyBuffer(buf->peek(), nBytes);
-        logger.info("success insert into %x bytes", nBytes);
+
         buf->retrieveUntil(crlf + 2);
+        logger.info("recv chunked size:%d ", static_cast<int>(nBytes));
+        if (nBytes == 0) {
+            m_state = kGotEnd;
+            break;
+        }
+
+        // recv buf < nBytes.
+        if (buf->readableBytes() < static_cast<int>(nBytes)) {
+            m_chunkLeftSize = nBytes - buf->readableBytes();
+            m_request.appendBodyBuffer(buf->peek(), buf->readableBytes());
+            logger.info("==>success insert into %d bytes left size:%d", buf->readableBytes(), m_chunkLeftSize);
+            buf->retrieveUntil(buf->peek() + buf->readableBytes() + 2);
+            break;
+        }
+
+        m_request.appendBodyBuffer(buf->peek(), nBytes);
+        logger.info("success insert into %d bytes", nBytes);
+        buf->retrieveUntil(buf->peek() + nBytes + 2);
     }
 }

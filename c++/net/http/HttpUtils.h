@@ -25,7 +25,7 @@ public:
 
     static std::string trim(const std::string &src, char ch = ' ');
 
-    static size_t chunkSize(const std::string &strChunkSize);
+    static long chunkSize(const std::string &strChunkSize);
 
     static std::vector<std::string> split(const std::string &src, char divider);
 

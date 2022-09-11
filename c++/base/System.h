@@ -15,6 +15,10 @@ inline int rename(const std::string &srcFilePath, const std::string &dstFileName
     return ::rename(srcFilePath.c_str(), dstFileName.c_str());
 }
 
+inline int remove(const std::string &path) { return ::remove(path.c_str()); }
+
+inline int rmdir(const std::string &path) { return ::rmdir(path.c_str()); }
+
 inline std::string GetCurrentThreadName() {
     char tempName[ 256 ] = {0};
     (void)prctl(PR_GET_NAME, tempName);
