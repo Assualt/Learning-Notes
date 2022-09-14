@@ -123,7 +123,7 @@ void HttpContext::parseBodyPart(Buffer *buf) {
     if (m_lenType == kContentLength) {
         parseBodyByContentLength(buf);
     } else if (m_lenType == kContentChunked) {
-        logger.info("parse buffer with chunked");
+        logger.debug("parse buffer with chunked");
         parseBodyByChunkedBuffer(buf);
     }
 }
@@ -150,9 +150,12 @@ void HttpContext::parseBodyByChunkedBuffer(Buffer *buf) {
                 logger.info("recv left chunked size %d", m_chunkLeftSize);
                 m_chunkLeftSize = 0;
             } else {
+                uint32_t recvSize = buf->readableBytes();
                 m_request.appendBodyBuffer(buf->peek(), buf->readableBytes());
                 buf->retrieveUntil(buf->peek() + buf->readableBytes());
-                m_chunkLeftSize -= buf->readableBytes();
+                logger.debug("should recv size:%d, real recv size:%d, left:%d", m_chunkLeftSize, recvSize,
+                            m_chunkLeftSize - recvSize);
+                m_chunkLeftSize -= recvSize;
                 break;
             }
         }
@@ -177,13 +180,13 @@ void HttpContext::parseBodyByChunkedBuffer(Buffer *buf) {
         if (buf->readableBytes() < static_cast<int>(nBytes)) {
             m_chunkLeftSize = nBytes - buf->readableBytes();
             m_request.appendBodyBuffer(buf->peek(), buf->readableBytes());
-            logger.info("==>success insert into %d bytes left size:%d", buf->readableBytes(), m_chunkLeftSize);
-            buf->retrieveUntil(buf->peek() + buf->readableBytes() + 2);
+            logger.debug("==>success insert into %d bytes left size:%d", buf->readableBytes(), m_chunkLeftSize);
+            buf->retrieveUntil(buf->peek() + buf->readableBytes());
             break;
         }
 
         m_request.appendBodyBuffer(buf->peek(), nBytes);
-        logger.info("success insert into %d bytes", nBytes);
+        logger.debug("success insert into %d bytes", nBytes);
         buf->retrieveUntil(buf->peek() + nBytes + 2);
     }
 }

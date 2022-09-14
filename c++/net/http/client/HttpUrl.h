@@ -1,7 +1,8 @@
-#include "third_party/url/include/url.h"
+#include "net/Uri.h"
 #include <sstream>
 #include <string>
 
+using namespace muduo::net;
 struct HttpUrl {
 public:
     std::string scheme;
@@ -65,19 +66,24 @@ private:
         if (url.has_ref())
             fragment = url.ref();
 #else
-        Url url = Url::create(fullUrl);
-        host    = url.getHost();
+        Uri url(StringPiece(fullUrl.c_str(), fullUrl.size()));
+        host = url.host();
         if (host.empty())
             return;
-        scheme   = url.getScheme();
-        username = url.getUsername();
-        password = url.getPassword();
-        port     = url.getPort();
-        path     = url.getPath();
-        query    = url.getQuery();
+        scheme   = url.scheme();
+        username = url.username();
+        password = url.password();
+        port     = url.port();
+        if (port == 0 && scheme == "https") {
+            port = 443;
+        } else if (port == 0 && scheme == "http") {
+            port = 80;
+        }
+        path  = url.path();
+        query = url.query();
         if (!query.empty() && query.front() == '?')
             query = query.substr(1);
-        fragment = url.getFragment();
+        fragment = url.fragment();
 #endif
         netloc = host + ":" + std::to_string(port);
     }

@@ -15,5 +15,3 @@ target_link_libraries(mailserver
     muduo_base
     muduo_net
 )
-
-add_test(NAME test_mail COMMAND mailserver -c /home/xhou/work/git/Learning-Notes/c++/net/mail1/conf/programs.cf)

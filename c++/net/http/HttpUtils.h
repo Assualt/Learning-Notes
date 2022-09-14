@@ -1,5 +1,5 @@
 #pragma once
-#include "net/ZlibStream.h"
+#include "base/stream//ZlibStream.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>
@@ -11,7 +11,8 @@
 #include <time.h>
 #include <vector>
 using namespace std;
-using muduo::net::MyStringBuffer;
+using muduo::base::MyStringBuffer;
+
 class utils {
 public:
     template <class T> static std::string toString(const T &val) {

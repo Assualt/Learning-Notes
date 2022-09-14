@@ -2,39 +2,47 @@
 // Created by xhou on 2022/9/11.
 //
 
-#include "net/ZlibStream.h"
+#include "base/stream/ZlibStream.h"
 #include <fstream>
-#include <stdio.h>
+#include <gtest/gtest.h>
 
-using namespace muduo::net;
+using namespace muduo::base;
+using namespace testing;
 
-void TestGzipFile(const std::string &path) {
-    MyStringBuffer buffer;
+TEST(test_zlib, gzip) {
+    std::string    expStr = "Hello World";
+    MyStringBuffer inBuf;
+    MyStringBuffer outBuf;
+    auto           encodeLen = ZlibStream::GzipCompress(expStr.data(), expStr.size(), inBuf);
+    EXPECT_TRUE(encodeLen != ULONG_MAX);
+    auto decodeLen = ZlibStream::GzipDecompress(inBuf, outBuf);
+    EXPECT_EQ(decodeLen, expStr.size());
+    EXPECT_EQ(outBuf.toString(), expStr);
+}
 
-    char   temp[ 1024 ];
-    FILE  *fp     = fopen(path.c_str(), "rb");
-    size_t nTotal = 0;
-    while (true) {
-        size_t nRead = fread(temp, 1, sizeof(temp), fp);
-        nTotal += nRead;
-        std::cout << "read:" << nRead << " total:" << nTotal << " " << buffer.size() << std::endl;
-        if (nRead < 1024) {
-            buffer.sputn(temp, nRead);
-            break;
-        }
-        buffer.sputn(temp, nRead);
-    }
+TEST(test_zlib, deflate) {
+    std::string    expStr = "Hello World";
+    MyStringBuffer inBuf;
+    MyStringBuffer outBuf;
+    auto           encodeLen = ZlibStream::DeflateCompress(expStr.data(), expStr.size(), inBuf);
+    EXPECT_TRUE(encodeLen != ULONG_MAX);
+    auto decodeLen = ZlibStream::DeflateDecompress(inBuf, outBuf);
+    EXPECT_EQ(decodeLen, expStr.size());
+    EXPECT_EQ(outBuf.toString(), expStr);
+}
 
-    std::cout << "total:" << buffer.size() << std::endl;
-    MyStringBuffer out;
-    buffer.seekReadPos(0);
-    auto ret = ZlibStream::GzipDecompress(buffer, out);
-
-    std::cout << "ret for buffer decode is=>" << ret << " str:" << out.toString() << std::endl;
-
+TEST(test_zlib, zlib) {
+    std::string    expStr = "Hello World";
+    MyStringBuffer inBuf;
+    MyStringBuffer outBuf;
+    auto           encodeLen = ZlibStream::ZlibCompress(expStr.data(), expStr.size(), inBuf);
+    EXPECT_TRUE(encodeLen != ULONG_MAX);
+    auto decodeLen = ZlibStream::ZlibDeCompress(inBuf, outBuf);
+    EXPECT_EQ(decodeLen, expStr.size());
+    EXPECT_EQ(outBuf.toString(), expStr);
 }
 
 int main(int argc, char **argv) {
-    TestGzipFile("lTime");
-    return 0;
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

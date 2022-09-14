@@ -1,11 +1,11 @@
 #pragma once
-#include "Buffer.h"
+#include <cstring>
 #include <sstream>
 #include <stdio.h>
 #include <zlib.h>
 #define MAX_BUF_SIZE 8192
 namespace muduo {
-namespace net {
+namespace base {
 
 class MyStringBuffer : public std::stringbuf {
 public:
@@ -37,7 +37,6 @@ public:
 };
 
 class ZlibStream {
-public:
     static uLongf DecompressWithZlib(MyStringBuffer &in, MyStringBuffer &out, int nLevel) {
         z_stream strm;
         strm.zalloc   = Z_NULL;
@@ -62,7 +61,7 @@ public:
         char outBuf[ MAX_BUF_SIZE ] = {0};
         int  left = 0, size = 0;
         do {
-            memset(inBuf, 0, MAX_BUF_SIZE);
+            (void)memset(inBuf, 0, MAX_BUF_SIZE);
             size_t nRead = in.sgetn(inBuf, MAX_BUF_SIZE);
             if (nRead == 0) {
                 break;
@@ -141,6 +140,7 @@ public:
         return nTotalSize;
     }
 
+public:
     static uLongf GzipCompress(void *buffer, ssize_t size, MyStringBuffer &out) { // gzip
         return CompressWithZlib(buffer, size, out, 1);
     }
@@ -160,5 +160,5 @@ public:
     // zlib
     static uLongf ZlibDeCompress(MyStringBuffer &in, MyStringBuffer &out) { return DecompressWithZlib(in, out, 3); }
 };
-} // namespace net
+} // namespace base
 } // namespace muduo

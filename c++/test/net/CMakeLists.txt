@@ -8,3 +8,5 @@ add_test(NAME test_tcp COMMAND test_tcpclient)
 
 add_executable(test_zlib test_zlib.cpp)
 target_link_libraries(test_zlib gtest muduo_base muduo_net pthread z)
+
+add_test(NAME test_zlib COMMAND test_zlib)

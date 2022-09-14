@@ -12,8 +12,7 @@ target_link_libraries(http-client-common
     z
     pthread
     magic
-    ${CMAKE_SOURCE_DIR}/third_party/url/lib/liburlparse.so
-)
+    )
 
 add_executable(httpclient ${client_source})
 target_link_libraries(httpclient http-client-common)
@@ -29,5 +28,5 @@ add_test(
     NAME
     test_client_baidu.com
     COMMAND
-    httpclient --url https://www.baidu.com --verbose 1
+    httpclient --url https://www.baidu.com:443 --verbose 1
 )

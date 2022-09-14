@@ -79,13 +79,9 @@ private:
 
 class Base64Impl : EncoderImpl<char>, DecoderImpl<char> {
 public:
-    uint32_t encode(const char *ptr, size_t len, char *out) override {
-        return encoder_.encode_str(ptr, len, out);
-    }
+    uint32_t encode(const char *ptr, size_t len, char *out) override { return encoder_.encode_str(ptr, len, out); }
 
-    uint32_t decode(const char *ptr, size_t len, char *out) override {
-        return decoder_.decode_str(ptr, len, out);
-    }
+    uint32_t decode(const char *ptr, size_t len, char *out) override { return decoder_.decode_str(ptr, len, out); }
 
 private:
     base64::encoder encoder_;

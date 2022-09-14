@@ -1,6 +1,7 @@
 #include "HttpClient.h"
 #include "base/Logging.h"
 #include "base/argparse/cmdline.h"
+#include <algorithm>
 
 #define AcceptEncoding_Default "gzip, deflate"
 #define AcceptLanguage_Default "zh-CN,zh;q=0.9"
@@ -52,8 +53,15 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    auto &log = muduo::base::Logger::getLogger();
-    log.BasicConfig(static_cast<LogLevel>(Debug),
+    if (parser.exist("help")) {
+        std::cout << parser.error() << std::endl;
+        std::cout << parser.usage() << std::endl;
+        return 0;
+    }
+
+    auto &log   = muduo::base::Logger::getLogger();
+    auto  level = static_cast<LogLevel>(parser.get<int>("logLevel"));
+    log.BasicConfig(static_cast<LogLevel>(level),
                     "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
     log.setAppName("app");
     auto stdHandle = std::make_shared<StdOutLogHandle>();
@@ -86,6 +94,7 @@ int main(int argc, char *argv[]) {
     }
 
     HttpResponse resp(false);
+    std::transform(reqType.begin(), reqType.end(), reqType.begin(), ::toupper);
     if (reqType == "GET") {
         resp = client.Get(urlString, redirect, verbose);
     } else if (reqType == "POST") {
@@ -93,6 +102,8 @@ int main(int argc, char *argv[]) {
         Buffer bodyBuf;
         bodyBuf.append(reqBody);
         resp = client.Post(urlString, bodyBuf, redirect, verbose);
+    } else if (reqType == "HEAD") {
+        resp = client.Head(urlString, redirect, verbose);
     }
 
     std::cout << "================================\n"

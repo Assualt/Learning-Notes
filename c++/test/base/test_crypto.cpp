@@ -34,18 +34,15 @@ TEST(SuiteBase64, test_b64_decode) {
         decoder.decode(decodeStr, strlen(decodeStr), decodePtr.get());
         EXPECT_EQ("Hello World", std::string(decodePtr.get()));
     }
-
 }
 
 TEST(SuiteBase64, test_b64_decode1) {
     auto            decodeStr = "KipAKiouY29t";
     base64::decoder decoder;
-    {
-        auto decodePtr = std::make_unique<char[]>(40);
-        decoder.decode_str(decodeStr, strlen(decodeStr), decodePtr.get());
-        EXPECT_EQ("Hello World", std::string(decodePtr.get()));
-    }
 
+    auto decodePtr = std::make_unique<char[]>(40);
+    decoder.decode_str(decodeStr, strlen(decodeStr), decodePtr.get());
+    EXPECT_EQ("**@**.com", std::string(decodePtr.get()));
 }
 
 int main(int argc, char **argv) {

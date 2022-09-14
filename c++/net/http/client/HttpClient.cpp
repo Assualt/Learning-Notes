@@ -1,5 +1,6 @@
 #include "HttpClient.h"
 #include "net/http/HttpContext.h"
+#include <sys/time.h>
 
 using namespace muduo::net;
 
@@ -10,6 +11,11 @@ HttpResponse HttpClient::Get(const string &url, bool needRedirect, bool verbose)
 
 HttpResponse HttpClient::Post(const string &url, const Buffer &body, bool needRedirect, bool verbose) {
     return Request(ReqType::Type_POST, url, body, needRedirect, verbose);
+}
+
+HttpResponse HttpClient::Head(const std::string &url, bool needRedirect, bool verbose) {
+    Buffer buffer;
+    return Request(ReqType::Type_HEAD, url, buffer, needRedirect, verbose);
 }
 
 HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &url, const Buffer &buff, bool needRedirect,
@@ -29,9 +35,12 @@ HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &url, co
         request_.setRequestType("GET");
     } else if (type == Type_POST) {
         request_.setRequestType("POST");
+    } else if (type == Type_HEAD) {
+        request_.setRequestType("HEAD");
     }
 
 request:
+    auto   startTick  = clock();
     size_t writeBytes = conn_.send(GetRequestBuffer(reqUrl));
     if (writeBytes <= 0) {
         logger.info("send data to server failed. write bytes:%d", writeBytes);
@@ -54,6 +63,11 @@ request:
         std::cout << resp;
     }
 
+    if (verbose) {
+        auto costTick     = clock() - startTick;
+        auto downloadBits = resp.getBody().size() * 1.0;
+        logger.info("download speed %f MB/s", downloadBits / 1024.0 / 1024.0 / (costTick * 1.0 / CLOCKS_PER_SEC));
+    }
     if (resp.getStatusCode() == HttpStatusCode::k302MovedPermanently && needRedirect) {
         reqUrl = resp.getHeader(Location);
         logger.info("begin to redirect url:%s ", reqUrl);
@@ -97,12 +111,16 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
     if (req.get(ContentType).find("text/") != std::string::npos) {
         auto encodingType = req.get(ContentEncoding);
         if (strcasecmp(encodingType.c_str(), "gzip") == 0) {
-            auto buf = req.getBodyBuffer();
+            auto           buf = req.getBodyBuffer();
             MyStringBuffer in, out;
             in.sputn(buf.peek(), buf.readableBytes());
             auto ret = ZlibStream::GzipDecompress(in, out);
             logger.info("gzip decode length is %d", ret);
-            resp.setBody(out.toString());
+            if (ret <= 0) {
+                resp.setBody("");
+            } else {
+                resp.setBody(out.toString());
+            }
         } else {
             if (!req.getPostParams().empty()) {
                 resp.setBody(req.getPostParams());
