@@ -59,6 +59,14 @@ Uri::Uri(StringPiece str)
             } catch (std::exception &e) {
                 throw std::invalid_argument(FmtString("invalid URI port: %").arg(e.what()).str());
             }
+        } else if (scheme_ == "https") {
+            port_ = 443;
+        } else if (scheme_ == "http") {
+            port_ = 80;
+        } else if (scheme_ == "ftp") {
+            port_ = 21;
+        } else if (scheme_ == "sftp") {
+            port_ = 22;
         }
 
         hasAuthority_ = true;

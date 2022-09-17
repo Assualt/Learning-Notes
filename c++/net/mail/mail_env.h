@@ -19,8 +19,8 @@
     "status     show mail server status\r\n.\r\n"
 
 #include "base/Configure.h"
+#include "base/Mutex.h"
 #include <algorithm>
-#include <mutex>
 #include <set>
 #include <string.h>
 using namespace muduo::base;
@@ -33,22 +33,26 @@ public:
 
 public:
     static MailEnv   &getInstance();
-    static MailEnv    g_MailEnvInstance;
-    static std::mutex g_MutexLock;
 
 public:
     std::string getServerIP() const { return m_strServerIP; }
-    int         getServerPort() const { return m_nServerPort; }
-    int         getCommandPort() const { return m_nCommandPort; }
-    int         getMaxClient() const { return m_nMaxClients; }
-    bool        NeedAuth(const std::string &strDomain) {
-               if (strDomain == m_strMailServerPrimaryDomain)
+
+    int getServerPort() const { return m_nServerPort; }
+
+    int getCommandPort() const { return m_nCommandPort; }
+
+    int getMaxClient() const { return m_nMaxClients; }
+
+    bool NeedAuth(const std::string &strDomain) {
+        if (strDomain == m_strMailServerPrimaryDomain)
             return true;
         return false;
     }
     std::string getPrimaryDomain() const { return m_strMailServerPrimaryDomain; }
 
     std::string getBuildVersionDate() const { return m_strMailServerBuildDate; }
+
+    std::string GenerateMsgTid();
 
 protected:
     std::string m_strServerIP;
@@ -57,6 +61,8 @@ protected:
     int         m_nMaxClients;
     std::string m_strMailServerPrimaryDomain;
     std::string m_strMailServerBuildDate;
+
+    static RWLock m_rwLock;
 
 protected:
     MailEnv();

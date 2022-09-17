@@ -8,7 +8,7 @@ using namespace muduo;
 using namespace muduo::base;
 
 static std::string            g_defaultAppName = "main";
-std::map<std::string, Logger> Logger::_MapLogger;
+std::map<std::string, Logger> Logger::mapLogger_;
 
 std::string stripFileName(const std::string &filename) {
     if (filename.rfind("/") == std::string::npos) {
@@ -30,7 +30,7 @@ Logger &Logger::BasicConfig(LogLevel defaultLevel, const char *messageFormat, co
     return *this;
 }
 
-std::string Logger::MessageFormat(const std::string &FormattedLogmessage, LogLevel nLevel) {
+std::string Logger::MessageFormat(const std::string &fmtLogMsg, LogLevel nLevel) {
     std::stringstream ss;
     std::string       strKey;
     bool              bFindKey = false;
@@ -41,7 +41,7 @@ std::string Logger::MessageFormat(const std::string &FormattedLogmessage, LogLev
             else {
                 strKey.push_back(')');
                 bFindKey = false;
-                getKeyString(strKey, ss, FormattedLogmessage, nLevel);
+                getKeyString(strKey, ss, fmtLogMsg, nLevel);
                 strKey.clear();
             }
         } else if (m_strMessageFormat[ i ] == '%' && i + 1 < m_strMessageFormat.size() &&
@@ -54,7 +54,7 @@ std::string Logger::MessageFormat(const std::string &FormattedLogmessage, LogLev
         }
     }
     if (!strKey.empty()) {
-        getKeyString(strKey, ss, FormattedLogmessage, nLevel);
+        getKeyString(strKey, ss, fmtLogMsg, nLevel);
     }
     return ss.str();
 }
@@ -139,4 +139,15 @@ Logger &Logger::setFileAttr(const std::string &fileName, const std::string &func
 Logger &Logger::setAppName(const std::string &appName) {
     m_strAppName = appName;
     return *this;
+}
+
+Logger &Logger::getLogger(const std::string &LoggerName) {
+    string strPrefix = LoggerName;
+    if (LoggerName.empty()) {
+        strPrefix = APP;
+    }
+    if (mapLogger_.find(strPrefix) == mapLogger_.end()) {
+        mapLogger_[ strPrefix ] = Logger();
+    }
+    return mapLogger_.at(strPrefix);
 }

@@ -1,8 +1,8 @@
 #include "mail_process.h"
 #include "base/Logging.h"
 #include "base/crypto/base64.h"
-#include "mailenv.h"
-#include "mailutils.h"
+#include "mail_env.h"
+#include "mail_utils.h"
 #include <algorithm>
 #include <cstring>
 #include <functional>
@@ -218,13 +218,23 @@ MAIL_STATE MailProcess::onMailFrom(const std::string &bufString, std::string &re
         replyString.assign("550 invalid user\r\n");
         return DISCONNECT;
     }
-    if (MailEnv::getInstance().NeedAuth(vec.second) && !m_bAuthPassed) {
-        replyString.assign("553 authentication is required\r\n");
-        return DISCONNECT;
+
+    bool needAuth = MailEnv::getInstance().NeedAuth(vec.second);
+    if (!needAuth) {
+        m_mailContext.m_strMailFrom = mailAddress;
+        replyString.assign("250 Mail OK\r\n");
+        m_bAuthPassed = true;
+        return RCPTTO;
     }
+
+    if (m_bAuthPassed) {
+        replyString.assign("250 Mail OK\r\n");
+        return RCPTTO;
+    }
+
     m_mailContext.m_strMailFrom = mailAddress;
     replyString.assign("250 Mail OK\r\n");
-    return RCPTTO;
+    return AUTH;
 }
 
 MAIL_STATE MailProcess::onRcptTo(const std::string &bufString, std::string &replyString) {
@@ -261,7 +271,6 @@ MAIL_STATE MailProcess::onRcptTo(const std::string &bufString, std::string &repl
     if (m_mailContext.m_strMailFrom == mailAddress)
         m_mailContext.m_RcptSets.insert(mailAddress);
     replyString.assign("250 Mail OK\r\n");
-
     return RCPTTO;
 }
 MAIL_STATE MailProcess::onData(const std::string &bufString, std::string &replyString) {
@@ -289,7 +298,8 @@ MAIL_STATE MailProcess::onQuit(const std::string &bufString, std::string &replyS
 }
 
 MAIL_STATE MailProcess::onDataFinish(const std::string &bufString, std::string &replyString) {
-    replyString.assign("250 Mail OK queued as smtp with id \r\n");
+    replyString.assign(
+        FmtString("250 Mail OK queued as smtp with id:%\r\n").arg(MailEnv::getInstance().GenerateMsgTid()).str());
     return QUIT;
 }
 

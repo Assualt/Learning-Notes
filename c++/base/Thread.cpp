@@ -23,8 +23,6 @@ void *Thread::StartThread(void *arg) {
         return nullptr;
     }
 
-    // Reg default get the callstack of current thread sigaction
-    ProcInfo::RegDefaultGetThreadAction();
     ThreadContext *_au = static_cast<ThreadContext *>(arg);
     _au->Run();
     delete _au;

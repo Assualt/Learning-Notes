@@ -40,29 +40,17 @@ public:
     Logger &BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix,
                         const char *fileFormat, const char *fileMode = "a+");
 
-    template <class... Args> void debug(const char *fmt, Args &&...arg) {
-        this->LogMessage(Debug, fmt, arg...);
-    }
+    template <class... Args> void debug(const char *fmt, Args &&...arg) { this->LogMessage(Debug, fmt, arg...); }
 
-    template <class... Args> void info(const char *fmt, Args &&...arg) {
-        this->LogMessage(Info, fmt, arg...);
-    }
+    template <class... Args> void info(const char *fmt, Args &&...arg) { this->LogMessage(Info, fmt, arg...); }
 
-    template <class... Args> void warning(const char *fmt, Args &&...arg) {
-        this->LogMessage(Warn, fmt, arg...);
-    }
+    template <class... Args> void warning(const char *fmt, Args &&...arg) { this->LogMessage(Warn, fmt, arg...); }
 
-    template <class... Args> void error(const char *fmt, Args &&...arg) {
-        this->LogMessage(Error, fmt, arg...);
-    }
+    template <class... Args> void error(const char *fmt, Args &&...arg) { this->LogMessage(Error, fmt, arg...); }
 
-    template <class... Args> void fatal(const char *fmt, Args &&...arg) {
-        this->LogMessage(Fatal, fmt, arg...);
-    }
+    template <class... Args> void fatal(const char *fmt, Args &&...arg) { this->LogMessage(Fatal, fmt, arg...); }
 
-    template <class... Args> void alert(const char *fmt, Args &&...arg) {
-        this->LogMessage(Alert, fmt, arg...);
-    }
+    template <class... Args> void alert(const char *fmt, Args &&...arg) { this->LogMessage(Alert, fmt, arg...); }
 
     template <class... Args> void emergency(const char *fmt, Args &&...arg) {
         this->LogMessage(LogLevel::Emergency, fmt, arg...);
@@ -77,6 +65,7 @@ public:
     std::string getLevelName(LogLevel nLevel);
 
     Logger &setFileAttr(const std::string &filename, const std::string &funcName, int lineno);
+
     Logger &setAppName(const std::string &appName);
 
     void addLogHandle(LogHandle *au) {
@@ -178,18 +167,10 @@ protected:
     void formatString(std::string &result) {}
 
 public:
-    static Logger &getLogger(const std::string &LoggerName = "") {
-        string strPrefix = LoggerName;
-        if (LoggerName.empty())
-            strPrefix = APP;
-        if (!_MapLogger.count(strPrefix)) {
-            _MapLogger[ strPrefix ] = Logger();
-        }
-        return _MapLogger.at(strPrefix);
-    }
+    static Logger &getLogger(const std::string &LoggerName = "");
 
 private:
-    static std::map<std::string, Logger> _MapLogger;
+    static std::map<std::string, Logger> mapLogger_;
 
 protected:
     LogLevel                 m_nLevel;

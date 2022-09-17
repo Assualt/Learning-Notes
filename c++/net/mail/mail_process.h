@@ -1,5 +1,5 @@
 #pragma once
-#include "mailcontext.h"
+#include "mail_context.h"
 #include <memory>
 
 namespace mail {

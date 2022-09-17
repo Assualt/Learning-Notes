@@ -53,7 +53,8 @@ void ConfigureManager::InitFile(cstring file) {
         size_t nPos;
         if ((nPos = strLine.find("#")) != std::string::npos)
             strLine = strLine.substr(0, nPos);
-        if (strLine.back() == ']' && strLine.front() == '[' && detail::count(strLine, '[') == 1 && detail::count(strLine, ']') == 1) {
+        if (strLine.back() == ']' && strLine.front() == '[' && detail::count(strLine, '[') == 1 &&
+            detail::count(strLine, ']') == 1) {
             auto temp = strLine.substr(1, strLine.size() - 2);
             if (temp.empty()) {
                 continue;
@@ -62,12 +63,12 @@ void ConfigureManager::InitFile(cstring file) {
             bFindSection  = true;
         } else if (bFindSection && detail::count(strLine, '=')) {
             auto pos1 = strLine.find('=');
-            strKey   = detail::trim(strLine.substr(0, pos1), std::string(" "));
-            strVal   = detail::trim(strLine.substr(pos1 + 1), std::string(" "));
-            strKey   = detail::trim(strKey, std::string("'"));
-            strVal   = detail::trim(strVal, std::string("'"));
-            strKey   = detail::trim(strKey, std::string("\""));
-            strVal   = detail::trim(strVal, std::string("\""));
+            strKey    = detail::trim(strLine.substr(0, pos1), std::string(" "));
+            strVal    = detail::trim(strLine.substr(pos1 + 1), std::string(" "));
+            strKey    = detail::trim(strKey, std::string("'"));
+            strVal    = detail::trim(strVal, std::string("'"));
+            strKey    = detail::trim(strKey, std::string("\""));
+            strVal    = detail::trim(strVal, std::string("\""));
             if (!strKey.empty() && !strVal.empty()) {
                 m_mConfigKeyValMapper[ strSectionKey + "/" + strKey ] = strVal;
             }
@@ -135,4 +136,7 @@ Section ConfigureManager::getSection(cstring prefix) const {
 
 [[maybe_unused]] void ConfigureManager::changeAccessPath(cstring confpath) {
     m_strPrefix = confpath;
+    if (m_strPrefix.back() != '/') {
+        m_strPrefix.push_back('/');
+    }
 }

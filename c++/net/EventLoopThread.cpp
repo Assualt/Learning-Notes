@@ -36,8 +36,6 @@ void EventLoopThread::threadFunc() {
     }
     m_pLoop = &loop;
     m_pCond->Notify();
-
     loop.loop();
-
     m_pLoop = nullptr;
 }

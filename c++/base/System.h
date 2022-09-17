@@ -1,9 +1,11 @@
 #pragma once
 #include <iostream>
+#include <signal.h>
 #include <stdio.h>
 #include <sys/prctl.h>
 #include <sys/stat.h>
 #include <syscall.h>
+#include <unordered_map>
 
 namespace muduo {
 namespace base {
@@ -32,6 +34,16 @@ inline long Tid() { return syscall(SYS_gettid); }
 inline long Pid() { return getpid(); }
 
 inline const char *GetErrMsg(int err) { return strerror(err); }
+
+inline const char *GetSigName(int sig) {
+    static std::unordered_map<int, const char *> g_sigNameMapper = {
+        {SIGINT, "SIGINT"},   {SIGSEGV, "SIGSEGV"}, {SIGHUP, "SIGHUP"},   {SIGPIPE, "SIGPIPE"},
+        {SIGQUIT, "SIGQUIT"}, {SIGKILL, "SIGKILL"}, {SIGTERM, "SIGTERM"}, {SIGCHLD, "SIGCHLD"},
+        {SIGIOT, "SIGIOT"},   {SIGUSR1, "SIGUSR1"}, {SIGALRM, "SIGALRM"}};
+
+    auto iter = g_sigNameMapper.find(sig);
+    return iter != g_sigNameMapper.end() ? iter->second : "NULL";
+}
 
 } // namespace System
 } // namespace base

@@ -71,6 +71,11 @@ public:
 
     int size() { return m_objMap.size(); }
 
+    template <class Function, class... Args>
+    auto Invoke(Function func, Args... args) -> std::result_of<Function(Args...)> {
+        return std::invoke(func, args...);
+    }
+
 private:
     std::map<size_t, Creator>                 m_creators;
     std::map<size_t, std::string>             m_objNameMap;

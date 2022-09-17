@@ -15,26 +15,26 @@ __thread EventLoop *t_loopInThisThread = 0;
 constexpr int       kPollTimeMs        = 10000;
 constexpr int       kNoEventTimes      = 2;
 
-int createEventfd() {
-    int evtfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
-    if (evtfd < 0) {
+int CreateEventFd() {
+    int evtFd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
+    if (evtFd < 0) {
         abort();
     }
-    return evtfd;
+    return evtFd;
 }
 
 EventLoop::EventLoop()
     : m_bLooping(false)
     , m_bQuit(false)
     , m_bEventHanding(false)
-    , m_nWakeUpFD(createEventfd())
+    , m_nWakeUpFD(CreateEventFd())
     , m_nThreadId(CurrentThread::tid())
     , m_pCurrentChannel(nullptr)
     , m_bCallFuncs(false)
     , m_Poller(Poller::newDefaultPoller(this))
     , m_wakeupChannel(new Channel(this, m_nWakeUpFD)) {
 
-    m_wakeupChannel->setReadCallback(std::bind(&EventLoop::handleRead, this));
+    m_wakeupChannel->setReadCallback([ this ](const base::Timestamp &) { handleRead(); });
     m_wakeupChannel->enableReading();
 }
 

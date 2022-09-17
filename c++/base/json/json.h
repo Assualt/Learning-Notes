@@ -89,6 +89,7 @@ public:
     bool is_string() const { return type() == STRING; }
     bool is_array() const { return type() == ARRAY; }
     bool is_object() const { return type() == OBJECT; }
+    bool is_timestamp() const { return type() == DATETIME; }
 
     // Return the enclosed value if this is a number, 0 otherwise. Note that json11 does not
     // distinguish between integer and non-integer numbers - number_value() and int_value()
@@ -157,7 +158,8 @@ public:
      * the given type. If not, return false and set err to a descriptive message.
      */
     typedef std::initializer_list<std::pair<std::string, Type>> shape;
-    bool                                                        has_shape(const shape &types, std::string &err) const;
+
+    bool has_shape(const shape &types, std::string &err) const;
 
 private:
     std::shared_ptr<JsonValue> m_ptr;

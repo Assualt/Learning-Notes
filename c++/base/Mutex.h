@@ -27,13 +27,18 @@ private:
 class RWLock final {
 public:
     RWLock(const pthread_rwlockattr_t *attr = nullptr);
+
     ~RWLock();
 
 public:
     void RLock();
+
     void WLock();
+
     void UnLock();
+
     void TryRLock();
+
     void TryWLock();
 
 private:

@@ -25,7 +25,7 @@ void EventLoopThreadPool::start(const ThreadInitFunc &cb) {
 
     m_bIsStarted = true;
     for (int i = 0; i < m_nThreadNum; ++i) {
-        auto threadName = FmtString("%s/%d").arg(m_strName).arg(i).str();
+        auto threadName = FmtString("%/%").arg(m_strName).arg(i).str();
         auto tmp        = std::make_unique<EventLoopThread>(cb, threadName);
         m_vLoops.push_back(tmp->startLoop());
         m_vThreads.push_back(std::move(tmp));

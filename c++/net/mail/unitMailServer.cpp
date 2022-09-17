@@ -13,8 +13,9 @@ int main(int argc, char const *argv[]) {
     cmdline::parser cmd;
     cmd.add("version", 'v', "show this Simple Mailer Version and exit");
     cmd.add<int>("level", 'l', "set server mail logger level", false, Info);
-    cmd.add<int>("threads_count", 'n', "The Mail's threads count", false, 3, cmdline::range<int>(1, 10));
-    cmd.add<std::string>("config_path", 'c', "The Mail's config path", true);
+    cmd.add<int>("threads_count", 'n', "The mail's threads count", false, 3, cmdline::range<int>(1, 10));
+    cmd.add<std::string>("config_path", 'c', "The mail's config path", true);
+    cmd.add("help", 'h', "The mail's usage help");
     bool ok = cmd.parse(argc, argv);
 
     auto level       = static_cast<LogLevel>(cmd.get<int>("level"));
@@ -22,7 +23,7 @@ int main(int argc, char const *argv[]) {
     log.BasicConfig(level, defaultMsgFmt.c_str(), "", "");
     log.setAppName(argv[ 0 ]);
     log.addLogHandle(plainHandle.get());
-    if (!ok) {
+    if (!ok || cmd.exist("help")) {
         std::cout << cmd.error() << std::endl;
         std::cout << cmd.usage() << std::endl;
         return 0;

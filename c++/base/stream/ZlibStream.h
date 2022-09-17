@@ -1,6 +1,7 @@
 #pragma once
 #include <cstring>
 #include <sstream>
+#include <fstream>
 #include <stdio.h>
 #include <zlib.h>
 #define MAX_BUF_SIZE 8192
@@ -34,6 +35,17 @@ public:
         seekReadPos(0);
         return ret;
     }
+
+    void toFile(const std::string &path) {
+        std::ofstream fout(path.c_str(), std::ios_base::binary);
+        seekReadPos(0);
+        int ch;
+        while ((ch = this->snextc()) != EOF) {
+            fout << ch;
+        }
+        seekReadPos(0);
+        fout.close();
+    }
 };
 
 class ZlibStream {
@@ -59,7 +71,7 @@ class ZlibStream {
 
         char inBuf[ MAX_BUF_SIZE ]  = {0};
         char outBuf[ MAX_BUF_SIZE ] = {0};
-        int  left = 0, size = 0;
+        int  left, size = 0;
         do {
             (void)memset(inBuf, 0, MAX_BUF_SIZE);
             size_t nRead = in.sgetn(inBuf, MAX_BUF_SIZE);
@@ -112,8 +124,6 @@ class ZlibStream {
             ret = deflateInit(&strm, Z_DEFAULT_COMPRESSION);
         } else if (nLevel == 2) { // raw
             ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
-            // ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, MAX_MEM_LEVEL,
-            // Z_DEFAULT_COMPRESSION);
         } else if (nLevel == 1) { // gzip
             ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, MAX_WBITS + 16, 8, Z_DEFAULT_STRATEGY);
         } else {

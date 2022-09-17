@@ -1,7 +1,7 @@
 #pragma once
 
-#include "mailcontext.h"
-#include "mailenv.h"
+#include "mail_context.h"
+#include "mail_env.h"
 #include "net/TcpServer.h"
 #include <iostream>
 #include <map>
@@ -17,20 +17,29 @@ public:
 class MailServer {
 public:
     MailServer(EventLoop &loop, const std::string &confPath);
-    void initEx(const std::string &strConfigPath);
-    void startServer(size_t nThreadCount = 10);
+
     ~MailServer();
+
+    void initEx(const std::string &strConfigPath);
+
+    void startServer(size_t nThreadCount = 10);
+
     std::string getMailServerStatus();
 
 private:
     void onConnection(const TcpConnectionPtr &conn);
+
     void onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp stamp);
 
-protected:
-    std::shared_ptr<TcpServer>        server_{nullptr};
-    std::shared_ptr<ConfigureManager> cfgMgr_{nullptr};
-    EventLoop                        &loop_;
+    void onCmdConnection(const TcpConnectionPtr &conn);
 
+    void onCmdMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp stamp);
+
+protected:
+    std::shared_ptr<TcpServer>         server_{nullptr};
+    std::shared_ptr<TcpServer>         cmdServer_{nullptr};
+    std::shared_ptr<ConfigureManager>  cfgMgr_{nullptr};
+    EventLoop                         &loop_;
     std::map<std::string, MailContext> mailCtx_;
 };
 

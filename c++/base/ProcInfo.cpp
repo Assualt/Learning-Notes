@@ -60,3 +60,29 @@ void ProcInfo::GetAllThreadCallStack() {
 
     scanner.CloseHandle();
 }
+
+// 获取当前进程的所有线程数量
+uint32_t ProcInfo::GetCurrentProcThreadNum() {
+    auto       scanPath = FmtString("/proc/%/task").arg(System::Pid()).str();
+    DirScanner scanner(scanPath.c_str());
+    FileAttr   attr;
+    uint32_t   threadCnt = 0;
+    while (scanner.Fetch(attr)) {
+        attr.SetParentPath(scanPath);
+        if (!attr.IsDir()) {
+            continue;
+        }
+
+        if (attr.GetName() == ".." || attr.GetName() == ".") {
+            continue;
+        }
+
+        auto threadId = std::atoi(attr.GetName().c_str());
+        if (threadId != 0) {
+            threadCnt++;
+        }
+    }
+
+    scanner.CloseHandle();
+    return threadCnt;
+}

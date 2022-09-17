@@ -6,11 +6,26 @@
 
 using namespace fsm;
 
-enum class CompState { COMP_NEW, COMP_INSTALLED, COMP_STARTING, COMP_RUNNING, COMP_STOPPING, COMP_STOPPED, COMP_FAULT, COMP_SUSPEND };
+enum class CompState {
+    COMP_NEW,
+    COMP_INSTALLED,
+    COMP_STARTING,
+    COMP_RUNNING,
+    COMP_STOPPING,
+    COMP_STOPPED,
+    COMP_FAULT,
+    COMP_SUSPEND
+};
 
-enum class CompEvent { COMP_INSTALL, COMP_START, COMP_STOP, COMP_UNINSTALL, COMP_EXIT };
+enum class CompEvent {
+    COMP_INSTALL,
+    COMP_START,
+    COMP_STOP,
+    COMP_UNINSTALL,
+    COMP_EXIT,
+};
 
-#define ENTRY_WARPPER(func) [ this ]() { return func(); }
+#define ENTRY_WRAPPER(func) [ this ]() { return func(); }
 
 class CompBase : fsm::StateMachine<CompState, CompEvent, FLogger>, fsm::Context<CompState, CompEvent, FLogger> {
 public:
@@ -18,12 +33,9 @@ public:
 
 public:
     explicit CompBase(const std::string &name)
-        : name_(name) {
-    }
+        : name_(name) {}
 
-    uint32_t configure(FsmConfig &config) override {
-        return 0;
-    }
+    uint32_t configure(FsmConfig &config) override { return 0; }
 
 protected:
     std::string name_;
@@ -32,47 +44,52 @@ protected:
 class CompNew : CompBase {
 public:
     CompNew()
-        : CompBase("new") {
-    }
+        : CompBase("new") {}
 
     uint32_t configure(FsmConfig &config) override {
-        config.entry(ENTRY_WARPPER(CompNew::OnEntry))
+        config.entry(ENTRY_WRAPPER(CompNew::OnEntry))
             .Add()
-            .WithExternal().SetSource(CompState::COMP_NEW).SetEvent(CompEvent::COMP_INSTALL).SetFunc(ENTRY_WARPPER(CompNew::OnEventInstall));
+            .WithExternal()
+            .SetSource(CompState::COMP_NEW)
+            .SetEvent(CompEvent::COMP_INSTALL)
+            .SetFunc(ENTRY_WRAPPER(CompNew::OnEventInstall));
         FLogger::log("configure for compNew\n");
         return 0;
     }
 
-    uint32_t OnEntry() {
-        return 0;
-    }
+    uint32_t OnEntry() { return 0; }
 
-    uint32_t OnEventInstall() {
-        return 0;
-    }
+    uint32_t OnEventInstall() { return 0; }
 };
 
 class CompReady : CompBase {
 public:
     CompReady()
-        : CompBase("ready") {
-    }
+        : CompBase("ready") {}
 
     uint32_t configure(FsmConfig &config) override {
-        config.entry(ENTRY_WARPPER(CompReady::OnEntry))
-            .Add().WithInternal()
-            .SetSource(CompState::COMP_INSTALLED).SetEvent(CompEvent::COMP_INSTALL).SetFunc(ENTRY_WARPPER(CompReady::OnEventInstall))
-            .Add().WithExternal()
-            .SetSource(CompState::COMP_INSTALLED).SetTarget(CompState::COMP_STARTING).SetEvent(CompEvent::COMP_START);
+        config.entry(ENTRY_WRAPPER(CompReady::OnEntry))
+            .Add()
+            .WithInternal()
+            .SetSource(CompState::COMP_INSTALLED)
+            .SetEvent(CompEvent::COMP_INSTALL)
+            .SetFunc(ENTRY_WRAPPER(CompReady::OnEventInstall))
+            .Add()
+            .WithExternal()
+            .SetSource(CompState::COMP_INSTALLED)
+            .SetTarget(CompState::COMP_STARTING)
+            .SetEvent(CompEvent::COMP_START);
         FLogger::log("configure for compReady\n");
         return 0;
     }
 
     uint32_t OnEntry() {
+        FLogger::log("log on Entry\n");
         return 0;
     }
 
     uint32_t OnEventInstall() {
+        FLogger::log("log on Event Install Entry\n");
         return 0;
     }
 };

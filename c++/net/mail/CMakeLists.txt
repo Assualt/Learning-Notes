@@ -1,5 +1,5 @@
 set(mail_objects
-    mailenv.cpp
+    mail_env.cpp
     mailserver.cpp
     mail_process.cpp
 )
@@ -14,4 +14,5 @@ target_link_libraries(mailserver
     dl
     muduo_base
     muduo_net
+    uuid
 )

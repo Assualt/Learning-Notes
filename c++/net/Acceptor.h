@@ -28,7 +28,7 @@ public:
 private:
     void handleRead();
 
-    EventLoop            *m_pLoop;
+    EventLoop            *m_pLoop{nullptr};
     Socket                m_nAcceptSocket;
     Channel               m_cAcceptChannel;
     NewConnectionCallback newConnectionCallback;

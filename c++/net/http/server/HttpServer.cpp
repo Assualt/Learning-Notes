@@ -1,11 +1,10 @@
 #include "HttpServer.h"
-#include "base/DirScanner.h"
 #include "base/Logging.h"
+#include "base/System.h"
 #include "controller/Controller_if.h"
 #include "net/http/HttpContext.h"
 #include "net/http/HttpLog.h"
 #include "net/http/HttpUtils.h"
-#include "signal.h"
 #include <any>
 #include <backtrace.h>
 #include <functional>
@@ -140,7 +139,7 @@ void HttpServer::SignalHandler(int sig) {
         return;
     }
 
-    LOG_SYSTEM.warning("begin to execute sig %d handler..", sig);
+    LOG_SYSTEM.warning("begin to execute sig %s handler..", System::GetSigName(sig));
     m_signalCallBack[ sig ].first(sig, m_signalCallBack[ sig ].second);
 }
 

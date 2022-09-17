@@ -17,24 +17,31 @@ public:
 
 public:
     explicit ThreadPool(const std::string &name = "ThreadPool");
+
     ~ThreadPool();
 
 public:
     void SetMaxQueueSize(int maxSize);
+
     void SetThreadInitCallBack(const Task &callback);
 
     void Start(int numThreads);
+
     void Stop();
 
     const std::string &GetThreadName() const;
-    size_t             QueueSize() const;
+
+    size_t QueueSize() const;
 
     void Run(Task func);
 
 private:
     void WaitQueueForever();
+
     bool IsFull();
+
     void RunInThread();
+
     Task Take();
 
 private:
