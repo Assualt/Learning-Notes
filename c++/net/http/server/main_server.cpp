@@ -59,7 +59,7 @@ int main(int argc, char const *argv[]) {
     InitObjPool();
 
     EventLoop  loop;
-    HttpServer server(&loop, InetAddress(8100), true);
+    HttpServer server(&loop, InetAddress(9000), strConfigPath, false);
     RegisterSignalHandle(server);
     server.SetThreadNum(threadNum);
     server.Start();

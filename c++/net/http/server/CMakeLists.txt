@@ -1,10 +1,12 @@
 set(http_server_objects
     CtlScanner.cpp
     HttpServer.cpp
+    WsServer.cpp
     main_server.cpp
     controller/DefaultController.cpp
     controller/40xController.cpp
     controller/UserController.cpp
+    controller/WebSockController.cpp
 )
 
 add_subdirectory(controller/lib)

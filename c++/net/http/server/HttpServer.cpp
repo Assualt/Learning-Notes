@@ -12,7 +12,7 @@
 SigHandleMap  HttpServer::m_signalCallBack;
 RequestMapper HttpServer::m_mapper;
 
-HttpServer::HttpServer(EventLoop *loop, const InetAddress &address, bool useHttps)
+HttpServer::HttpServer(EventLoop *loop, const InetAddress &address, const std::string &cfgPath, bool useHttps)
     : m_pLoop(loop)
     , m_pServer(new TcpServer(loop, address, "tcpServer", useHttps)) {
     auto &accessLogger = Logger::getLogger("AccessLogger");
@@ -22,14 +22,18 @@ HttpServer::HttpServer(EventLoop *loop, const InetAddress &address, bool useHttp
     m_pServer->SetMessageCallback(
         [ this ](const TcpConnectionPtr conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
     m_httpLog->Init();
-    m_hConfig.Init("/home/xhou");
+    m_hConfig.Init(cfgPath);
+
+    if (m_hConfig.getSupportWebSocket()) {
+        m_pWsServer = std::make_shared<WsServer>(loop, InetAddress(m_hConfig.getWebSocketPort()), m_hConfig, useHttps);
+    }
 }
 
 void HttpServer::SetRequestCallBack(CallBack callback) { m_requestCallBack = callback; }
 
 void HttpServer::onConnect(const TcpConnectionPtr &conn) {
     if (conn->isConnected()) {
-        logger.info("connection is ready. %s", conn->peerAddress().toIpPort());
+        logger.info("[HTTP/HTTPS]connection is ready. %s", conn->peerAddress().toIpPort());
     }
 }
 
@@ -71,6 +75,8 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
         basicRequestPath += request.getRequestFilePath();
     }
 
+    std::cout << request;
+
     auto objHandle =
         m_mapper.findHandle(request.getRequestPath(), request.getRequestType(), request.GetRequestQueryMap());
     bool fileExists = utils::FileExists(basicRequestPath);
@@ -92,12 +98,12 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
     response.appendToBuffer(buf);
     conn->send(&buf);
 
-    if (true) {
-        (*m_httpLog) << conn->localAddress().toIpPort() << " - [" << utils::requestTimeFmt() << "] \""
-                     << request.getRequestType() << " " << request.getRequestPath() << " " << request.getHttpVersion()
-                     << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \""
-                     << request.get(UserAgent) << "\"" << CTRL;
-    }
+    (*m_httpLog) << conn->localAddress().toIpPort() << " - [" << utils::requestTimeFmt() << "] \""
+                 << request.getRequestType() << " " << request.getRequestPath() << " " << request.getHttpVersion()
+                 << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \"" << request.get(UserAgent)
+                 << "\"" << CTRL;
+
+    std::cout << response;
     if (response.closeConnection()) {
         conn->shutdown();
     }
@@ -106,11 +112,17 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
 void HttpServer::Start() {
     logger.info("HttpServer start ... at:%s", m_pServer->IpPort());
     m_pServer->Start();
+    if (m_pWsServer != nullptr) {
+        m_pWsServer->start();
+    }
 }
 
 void HttpServer::Exit() {
     logger.info("HttpServer stop ... at:%s", m_pServer->IpPort());
     m_pServer->Stop();
+    if (m_pWsServer != nullptr) {
+        m_pWsServer->stop();
+    }
     m_ctlScannerTask.stopTask();
 }
 

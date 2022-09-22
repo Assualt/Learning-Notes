@@ -18,7 +18,8 @@ void HttpResponse::appendToBuffer(Buffer &output) const {
         output.append("Transfer-Encoding: chunked\r\n");
     }
 
-    if (closeConnection_) {
+    if (headers_.find(Connection) != headers_.end()) {
+    } else if (closeConnection_) {
         output.append(FmtString("%: close\r\n").arg(Connection).str());
     } else {
         output.append(FmtString("%: Keep-Alive\r\n").arg(Connection).str());

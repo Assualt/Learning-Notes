@@ -1,4 +1,5 @@
 #include "checksum.h"
+#include <zlib.h>
 
 using namespace muduo::base;
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CtlScanner.h"
+#include "WsServer.h"
 #include "base/nonecopyable.h"
 #include "net/EventLoop.h"
 #include "net/InetAddress.h"
@@ -23,7 +24,7 @@ using SigHandleMap   = std::map<int, std::pair<SignalCallback, uintptr_t>>;
 
 class HttpServer : nonecopyable {
 public:
-    HttpServer(EventLoop *loop, const InetAddress &address, bool useHttps = false);
+    HttpServer(EventLoop *loop, const InetAddress &address, const std::string &cfgPath, bool useHttps = false);
 
 public:
     void SetRequestCallBack(CallBack cb);
@@ -58,4 +59,5 @@ protected:
     std::shared_ptr<HttpLog>   m_httpLog{nullptr};
     static SigHandleMap        m_signalCallBack;
     ControllerScanner          m_ctlScannerTask;
+    std::shared_ptr<WsServer>  m_pWsServer{nullptr};
 };

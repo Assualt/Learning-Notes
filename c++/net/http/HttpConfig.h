@@ -1,11 +1,14 @@
 #pragma once
+#include "base/Configure.h"
 #include "base/nonecopyable.h"
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
 
-#define PARAM_SETER_GETER(strParamName, valType)                                                                       \
+using namespace muduo::base;
+#define PARAM_SETTER_GETTER(strParamName, valType)                                                                     \
 public:                                                                                                                \
     inline const valType &get##strParamName(void) const { return m_##strParamName; }                                   \
     inline void           set##strParamName(const valType &n) { m_##strParamName = n; }                                \
@@ -45,6 +48,13 @@ protected:                                                                      
 
 #define WwwAuthenticate "WWW-Authenticate"
 
+// for websocket
+#define Upgrade "Upgrade"
+#define SecWebSocketVersion "Sec-WebSocket-Version"
+#define SecWebSocketKey "Sec-WebSocket-Key"
+#define Origin "Origin"
+#define SecWebSocketAccept "Sec-WebSocket-Accept"
+
 #define FilePattern "/#*#/"
 #define DefaultPattern "/#@#/"
 
@@ -64,6 +74,7 @@ enum EncodingType {
 
 enum HttpStatusCode : uint32_t {
     kUnknown,
+    k101ProtocolSwitch   = 101,
     k200Ok               = 200,
     k302MovedPermanently = 302,
     k400BadRequest       = 400,
@@ -135,9 +146,15 @@ public:
 
     void Init(const std::string &path);
 
+private:
+    std::shared_ptr<ConfigureManager> mgr_{nullptr};
+
 public:
-    PARAM_SETER_GETER(AuthName, std::string);
-    PARAM_SETER_GETER(ServerRoot, std::string);
-    PARAM_SETER_GETER(DirentTmplateHtml, std::string);
-    PARAM_SETER_GETER(RecoredLog, bool);
+    PARAM_SETTER_GETTER(AuthName, std::string);
+    PARAM_SETTER_GETTER(ServerRoot, std::string);
+    PARAM_SETTER_GETTER(DirentTmplateHtml, std::string);
+    PARAM_SETTER_GETTER(RecoredLog, bool);
+    PARAM_SETTER_GETTER(SupportWebSocket, bool);
+    PARAM_SETTER_GETTER(WebSocketPort, int);
+    PARAM_SETTER_GETTER(WebSocketThreadNum, int);
 };
