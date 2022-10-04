@@ -1,9 +1,9 @@
 import sys
-from PyQt5 import QtWidgets,QtCore
-
+from PyQt5 import QtWidgets
 from mainwindow import MainWindow
 
-def mainExec():
+
+def main_exec():
     app = QtWidgets.QApplication(sys.argv)
 
     main = MainWindow()
@@ -13,4 +13,4 @@ def mainExec():
 
 
 if __name__ == '__main__':
-    mainExec()
+    main_exec()

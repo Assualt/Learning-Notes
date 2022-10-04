@@ -75,8 +75,6 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
         basicRequestPath += request.getRequestFilePath();
     }
 
-    std::cout << request;
-
     auto objHandle =
         m_mapper.findHandle(request.getRequestPath(), request.getRequestType(), request.GetRequestQueryMap());
     bool fileExists = utils::FileExists(basicRequestPath);
@@ -103,7 +101,6 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
                  << "\" " << response.getStatusCode() << " " << buf.readableBytes() << " \"" << request.get(UserAgent)
                  << "\"" << CTRL;
 
-    std::cout << response;
     if (response.closeConnection()) {
         conn->shutdown();
     }

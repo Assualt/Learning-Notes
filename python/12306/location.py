@@ -23,7 +23,7 @@ try:
             i+=1
         else:
             break
-    with open('./res/location.json','w',encoding='utf-8') as f:
+    with open('./res/location.json', 'w', encoding='utf-8') as f:
         f.write(json.dumps(stations))
 except IOError:
     print("can't read")

@@ -32,6 +32,7 @@ static int count(const std::string &strVal, char ch) {
 }
 
 enum FILE_TYPE { Type_Unknown, Type_File, Type_Dir, Type_Other };
+
 static FILE_TYPE getFileType(cstring file) {
     struct stat st {};
     if (stat(file.c_str(), &st) == -1)
@@ -45,8 +46,9 @@ static FILE_TYPE getFileType(cstring file) {
     return Type_Other;
 }
 static bool startWith(cstring src, cstring prefix) { return src.substr(0, prefix.size()) == prefix; }
-static bool endWith(cstring src, cstring backfix) {
-    return src.substr(src.size() - backfix.size(), backfix.size()) == backfix;
+
+static bool endWith(cstring src, cstring basicString) {
+    return src.substr(src.size() - basicString.size(), basicString.size()) == basicString;
 }
 template <typename Target, typename Source, bool Same> class lexical_cast_t {
 public:

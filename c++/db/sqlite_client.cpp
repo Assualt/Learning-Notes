@@ -19,9 +19,7 @@ std::string SqlPrepareStatement::getFullExecuteSql() const {
     return m_sstream.str();
 }
 
-SqlPrepareStatement::~SqlPrepareStatement() {
-    reset();
-}
+SqlPrepareStatement::~SqlPrepareStatement() { reset(); }
 
 void SqlPrepareStatement::reset() {
     m_nPos = 0;
@@ -44,7 +42,7 @@ bool SqliteClient::execute(SqlPrepareStatement &stmt) {
     int           ret;
     sqlite3_stmt *st = nullptr;
     if ((ret = sqlite3_prepare_v2(m_sqlHandle, stmt.getFullExecuteSql().c_str(), -1, &st, nullptr)) != SQLITE_OK) {
-        logger.warning("sql is not valid. input:%s", stmt.getFullExecuteSql());
+        logger.warning("sql is not valid. input:%s ret:%d", stmt.getFullExecuteSql(), ret);
         sqlite3_finalize(st);
         st = nullptr;
         return false;
@@ -55,13 +53,12 @@ bool SqliteClient::execute(SqlPrepareStatement &stmt) {
     return ret == 1;
 }
 
-SqliteClient::~SqliteClient() {
-    close();
-}
+SqliteClient::~SqliteClient() { close(); }
 
 void SqliteClient::close() {
-    if (m_sqlHandle) {
-        sqlite3_close_v2(m_sqlHandle);
-        m_sqlHandle = nullptr;
+    if (m_sqlHandle == nullptr) {
+        return;
     }
+    sqlite3_close_v2(m_sqlHandle);
+    m_sqlHandle = nullptr;
 }

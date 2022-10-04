@@ -1,5 +1,0 @@
-POST  http://127.0.0.1:8080/login/user/123?task=123&email=xhou@qq.com#query
-Authorization: Basic 123:123
-Content-Type: application/json
-
-{"ok":"123"}

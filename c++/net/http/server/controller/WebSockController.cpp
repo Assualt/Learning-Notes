@@ -9,8 +9,7 @@ REG_OBJECT(WebSockController)
 bool WebSockController::onGet(const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) {
     auto isWsFlag = (req.get(Connection) == "Upgrade") && (req.get(Upgrade) == "websocket");
     if (!isWsFlag) {
-        onError(req, res, cfg);
-        return false;
+        return onError(req, res, cfg);
     }
 
     res.setStatusMessage(HttpStatusCode::k101ProtocolSwitch, req.getHttpVersion(), "Switching Protocols");

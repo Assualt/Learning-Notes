@@ -3,6 +3,7 @@ import sys
 import requests
 import math, random, re, json
 import urllib3
+
 agents = ["Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/22.0.1207.1 Safari/537.1",
           "Mozilla/5.0 (X11; CrOS i686 2268.111.0) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11",
           "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.1092.0 Safari/536.6",
@@ -22,6 +23,8 @@ agents = ["Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1 (KHTML, like Ge
           "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24",
           "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24",
           ]
+
+
 def getRandomAgent():
     a = random.randint(0, len(agents) - 1)
     return agents[a]
@@ -162,7 +165,8 @@ def query_ticket_price(train_no, from_station_no, to_station_no, seat_types, tra
     try:
         header = {}
         header['User-Agent'] = getRandomAgent()
-        requrl = url + 'train_no=%s&from_station_no=%s&to_station_no=%s&seat_types=%s&train_date=%s'%(train_no, from_station_no, to_station_no, seat_types, train_date)
+        requrl = url + 'train_no=%s&from_station_no=%s&to_station_no=%s&seat_types=%s&train_date=%s' % (
+        train_no, from_station_no, to_station_no, seat_types, train_date)
         print("requrl :%s" % requrl)
         res = requests.get(requrl, headers=header, verify=False)
         if res.status_code == 200:

@@ -18,7 +18,7 @@ Socket::Socket(int sockFd, void *arg)
     }
 }
 
-Socket::~Socket() {}
+Socket::~Socket() = default;
 
 int Socket::fd() { return sockFd_; }
 

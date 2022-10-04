@@ -28,7 +28,25 @@ void InitObjPool() {
     ObjPool::Instance().PostInit();
 }
 
+void PrintFigLet()
+{
+    const char *fig = ""
+                      ""
+                      " _   _ _   _           ____                           \n"
+                      "| | | | |_| |_ _ __   / ___|  ___ _ ____   _____ _ __ \n"
+                      "| |_| | __| __| '_ \\  \\___ \\ / _ \\ '__\\ \\ / / _ \\ '__|\n"
+                      "|  _  | |_| |_| |_) |  ___) |  __/ |   \\ V /  __/ |   \n"
+                      "|_| |_|\\__|\\__| .__/  |____/ \\___|_|    \\_/ \\___|_|   \n"
+                      "              |_|                                     "
+                      ""
+                      ""
+                      "";
+    std::cout << fig << std::endl;
+}
+
 int main(int argc, char const *argv[]) {
+    PrintFigLet();
+
     cmdline::parser cmd;
     cmd.add("version", 'v', "show this HttpServer Version and exit");
     cmd.add<int>("threads_count", 'n', "The http server's threads count", false, 10, cmdline::range<int>(1, 100));
