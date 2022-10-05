@@ -172,7 +172,7 @@ bool Socket::connect(const InetAddress &addr, int timeout) {
     return true;
 }
 
-uint32_t Socket::write(void *buf, size_t size) {
+int32_t Socket::write(void *buf, size_t size) {
     if (sockFd_ == -1) {
         return -1;
     }
@@ -188,7 +188,7 @@ uint32_t Socket::write(void *buf, size_t size) {
 #endif
 }
 
-uint32_t Socket::read(Buffer &buf) {
+int32_t Socket::read(Buffer &buf) {
     if (sockFd_ == -1) {
         return -1;
     }

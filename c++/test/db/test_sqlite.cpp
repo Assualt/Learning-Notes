@@ -1,7 +1,7 @@
-#include "db/sqlite_client.h"
+#include "db/sqlite_cli.h"
 
 int main(int argc, char const *argv[]) {
-    db::SqlPrepareStatement st("insert into test(id,name,desc) values(%,'%','%')");
+    SqlPrepareStatement st("insert into test(id,name,desc) values(%,'%','%')");
 
     st.assignValue(12).assignValue("xhou").assignValue("description ok...");
     std::cout << "execute:" << st.getFullExecuteSql() << std::endl;
@@ -10,7 +10,7 @@ int main(int argc, char const *argv[]) {
 
     client.openDb("./test.db");
 
-    db::SqlPrepareStatement st1("select * from test");
+    SqlPrepareStatement st1("select * from test");
 
     auto result = client.query<3>(st1);
 

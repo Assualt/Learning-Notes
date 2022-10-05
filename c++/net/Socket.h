@@ -41,9 +41,9 @@ public:
 
     void close();
 
-    uint32_t write(void *buf, size_t size);
+    int32_t write(void *buf, size_t size);
 
-    uint32_t read(Buffer &buf);
+    int32_t read(Buffer &buf);
 
     int32_t setReadTimeout(int seconds);
 

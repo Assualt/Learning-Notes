@@ -1,4 +1,5 @@
 #include "base/Logging.h"
+#include "sql_prepare_statement.h"
 #include <algorithm>
 #include <iostream>
 #include <map>
@@ -8,39 +9,6 @@
 namespace db {
 
 #define DefaultMode (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE)
-
-class SqlPrepareStatement {
-public:
-    SqlPrepareStatement(const std::string &sql);
-
-    template <class T> SqlPrepareStatement &assignValue(const T &val) {
-        size_t nPos = m_strRawSql.find_first_of('%', m_nPos);
-        if (nPos == std::string::npos)
-            return *this;
-        if (m_nCurrentParamCnt > m_nParamsCnt)
-            return *this;
-        m_nCurrentParamCnt += 1;
-        m_sstream << m_strRawSql.substr(m_nPos, nPos - m_nPos);
-        m_sstream << val;
-        m_nPos = nPos + 1;
-        if (m_nCurrentParamCnt == m_nParamsCnt)
-            m_sstream << m_strRawSql.substr(nPos + 1);
-        return *this;
-    }
-
-    std::string getFullExecuteSql() const;
-
-    ~SqlPrepareStatement();
-
-    void reset();
-
-protected:
-    std::stringstream m_sstream;
-    std::string       m_strRawSql;
-    size_t            m_nParamsCnt;
-    size_t            m_nPos;
-    size_t            m_nCurrentParamCnt;
-};
 
 class SqliteClient {
 public:

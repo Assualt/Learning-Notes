@@ -2,9 +2,9 @@
 // Created by xhou on 2022/8/7.
 //
 
-#include "mysql_client.h"
 #include "base/Logging.h"
 #include "base/Timestamp.h"
+#include "mysql_cli.h"
 #include <vector>
 
 using namespace db;
@@ -114,56 +114,13 @@ std::pair<SqlError, json::Json> MysqlClient::Query(const std::string &strSql) {
         return {MYSQL_QUERY_FETCH_FAIL, {}};
     }
 
-    auto         fieldNum = mysql_num_fields(res);
-    MYSQL_FIELD *f;
-
-    std::vector<std::pair<std::string, enum_field_types>> fieldInfo;
-    while ((f = mysql_fetch_field(res))) {
+    MYSQL_FIELD *f{nullptr};
+    FieldInfo    fieldInfo;
+    while ((f = mysql_fetch_field(res)) != nullptr) {
         fieldInfo.push_back({f->org_name, f->type});
     }
 
-    json::Json result(json::Json::ARRAY);
-    MYSQL_ROW  row;
-    uint32_t   rowCnt = 0;
-    while ((row = mysql_fetch_row(res))) {
-        json::Json dict(json::Json::OBJECT);
-        for (auto idx = 0; idx < fieldNum; ++idx) {
-            auto field = fieldInfo[ idx ];
-            switch (field.second) {
-                case MYSQL_TYPE_TINY:
-                case MYSQL_TYPE_SHORT:
-                    dict[ field.first ] = json::Json(atoi(row[ idx ]));
-                    break;
-                case MYSQL_TYPE_DOUBLE:
-                case MYSQL_TYPE_FLOAT:
-                    dict[ field.first ] = json::Json(atof(row[ idx ]));
-                    break;
-                case MYSQL_TYPE_STRING:
-                case MYSQL_TYPE_VARCHAR:
-                case MYSQL_TYPE_VAR_STRING:
-                    dict[ field.first ] = json::Json(row[ idx ]);
-                    break;
-                case MYSQL_TYPE_LONG:
-                case MYSQL_TYPE_LONGLONG:
-                    dict[ field.first ] = json::Json(atoi(row[ idx ]));
-                    break;
-                case MYSQL_TYPE_DATETIME:
-                case MYSQL_TYPE_DATETIME2:
-                    dict[ field.first ] = json::Json(Timestamp::fromTimeStr(row[ idx ]));
-                    break;
-                default:
-                    if (row[ idx ] == nullptr) {
-                        dict[ field.first ] = json::Json(nullptr);
-                    } else {
-                        dict[ field.first ] = json::Json(row[ idx ]);
-                    }
-                    break;
-            }
-        }
-        rowCnt++;
-        result.push_back(dict);
-    }
-
+    json::Json result = translateSqlResultToJson(*res, fieldInfo);
     return {MYSQL_SUCCESS, result};
 }
 
@@ -209,3 +166,53 @@ std::pair<SqlError, long long> MysqlClient::Execute(const std::string &strSql) {
     m_strErrMsg    = "Success";
     return {MYSQL_SUCCESS, affectNum};
 }
+
+json::Json MysqlClient::translateSqlResultToJson(MYSQL_RES &res, const FieldInfo &info) {
+    json::Json result(json::Json::ARRAY);
+    MYSQL_ROW  row;
+    uint32_t   rowCnt   = 0;
+    auto       fieldNum = mysql_num_fields(&res);
+    while ((row = mysql_fetch_row(&res))) {
+        json::Json dict(json::Json::OBJECT);
+        for (auto idx = 0; idx < fieldNum; ++idx) {
+            auto field = info[ idx ];
+            switch (field.second) {
+                case MYSQL_TYPE_INT24:
+                case MYSQL_TYPE_TINY:
+                case MYSQL_TYPE_SHORT:
+                    dict[ field.first ] = json::Json(atoi(row[ idx ]));
+                    break;
+                case MYSQL_TYPE_DOUBLE:
+                case MYSQL_TYPE_FLOAT:
+                    dict[ field.first ] = json::Json(atof(row[ idx ]));
+                    break;
+                case MYSQL_TYPE_STRING:
+                case MYSQL_TYPE_VARCHAR:
+                case MYSQL_TYPE_VAR_STRING:
+                    dict[ field.first ] = json::Json(row[ idx ]);
+                    break;
+                case MYSQL_TYPE_LONG:
+                case MYSQL_TYPE_LONGLONG:
+                    dict[ field.first ] = json::Json(atoi(row[ idx ]));
+                    break;
+                case MYSQL_TYPE_DATETIME:
+                case MYSQL_TYPE_DATETIME2:
+                    dict[ field.first ] = json::Json(Timestamp::fromTimeStr(row[ idx ]));
+                    break;
+                default:
+                    if (row[ idx ] == nullptr) {
+                        dict[ field.first ] = json::Json(nullptr);
+                    } else {
+                        dict[ field.first ] = json::Json(row[ idx ]);
+                    }
+                    break;
+            }
+        }
+        rowCnt++;
+        result.push_back(dict);
+    }
+
+    return result;
+}
+
+void MysqlClient::QueryCallback(const std::string &strSql, db::QueryCallback cb) {}

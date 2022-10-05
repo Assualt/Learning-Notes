@@ -1,33 +1,8 @@
-#include "sqlite_client.h"
 #include "base/Logging.h"
-#include <algorithm>
+#include "sqlite_cli.h"
 
 using namespace muduo::base;
 using namespace db;
-#define DefaultMode (SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE)
-
-SqlPrepareStatement::SqlPrepareStatement(const std::string &sql)
-    : m_strRawSql(sql)
-    , m_nPos(0)
-    , m_nCurrentParamCnt(0) {
-    m_nParamsCnt = std::count_if(sql.begin(), sql.end(), [](char ch) { return ch == '%'; });
-}
-
-std::string SqlPrepareStatement::getFullExecuteSql() const {
-    if (m_nParamsCnt == 0)
-        return m_strRawSql;
-    return m_sstream.str();
-}
-
-SqlPrepareStatement::~SqlPrepareStatement() { reset(); }
-
-void SqlPrepareStatement::reset() {
-    m_nPos = 0;
-    m_strRawSql.clear();
-    m_nCurrentParamCnt = 0;
-    m_nParamsCnt       = 0;
-    m_sstream.clear();
-}
 
 bool SqliteClient::openDb(const std::string &dbpath, int option) {
     m_strDBFilePath = dbpath;

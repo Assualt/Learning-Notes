@@ -26,6 +26,7 @@ enum SqlError {
 };
 
 using QueryCallback = std::function<void(const json::Json &)>;
+using FieldInfo     = std::vector<std::pair<std::string, enum_field_types>>;
 class MysqlClient {
 public:
     explicit MysqlClient(const std::string &dbName, const std::string &host = "127.0.0.1", size_t port = 3306,
@@ -34,20 +35,36 @@ public:
     ~MysqlClient();
 
 public:
-    SqlError                        Ping();
-    SqlError                        connect();
-    void                            close();
-    std::string                     getErrMsg() const { return m_strErrMsg; }
+    SqlError Ping();
+
+    SqlError connect();
+
+    void close();
+
+    std::string getErrMsg() const { return m_strErrMsg; }
+
     std::pair<SqlError, json::Json> Query(const std::string &strSql);
-    std::pair<SqlError, long long>  Execute(const std::string &mysql);
+
+    void QueryCallback(const std::string &strSql, QueryCallback cb);
+
+    std::pair<SqlError, long long> Execute(const std::string &strSql);
+
     std::pair<SqlError, json::Json> ShowTables();
+
     std::pair<SqlError, json::Json> ShowTable(const std::string &tableName);
-    SqlError                        SwitchBD(const std::string &dbName);
-    SqlError                        CommitTransaction();
-    SqlError                        Rollback();
-    SqlError                        CreateTable(const std::string &strSql);
+
+    SqlError SwitchBD(const std::string &dbName);
+
+    SqlError CommitTransaction();
+
+    SqlError Rollback();
+
+    SqlError CreateTable(const std::string &strSql);
 
     SqlError NewDB(const std::string &dbName);
+
+private:
+    json::Json translateSqlResultToJson(MYSQL_RES &res, const FieldInfo &fields);
 
 private:
     std::string m_strHost{"127.0.0.1"};
