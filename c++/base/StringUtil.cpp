@@ -31,3 +31,41 @@ bool util::StartsWithIgnoreCase(std::string_view text, std::string_view prefix) 
 bool util::EndsWithIgnoreCase(std::string_view text, std::string_view suffix) noexcept {
     return (text.size() >= suffix.size()) && EqualsIgnoreCase(text.substr(text.size() - suffix.size()), suffix);
 }
+
+std::string util::TrimLeft(const std::string &src, char ch) {
+    std::string           temp = src;
+    std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [ &ch ](char c) { return 32 != c; });
+    temp.erase(temp.begin(), p);
+    return temp;
+}
+
+std::string util::TrimRight(const std::string &src, char ch) {
+    std::string                   temp = src;
+    std::string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [ &ch ](char c) { return ch != c; });
+    temp.erase(p.base(), temp.end());
+    return temp;
+}
+
+std::string util::Trim(const std::string &src, char ch) { return TrimRight(TrimLeft(src, ch), ch); }
+
+std::vector<std::string> util::splitToVector(const std::string &strVal, char ch) {
+    std::vector<std::string> result;
+    std::string              temp;
+    for (auto c : strVal) {
+        if (c == ch) {
+            temp = Trim(temp);
+            if (temp.empty())
+                continue;
+            result.push_back(temp);
+            temp.clear();
+        } else {
+            temp.push_back(c);
+        }
+    }
+    temp = Trim(temp);
+    if (!temp.empty())
+        result.push_back(temp);
+    else if (temp.empty())
+        result.push_back(temp);
+    return result;
+}

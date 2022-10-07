@@ -2,11 +2,15 @@
 // Created by xhou on 2022/10/7.
 //
 
-#ifndef MUDUO_BASE_TOOLS_STRINGUTILS_H
-#define MUDUO_BASE_TOOLS_STRINGUTILS_H
+#ifndef MUDUO_BASE_TOOLS_STRING_UTILS_H
+#define MUDUO_BASE_TOOLS_STRING_UTILS_H
 
+#include <algorithm>
 #include <cstring>
+#include <string>
 #include <string_view>
+#include <sstream>
+#include <vector>
 
 namespace muduo::base::util {
 
@@ -54,6 +58,84 @@ bool StartsWithIgnoreCase(std::string_view text, std::string_view prefix) noexce
 // case in the comparison.
 bool EndsWithIgnoreCase(std::string_view text, std::string_view suffix) noexcept;
 
+// TrimLeft()
+//
+// Returns the g give ASCII string text by using trim char `ch` on the left
+std::string TrimLeft(const std::string &src, char ch);
+
+// TrimLeft()
+//
+// Returns the g give ASCII string text by using trim char `ch` on the right
+std::string TrimRight(const std::string &src, char ch);
+
+// TrimLeft()
+//
+// Returns the g give ASCII string text by using trim char `ch` on the left|right
+std::string Trim(const std::string &src, char ch = ' ');
+
+std::vector<std::string> splitToVector(const std::string &strVal, char ch);
+
+template <class typeString> static typeString trimRight(const typeString &strVal, const typeString &strSpace) {
+    return strVal.substr(0, strVal.find_last_not_of(strSpace) + 1);
+}
+
+template <class typeString> static typeString trimLeft(const typeString &strVal, const typeString &strSpace) {
+    typename typeString::size_type pos = strVal.find_first_not_of(strSpace);
+    return (pos == typeString::npos) ? typeString() : typeString(strVal.substr(pos));
+}
+template <class typeString> static typeString trim(const typeString &strVal, const typeString &strSpace) {
+    return trimLeft(trimRight(strVal, strSpace), strSpace);
+}
+
+static int count(const std::string &strVal, char ch) {
+    return std::count_if(strVal.begin(), strVal.end(), [ ch ](char c) { return ch == c; });
+}
+
+template <typename Target, typename Source, bool Same> class lexical_cast_t {
+public:
+    static Target cast(const Source &arg) {
+        Target            ret;
+        std::stringstream ss;
+        if (!(ss << arg && ss >> ret && ss.eof()))
+            throw std::bad_cast();
+
+        return ret;
+    }
+};
+
+template <typename Target, typename Source> class lexical_cast_t<Target, Source, true> {
+public:
+    static Target cast(const Source &arg) { return arg; }
+};
+
+template <typename Source> class lexical_cast_t<std::string, Source, false> {
+public:
+    static std::string cast(const Source &arg) {
+        std::ostringstream ss;
+        ss << arg;
+        return ss.str();
+    }
+};
+
+template <typename Target> class lexical_cast_t<Target, std::string, false> {
+public:
+    [[maybe_unused]] static Target cast(const std::string &arg) {
+        Target             ret;
+        std::istringstream ss(arg);
+        if (!(ss >> ret && ss.eof()))
+            throw std::bad_cast();
+        return ret;
+    }
+};
+
+template <typename T1, typename T2> struct is_same { static const bool value = false; };
+
+template <typename T> struct is_same<T, T> { static const bool value = true; };
+
+template <typename Target, typename Source> Target lexical_cast(const Source &arg) {
+    return lexical_cast_t<Target, Source, is_same<Target, Source>::value>::cast(arg);
+}
+
 } // namespace muduo::base::util
 
-#endif // MUDUO_BASE_TOOLS_STRINGUTILS_H
+#endif // MUDUO_BASE_TOOLS_STRING_UTILS_H

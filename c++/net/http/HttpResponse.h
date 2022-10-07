@@ -44,7 +44,7 @@ public:
     template <class T> void addHeader(const std::string &key, const T &val) {
         std::stringstream ss;
         ss << val;
-        headers_[ key ] = ss.str();
+        headers_.emplace(key, ss.str());
     }
 
     void setBody(const std::string &body) {
@@ -82,12 +82,12 @@ public:
     }
 
 private:
-    HttpVersion                        httpVersion_;
-    std::map<std::string, std::string> headers_;
-    HttpStatusCode                     statusCode_;
-    std::string                        statusMessage_;
-    bool                               closeConnection_;
-    std::string                        body_;
-    HttpContentType                    encodingType_;
-    Buffer                             bodyBuffer_;
+    HttpVersion                             httpVersion_;
+    std::multimap<std::string, std::string> headers_;
+    HttpStatusCode                          statusCode_;
+    std::string                             statusMessage_;
+    bool                                    closeConnection_;
+    std::string                             body_;
+    HttpContentType                         encodingType_;
+    Buffer                                  bodyBuffer_;
 };

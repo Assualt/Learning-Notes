@@ -70,11 +70,11 @@ protected:
     ChannelList              m_vActiveChannels;
     Channel                 *m_pCurrentChannel;
     Timestamp                m_tRecvTimeStamp;
-    std::unique_ptr<Poller>  m_Poller;
+    std::unique_ptr<Poller>  m_Poller{nullptr};
     std::vector<Functor>     m_vPendingFunctors;
     bool                     m_bCallFuncs;
     pid_t                    m_nThreadId;
-    std::unique_ptr<Channel> m_wakeupChannel;
+    std::unique_ptr<Channel> m_wakeupChannel{nullptr};
 };
 } // namespace net
 } // namespace muduo

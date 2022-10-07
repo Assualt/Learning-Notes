@@ -29,7 +29,7 @@ struct Header {
 
 template <class Encoder, class Decoder, class Byte> class CompressStreamImpl : public BinaryStream {
 public:
-    uint32_t writeBytes(const Byte *ptr, size_t nBytes) {
+    uint32_t writeBytes(const Byte *ptr, uint32_t nBytes) {
         if ((ptr == nullptr) || (nBytes == 0)) {
             return RET::OUT_OF_RANGE_ERR;
         }

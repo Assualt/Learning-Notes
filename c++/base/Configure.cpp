@@ -1,6 +1,23 @@
 #include "Configure.h"
+#include "StringUtil.h"
 using namespace muduo;
 using namespace muduo::base;
+
+namespace {
+enum FILE_TYPE { Type_Unknown, Type_File, Type_Dir, Type_Other };
+FILE_TYPE getFileType(cstring file) {
+    struct stat st {};
+    if (stat(file.c_str(), &st) == -1)
+        return Type_Unknown;
+    switch (st.st_mode & S_IFMT) {
+        case S_IFREG:
+            return Type_File;
+        case S_IFDIR:
+            return Type_Dir;
+    }
+    return Type_Other;
+}
+} // namespace
 
 void ConfigureManager::GetAllFiles(cstring path, cstring suffix) {
     DIR *dir = opendir(path.c_str());
@@ -12,10 +29,10 @@ void ConfigureManager::GetAllFiles(cstring path, cstring suffix) {
             continue;
         }
         auto fileName = path + "/" + dr->d_name;
-        auto filetype = detail::getFileType(fileName);
-        if (filetype == detail::Type_Dir) {
+        auto filetype = getFileType(fileName);
+        if (filetype == Type_Dir) {
             GetAllFiles(fileName, suffix);
-        } else if (filetype == detail::Type_File && detail::endWith(fileName, suffix)) {
+        } else if (filetype == Type_File && util::EndsWith(fileName, suffix)) {
             m_vAllConfFiles.emplace_back(fileName);
         }
     }
@@ -32,9 +49,9 @@ void ConfigureManager::InitFile(cstring file) {
     std::string strPrefix = "/";
     size_t      pos       = file.rfind("/");
     if (pos != std::string::npos) {
-        strPrefix.append(detail::trimRight(file.substr(pos + 1), m_Suffix));
+        strPrefix.append(util::trimRight(file.substr(pos + 1), m_Suffix));
     } else {
-        strPrefix.append(detail::trimRight(file, m_Suffix));
+        strPrefix.append(util::trimRight(file, m_Suffix));
     }
     std::string   strLine;
     std::ifstream fin(file);
@@ -45,30 +62,30 @@ void ConfigureManager::InitFile(cstring file) {
     std::string strSectionKey, strKey, strVal;
     bool        bFindSection = false;
     while (getline(fin, strLine)) {
-        strLine = detail::trim(strLine, std::string(" "));
-        if (strLine.empty() || detail::startWith(strLine, "#")) {
+        strLine = util::trim(strLine, std::string(" "));
+        if (strLine.empty() || util::StartsWith(strLine, "#")) {
             continue;
         }
 
         size_t nPos;
         if ((nPos = strLine.find("#")) != std::string::npos)
             strLine = strLine.substr(0, nPos);
-        if (strLine.back() == ']' && strLine.front() == '[' && detail::count(strLine, '[') == 1 &&
-            detail::count(strLine, ']') == 1) {
+        if (strLine.back() == ']' && strLine.front() == '[' && util::count(strLine, '[') == 1 &&
+            util::count(strLine, ']') == 1) {
             auto temp = strLine.substr(1, strLine.size() - 2);
             if (temp.empty()) {
                 continue;
             }
             strSectionKey = strPrefix + "/" + temp;
             bFindSection  = true;
-        } else if (bFindSection && detail::count(strLine, '=')) {
+        } else if (bFindSection && util::count(strLine, '=')) {
             auto pos1 = strLine.find('=');
-            strKey    = detail::trim(strLine.substr(0, pos1), std::string(" "));
-            strVal    = detail::trim(strLine.substr(pos1 + 1), std::string(" "));
-            strKey    = detail::trim(strKey, std::string("'"));
-            strVal    = detail::trim(strVal, std::string("'"));
-            strKey    = detail::trim(strKey, std::string("\""));
-            strVal    = detail::trim(strVal, std::string("\""));
+            strKey    = util::trim(strLine.substr(0, pos1), std::string(" "));
+            strVal    = util::trim(strLine.substr(pos1 + 1), std::string(" "));
+            strKey    = util::trim(strKey, std::string("'"));
+            strVal    = util::trim(strVal, std::string("'"));
+            strKey    = util::trim(strKey, std::string("\""));
+            strVal    = util::trim(strVal, std::string("\""));
             if (!strKey.empty() && !strVal.empty()) {
                 m_mConfigKeyValMapper[ strSectionKey + "/" + strKey ] = strVal;
             }
@@ -77,50 +94,50 @@ void ConfigureManager::InitFile(cstring file) {
     fin.close();
 }
 
-bool ConfigureManager::getBool(bool bdefault, cstring prefix) const {
+bool ConfigureManager::getBool(bool bDefault, cstring prefix) const {
     std::string strPrefix = m_strPrefix + prefix;
     if (m_mConfigKeyValMapper.find(strPrefix) == m_mConfigKeyValMapper.end())
-        return bdefault;
+        return bDefault;
     if (strcasecmp(m_mConfigKeyValMapper.at(strPrefix).c_str(), "true") == 0)
         return true;
     else if (strcasecmp(m_mConfigKeyValMapper.at(strPrefix).c_str(), "false") == 0)
         return false;
-    return detail::lexical_cast<bool, std::string>(m_mConfigKeyValMapper.at(strPrefix));
+    return util::lexical_cast<bool, std::string>(m_mConfigKeyValMapper.at(strPrefix));
 }
 
-[[maybe_unused]] std::string ConfigureManager::getString(cstring strdefault, cstring prefix) const {
+[[maybe_unused]] std::string ConfigureManager::getString(cstring strDefault, cstring prefix) const {
     std::string strPrefix = m_strPrefix + prefix;
     if (m_mConfigKeyValMapper.find(strPrefix) == m_mConfigKeyValMapper.end())
-        return strdefault;
+        return strDefault;
     return m_mConfigKeyValMapper.at(strPrefix);
 }
 
-int ConfigureManager::getInt(int ndefault, cstring prefix) const {
+int ConfigureManager::getInt(int nDefault, cstring prefix) const {
     std::string strPrefix = m_strPrefix + prefix;
     if (m_mConfigKeyValMapper.find(strPrefix) == m_mConfigKeyValMapper.end())
-        return ndefault;
-    return detail::lexical_cast<int, std::string>(m_mConfigKeyValMapper.at(strPrefix));
+        return nDefault;
+    return util::lexical_cast<int, std::string>(m_mConfigKeyValMapper.at(strPrefix));
 }
 
-float ConfigureManager::getFloat(float fdefault, cstring prefix) const {
+float ConfigureManager::getFloat(float fDefault, cstring prefix) const {
     std::string strPrefix = m_strPrefix + prefix;
     if (m_mConfigKeyValMapper.find(strPrefix) == m_mConfigKeyValMapper.end())
-        return fdefault;
-    return detail::lexical_cast<float, std::string>(m_mConfigKeyValMapper.at(strPrefix));
+        return fDefault;
+    return util::lexical_cast<float, std::string>(m_mConfigKeyValMapper.at(strPrefix));
 }
 
-double ConfigureManager::getDouble(double ddefault, cstring prefix) const {
+double ConfigureManager::getDouble(double dDefault, cstring prefix) const {
     std::string strPrefix = m_strPrefix + prefix;
     if (m_mConfigKeyValMapper.find(strPrefix) == m_mConfigKeyValMapper.end())
-        return ddefault;
-    return detail::lexical_cast<double, std::string>(m_mConfigKeyValMapper.at(strPrefix));
+        return dDefault;
+    return util::lexical_cast<double, std::string>(m_mConfigKeyValMapper.at(strPrefix));
 }
 
-long ConfigureManager::getLong(long ldefault, cstring prefix) const {
+long ConfigureManager::getLong(long lDefault, cstring prefix) const {
     std::string strPrefix = m_strPrefix + prefix;
     if (m_mConfigKeyValMapper.find(strPrefix) == m_mConfigKeyValMapper.end())
-        return ldefault;
-    return detail::lexical_cast<long, std::string>(m_mConfigKeyValMapper.at(strPrefix));
+        return lDefault;
+    return util::lexical_cast<long, std::string>(m_mConfigKeyValMapper.at(strPrefix));
 }
 
 Section ConfigureManager::getSection(cstring prefix) const {
@@ -134,8 +151,8 @@ Section ConfigureManager::getSection(cstring prefix) const {
     return s;
 }
 
-[[maybe_unused]] void ConfigureManager::changeAccessPath(cstring confpath) {
-    m_strPrefix = confpath;
+[[maybe_unused]] void ConfigureManager::changeAccessPath(cstring confPath) {
+    m_strPrefix = confPath;
     if (m_strPrefix.back() != '/') {
         m_strPrefix.push_back('/');
     }

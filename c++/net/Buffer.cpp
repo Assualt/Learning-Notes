@@ -35,6 +35,9 @@ const char *Buffer::beginWrite() const { return begin() + m_nWriteIndex; }
 
 char *Buffer::beginWrite() { return begin() + m_nWriteIndex; }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wstring-plus-int"
+
 const char *Buffer::findCRLF() const {
     const char *crlf = std::search(peek(), beginWrite(), KCRTL, KCRTL + 2);
     return crlf == beginWrite() ? nullptr : crlf;
@@ -47,6 +50,8 @@ const char *Buffer::findCRLF(const char *start) const {
     const char *crlf = std::search(start, beginWrite(), KCRTL, KCRTL + 2);
     return crlf == beginWrite() ? NULL : crlf;
 }
+
+#pragma clang diagnostic pop
 
 const char *Buffer::findEOL() const {
     const void *eol = memchr(peek(), '\n', readableBytes());

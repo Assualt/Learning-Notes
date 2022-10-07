@@ -156,3 +156,24 @@ Buffer HttpClient::GetRequestBuffer(const std::string &url) {
     buf.append(header.c_str(), header.size());
     return buf;
 }
+
+void HttpClient::SaveResultToFile(const std::string &resultFile, const HttpResponse &res) {
+    std::ofstream fout(resultFile);
+    if (res.getBodyBuf().readableBytes() != 0) {
+        fout.write(res.getBodyBuf().peek(), res.getBodyBuf().readableBytes());
+    } else {
+        fout.write(res.getBody().c_str(), res.getBody().size());
+    }
+
+    fout.close();
+}
+
+void HttpClient::setBasicAuthUserPass(const std::string &user, const std::string &passwd) {
+    std::stringstream ss;
+    ss << user << ":" << passwd;
+    std::string output;
+    output.resize(ss.str().size() * 1.5);
+    base64::encoder encoder;
+    encoder.encode_str(ss.str().c_str(), ss.str().size(), output.data());
+    this->setHeader(Authorization, "Basic " + output);
+}
