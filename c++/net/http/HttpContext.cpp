@@ -73,8 +73,21 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime) {
         } else if (m_state == kExpectHeaders) {
             const char *crlf = buf->findCRLF();
             if (crlf) {
+                if (!m_lastBuffer.empty()) {
+                    std::string singleHeader = m_lastBuffer + std::string(buf->peek(), crlf);
+                    auto        pos          = singleHeader.find_first_of(':');
+                    if (pos != std::string::npos) {
+                        m_request.addHeader(singleHeader.c_str(), singleHeader.c_str() + pos,
+                                            singleHeader.c_str() + singleHeader.size());
+                    }
+                    m_lastBuffer.clear();
+                    buf->retrieveUntil(crlf + 2);
+                    continue;
+                }
+
                 const char *colon = std::find(buf->peek(), crlf, ':');
                 if (colon != crlf) {
+                    // Fixme
                     m_request.addHeader(buf->peek(), colon, crlf);
                 } else {
                     // empty line, end of header
@@ -89,7 +102,8 @@ bool HttpContext::parseRequest(Buffer *buf, Timestamp receiveTime) {
                 }
                 buf->retrieveUntil(crlf + 2);
             } else {
-                hasMore = false;
+                hasMore      = false;
+                m_lastBuffer = {buf->peek(), buf->readableBytes()};
             }
         } else if (m_state == kExpectBody) {
             // FIXME:
@@ -147,14 +161,14 @@ void HttpContext::parseBodyByChunkedBuffer(Buffer *buf) {
             if (m_chunkLeftSize < buf->readableBytes()) {
                 m_request.appendBodyBuffer(buf->peek(), m_chunkLeftSize);
                 buf->retrieveUntil(buf->peek() + m_chunkLeftSize + 2);
-                logger.info("recv left chunked size %d", m_chunkLeftSize);
+                logger.debug("recv left chunked size %d", m_chunkLeftSize);
                 m_chunkLeftSize = 0;
             } else {
                 uint32_t recvSize = buf->readableBytes();
                 m_request.appendBodyBuffer(buf->peek(), buf->readableBytes());
                 buf->retrieveUntil(buf->peek() + buf->readableBytes());
                 logger.debug("should recv size:%d, real recv size:%d, left:%d", m_chunkLeftSize, recvSize,
-                            m_chunkLeftSize - recvSize);
+                             m_chunkLeftSize - recvSize);
                 m_chunkLeftSize -= recvSize;
                 break;
             }
@@ -170,7 +184,7 @@ void HttpContext::parseBodyByChunkedBuffer(Buffer *buf) {
         }
 
         buf->retrieveUntil(crlf + 2);
-        logger.info("recv chunked size:%d ", static_cast<int>(nBytes));
+        logger.debug("recv chunked size:%d ", static_cast<int>(nBytes));
         if (nBytes == 0) {
             m_state = kGotEnd;
             break;

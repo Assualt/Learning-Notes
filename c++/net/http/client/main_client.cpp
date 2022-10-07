@@ -33,7 +33,7 @@ cmdline::parser cmdParse(int, char **) {
     cmdParser.add<string>("body", 0, "the post parameter", false, "");
     cmdParser.add<string>("output", 'o', "output file path", false, "");
     cmdParser.add<string>("content-type", 0, "the post data content type", false, "application/x-www-form-urlencoded");
-    cmdParser.add<int>("logLevel", 'l', "the logger level.(0.debug, 1.info 2.warning 3.alert", false, 1,
+    cmdParser.add<int>("logLevel", 'l', "the logger level.(0.debug, 1.info 2.warning 3.alert", false, 2,
                        cmdline::range<int>(0, 3));
     cmdParser.add<int>("timeout", 0, "set connection timeout(s)", false, 10, cmdline::range<int>(0, 30));
     cmdParser.add<string>("auth-basic", 0, "set auth basic user", false, "");
@@ -41,6 +41,12 @@ cmdline::parser cmdParse(int, char **) {
     cmdParser.set_program_name("httpclient");
 
     return cmdParser;
+}
+
+void DisplayVersion() {
+    std::string version = "httpserver: 1.1.0";
+
+    std::cout << version << std::endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -56,6 +62,11 @@ int main(int argc, char *argv[]) {
     if (parser.exist("help")) {
         std::cout << parser.error() << std::endl;
         std::cout << parser.usage() << std::endl;
+        return 0;
+    }
+
+    if (parser.exist("version")) {
+        DisplayVersion();
         return 0;
     }
 
@@ -79,6 +90,7 @@ int main(int argc, char *argv[]) {
     client.setAcceptEncoding(parser.get<string>("acceptEncoding"));
     client.setAcceptLanguage(parser.get<string>("acceptLanguage"));
     client.setHeader("Connection", "keep-alive");
+    auto outPath = parser.get<std::string>("output");
     int httpVersion = parser.get<int>("http_version");
     client.setHttpVersion("HTTP/1.1");
 
@@ -106,10 +118,19 @@ int main(int argc, char *argv[]) {
         resp = client.Head(urlString, redirect, verbose);
     }
 
-    std::cout << "================================\n"
-              << "status_code:" << resp.getStatusCode() << " \n"
-              << "status_message:" << resp.getStatusMessage() << " \n"
-              << "reply message:" << resp.getBody().size() << "\n";
+    if (!outPath.empty()) {
+        client.SaveResultToFile(outPath, resp);
+        return 0;
+    }
+
+    if (verbose) {
+        std::cout << "================================\n"
+                  << "status_code:" << resp.getStatusCode() << " \n"
+                  << "status_message:" << resp.getStatusMessage() << " \n"
+                  << "reply message:" << resp.getBody().size() << "\n";
+    } else {
+        std::cout << resp.getBody();
+    }
 
     return 0;
 }

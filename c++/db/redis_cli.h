@@ -18,7 +18,7 @@ using muduo::net::Buffer;
 using muduo::net::TcpClient;
 class RedisClient {
 public:
-    RedisClient(const std::string &host, uint16_t port, const std::string &authUser = "",
+    RedisClient(const std::string &host, uint16_t port = 6379, const std::string &authUser = "",
                 const std::string &authPass = "", bool useTls = false, uint32_t timeOut = 10);
     ~RedisClient();
 

@@ -80,7 +80,7 @@ std::string Logger::getCurrentHourTime(bool showMicroSeconds) {
     }
     struct timeval tv;
     gettimeofday(&tv, nullptr);
-    ss << "." << std::setw(5) << std::setfill('0') << tv.tv_usec;
+    ss << "." << std::left << std::setw(5) << std::setfill('0') << tv.tv_usec;
     return ss.str();
 }
 

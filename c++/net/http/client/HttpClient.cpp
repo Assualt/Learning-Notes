@@ -66,6 +66,9 @@ request:
     if (verbose) {
         auto costTick     = clock() - startTick;
         auto downloadBits = resp.getBody().size() * 1.0;
+        if (downloadBits == 0) {
+            downloadBits = resp.getBodyBuf().readableBytes() * 1.0;
+        }
         logger.info("download speed %f MB/s", downloadBits / 1024.0 / 1024.0 / (costTick * 1.0 / CLOCKS_PER_SEC));
     }
     if (resp.getStatusCode() == HttpStatusCode::k302MovedPermanently && needRedirect) {
@@ -125,7 +128,7 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
             if (!req.getPostParams().empty()) {
                 resp.setBody(req.getPostParams());
             } else {
-                resp.setBody(req.getBodyBuffer());
+                resp.setBody({req.getBodyBuffer().peek(), req.getBodyBuffer().readableBytes()});
             }
         }
     } else {
@@ -142,6 +145,8 @@ Buffer HttpClient::GetRequestBuffer(const std::string &url) {
         if (path.back() != '?')
             path.append("?");
         path.append(u.query);
+    } else {
+        path = "/";
     }
     request_.setRequestPath(path);
     request_.setHeader("Host", u.host);

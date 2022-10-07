@@ -10,7 +10,6 @@ TcpClient::TcpClient(bool useSsl)
     socket_ = std::make_unique<Socket>(fd_);
     if (useSsl) {
         socket_->initSSL();
-        logger.info("use ssl to connect ...");
     }
 }
 

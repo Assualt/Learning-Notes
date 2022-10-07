@@ -67,4 +67,5 @@ private:
     HttpRequest             m_request;
     long                    m_contentLength;
     long                    m_chunkLeftSize{0};
+    std::string             m_lastBuffer;
 };

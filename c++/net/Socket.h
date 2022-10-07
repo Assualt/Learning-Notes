@@ -81,6 +81,8 @@ public:
 
     void showTlsInfo();
 
+    void PrintSSLError(const std::string &funcName, int32_t ret);
+
 private:
     int sockFd_{-1};
 

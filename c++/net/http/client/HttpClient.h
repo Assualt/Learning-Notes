@@ -17,7 +17,9 @@ public:
     HttpClient() = default;
 
     HttpResponse Get(const std::string &url, bool needRedirect = false, bool verbose = false);
+
     HttpResponse Post(const std::string &url, const Buffer &buf, bool needRedirect = false, bool verbose = false);
+
     HttpResponse Head(const std::string &url, bool needRedirect = false, bool verbose = false);
 
     template <class Val> void SetHeader(const std::string &key, const Val &val) { request_.setHeader(key, val); }
@@ -42,17 +44,23 @@ public:
 
     void SaveResultToFile(const std::string &resultFile, const HttpResponse &res) {
         std::ofstream fout(resultFile);
-        fout.write(res.getBodyBuf().peek(), res.getBodyBuf().readableBytes());
+        if (res.getBodyBuf().readableBytes() != 0) {
+            fout.write(res.getBodyBuf().peek(), res.getBodyBuf().readableBytes());
+        } else {
+            fout.write(res.getBody().c_str(), res.getBody().size());
+        }
+
         fout.close();
     }
 
     void setBasicAuthUserPass(const std::string &user, const std::string &passwd) {
         std::stringstream ss;
         ss << user << ":" << passwd;
-        std::string     Base64String;
+        std::string output;
+        output.resize(ss.str().size() * 1.5);
         base64::encoder encoder;
-        encoder.encode_str(user.c_str(), user.size(), Base64String.data());
-        this->setHeader(Authorization, "Basic " + Base64String);
+        encoder.encode_str(ss.str().c_str(), ss.str().size(), output.data());
+        this->setHeader(Authorization, "Basic " + output);
     }
 
 private:

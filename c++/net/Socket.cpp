@@ -48,7 +48,7 @@ bool Socket::getTcpInfoString(std::string &infoString) const {
         ss << "rtt=" << tcpInfo.tcpi_rtt << " ";
         ss << "rttVar=" << tcpInfo.tcpi_rttvar << " ";
         ss << "sshThresh=" << tcpInfo.tcpi_snd_ssthresh << " ";
-        ss << "cwnd=" << tcpInfo.tcpi_snd_cwnd << " ";
+        ss << "cw_nd=" << tcpInfo.tcpi_snd_cwnd << " ";
         ss << "total_reTrans=" << tcpInfo.tcpi_total_retrans;
         infoString = ss.str();
     }
@@ -78,7 +78,6 @@ void Socket::setReusePort(bool on) {
 
 std::pair<int, void *> Socket::accept(InetAddress *remoteAddr) {
     struct sockaddr_in6 addr;
-    socklen_t           len;
     bzero(&addr, sizeof addr);
     int connFd = sockets::accept(sockFd_, &addr);
     if (connFd >= 0) {
@@ -95,7 +94,7 @@ std::pair<int, void *> Socket::accept(InetAddress *remoteAddr) {
     SSL *ssl = nullptr;
     ssl      = SSL_new(sslConn_->m_ptrContext);
     if (SSL_set_fd(ssl, connFd) != 1) {
-        ERR_print_errors_fp(stderr);
+        PrintSSLError("SSL_set_fd", 0);
         sockets::close(connFd);
         logger.info("tls/ssl set fd fail.");
         return {-1, nullptr};
@@ -103,7 +102,7 @@ std::pair<int, void *> Socket::accept(InetAddress *remoteAddr) {
 
     auto ret = SSL_accept(ssl);
     if (ret != 1) {
-        ERR_print_errors_fp(stderr);
+        PrintSSLError("SSL_accept", ret);
         logger.info("tls/ssl handle shake fail. ret:%d", SSL_get_error(ssl, ret));
         sockets::close(connFd);
         return {-1, nullptr};
@@ -225,6 +224,14 @@ int32_t Socket::read(Buffer &buf) {
                 printf("\n");
             }
         }
+        printf("\n");
+        for (auto idx = 0; idx < nRead; idx++) {
+            printf("%c", buffer[ idx ]);
+            if (buffer[ idx ] == '\n' && idx > 1 && buffer[ idx - 1 ] == 0xd) {
+                printf("\n");
+            }
+        }
+        printf("\n");
 #endif
 
         if (nRead < sizeof(buffer)) {
@@ -276,7 +283,7 @@ bool Socket::switchToSSL(bool isClient) {
 #ifdef USE_SSL
     sslConn_ = std::make_unique<SSL_Connection>();
     if (isClient) {
-        sslConn_->m_ptrContext = SSL_CTX_new((TLS_client_method()));
+        sslConn_->m_ptrContext = SSL_CTX_new(TLS_client_method());
     } else {
         sslConn_->m_ptrContext = SSL_CTX_new(TLS_method());
         SSL_CTX_set_options(sslConn_->m_ptrContext, SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
@@ -298,20 +305,21 @@ bool Socket::switchToSSL(bool isClient) {
     sslConn_->m_ptrHandle = SSL_new(sslConn_->m_ptrContext);
     if (sslConn_->m_ptrHandle == nullptr) {
         sslDisConnect();
-        ERR_print_errors_fp(stderr);
+        PrintSSLError("ssl handle null", 0);
         return false;
     }
 
     // Connect the SSL struct to our connection
     if (!SSL_set_fd(sslConn_->m_ptrHandle, sockFd_)) {
         sslDisConnect();
-        ERR_print_errors_fp(stderr);
+        PrintSSLError("SSL_set_fd", 0);
         return false;
     }
 
+    int ret;
     // Initiate SSL handshake
-    if (SSL_connect(sslConn_->m_ptrHandle) != 1) {
-        ERR_print_errors_fp(stderr);
+    if ((ret = SSL_connect(sslConn_->m_ptrHandle)) != 1) {
+        PrintSSLError("SSL_Connect", ret);
         sslDisConnect();
         return false;
     }
@@ -336,7 +344,7 @@ int32_t Socket::setReadTimeout(int seconds) {
     };
 
     return setsockopt(sockFd_, SOL_SOCKET, SO_RCVTIMEO, (const void *)&val, sizeof(val));
-};
+}
 
 int32_t Socket::setWriteTimeout(int seconds) {
     struct timeval val {
@@ -350,15 +358,9 @@ bool Socket::initSSLServer(const std::string &certPath, const std::string &keyPa
 #ifndef USE_SSL
     return false;
 #else
-    auto ret = initSSL();
+    (void)initSSL();
+    auto ret = switchToSSL(false);
     if (!ret) {
-        logger.info("init ssl error");
-        return false;
-    }
-
-    ret = switchToSSL(false);
-    if (!ret) {
-        ERR_print_errors_fp(stderr);
         sslDisConnect();
         return ret;
     }
@@ -366,6 +368,7 @@ bool Socket::initSSLServer(const std::string &certPath, const std::string &keyPa
     auto code = SSL_CTX_use_certificate_file(sslConn_->m_ptrContext, certPath.c_str(), SSL_FILETYPE_PEM);
     if (code != 1) {
         ERR_print_errors_fp(stderr);
+        PrintSSLError("SSL_CTX_use_certificate_file", code);
         sslDisConnect();
         return false;
     }
@@ -376,7 +379,7 @@ bool Socket::initSSLServer(const std::string &certPath, const std::string &keyPa
 
     code = SSL_CTX_use_PrivateKey_file(sslConn_->m_ptrContext, keyPath.c_str(), SSL_FILETYPE_PEM);
     if (code != 1) {
-        ERR_print_errors_fp(stderr);
+        PrintSSLError("SSL_CTX_use_PrivateKey_file", code);
         sslDisConnect();
         return false;
     }
@@ -398,8 +401,29 @@ void Socket::showTlsInfo() {
         return;
     }
 
-    auto str = X509_NAME_oneline(X509_get_subject_name(cert), nullptr, 0);
-    logger.info("subject:%s", str);
+    static std::vector<std::pair<int, std::string>> entryMap = {
+        {NID_countryName, "countryName"},
+        {NID_stateOrProvinceName, "stateOrProvinceName"},
+        {NID_localityName, "localityName"},
+        {NID_organizationName, "organizationName"},
+        {NID_organizationalUnitName, "organizationalUnitName"},
+        {NID_commonName, "commonName"},
+        {NID_pkcs9_emailAddress, "emailAddress"},
+    };
+
+    constexpr uint32_t entryCount = 7;
+    int32_t            pos        = -1;
+    auto               xn         = X509_get_subject_name(cert);
+    for (auto idx = 0; idx < entryCount; ++idx) {
+        for (;;) {
+            pos = X509_NAME_get_index_by_NID(xn, entryMap[ idx ].first, pos);
+            if (pos == -1) {
+                break;
+            }
+            auto name = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(xn, pos));
+            logger.info("subject key:\"%s\" value:\"%s\" length:%d", entryMap[ idx ].second, name->data, name->length);
+        }
+    }
 
     string startTime = reinterpret_cast<const char *>(X509_get0_notBefore(cert)->data);
     string endTime   = reinterpret_cast<const char *>(X509_get0_notAfter(cert)->data);
@@ -411,6 +435,14 @@ void Socket::showTlsInfo() {
     logger.info("issuer:%s", issuer);
 
     X509_free(cert);
+#endif
+}
+
+void Socket::PrintSSLError(const std::string &funcName, int32_t ret) {
+#ifdef USE_SSL
+    auto errCode = ERR_get_error();
+    auto errStr  = ERR_error_string(errCode, nullptr);
+    LOG_SYSTEM.warning("SSL func[%s] result is %d, errCode:0x%x errStr:%s", funcName, ret, errCode, errStr);
 #endif
 }
 

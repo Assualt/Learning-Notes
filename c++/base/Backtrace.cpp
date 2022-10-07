@@ -1,10 +1,19 @@
 #include "Backtrace.h"
 #include <cxxabi.h>
 #include <execinfo.h>
+#include <iomanip>
 #include <memory.h>
+#include <sstream>
 
 namespace muduo {
-int         maxTraceSize = 100;
+int maxTraceSize = 100;
+
+template <class T> std::string ToFixedString(T val, int width, bool isLeft, char filled = '0') {
+    std::stringstream ss;
+    ss << std::setw(width) << (isLeft ? std::left : std::right) << std::setfill(filled) << val;
+    return ss.str();
+}
+
 std::string GetSymbolName(const std::string &symbol) {
     return abi::__cxa_demangle(symbol.c_str(), nullptr, nullptr, nullptr);
 }
@@ -50,7 +59,7 @@ std::string GetBackCallStack() {
     std::string res;
     for (auto i = 0; i < size; ++i) {
         res += "#";
-        res += std::to_string(i);
+        res += ToFixedString(i, 2, false, '0');
         res += " ";
         try {
             res += TransLateDemangle(trace[ i ]);

@@ -10,6 +10,7 @@ set(muduo_base_objects
     File.cpp
     Logging.cpp
     Mutex.cpp
+    StringUtil.cpp
     Timer.cpp
     Thread.cpp
     ThreadPool.cpp

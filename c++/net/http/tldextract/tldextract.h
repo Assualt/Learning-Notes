@@ -180,14 +180,14 @@ private:
         client.setUserAgent(USERAGENT);
         client.setHttpVersion("HTTP/1.1");
         for (auto &reqUrl : suffix_list_urls) {
-            auto result = client.Get(reqUrl);
+            auto result = client.Get(reqUrl, true);
             if (result.getStatusCode() == HttpStatusCode::k200Ok) {
                 client.SaveResultToFile(destFileName, result);
                 logger.info("download file %s from %s success.", destFileName, reqUrl);
                 return true;
             }
-            logger.info("Download %d Error: %s, try another url %s", result.getStatusCode(), result.getStatusMessage(),
-                        reqUrl);
+            logger.info("Download Error:%d [%s], try another url ===> %s", result.getStatusCode(),
+                        result.getStatusMessage(), reqUrl);
         }
         return false;
     }

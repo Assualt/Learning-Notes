@@ -40,7 +40,7 @@ public:
             return RET::COMPRESS_ERR;
         }
 
-        Header header{.compress_len_ = size, .origin_len_ = nBytes};
+        Header header = {.compress_len_ = size, .origin_len_ = nBytes};
         write((const void *)&header, sizeof(header));
         return write((const void *)buffer.get(), size);
     }
