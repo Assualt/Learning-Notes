@@ -47,6 +47,34 @@ public:
 
     std::vector<std::string> keys();
 
+    template <class T> void lpush(const std::string &key, const T val) {
+        std::stringstream ss;
+        ss << "lpush \"" << key << "\" \"" << val << "\"";
+        execute(ss.str());
+    }
+
+    void lpop(const std::string &key) {
+        std::stringstream ss;
+        ss << "lpop \"" << key << "\"";
+        execute(ss.str());
+    }
+
+    template <class T> void rpush(const std::string &key, const T val) {
+        std::stringstream ss;
+        ss << "rpush \"" << key << "\" \"" << val << "\"";
+        execute(ss.str());
+    }
+
+    void rpop(const std::string &key) {
+        std::stringstream ss;
+        ss << "rpop \"" << key << "\"";
+        execute(ss.str());
+    }
+
+    int32_t llen(const std::string &key);
+
+    std::vector<std::string> lrange(const std::string &key, int32_t start = 0, int32_t end = -1);
+
 private:
     template <class T> std::optional<std::vector<T>> parseResult(Buffer &outBuf) {
         if (strncasecmp(outBuf.peek(), "-ERR", strlen("-ERR")) == 0) {

@@ -16,12 +16,28 @@ const std::string stationNameUrl =
     "https://kyfw.12306.cn/otn/resources/js/framework/station_name.js?station_version=1.9167";
 const std::string LeftTicketUrl =
     "https://kyfw.12306.cn/otn/leftTicket/"
-    "queryZ?leftTicketDTO.train_date=%s&leftTicketDTO.from_station=%s&leftTicketDTO.to_station=%s&purpose_codes=%s";
+    "queryZ?leftTicketDTO.train_date=%&leftTicketDTO.from_station=%&leftTicketDTO.to_station=%&purpose_codes=%";
 const std::string MainTicketUrl       = "https://kyfw.12306.cn";
 const std::string TicketQueryInitUrl  = "https://kyfw.12306.cn/otn/lcxxcx/init";
 const std::string TicketQueryDeviceID = "https://kyfw.12306.cn/otn/HttpZF/logdevice";
 const std::string TicketInitUrl       = "https://kyfw.12306.cn/otn/leftTicket/"
                                         "init?linktypeid=dc&fs=%,%&ts=%,%&date=%&flag=%,%,%";
+
+const std::string queryCookie =
+    "_uab_collina=166515664743421659295045; JSESSIONID=3BE2203D333EC5823D12EC28C93E0E05; "
+    "RAIL_EXPIRATION=1665447312256; "
+    "RAIL_DEVICEID=DwL-OqxMyTV0paSBzDsI4WNYqzjJ0j71tjW2nGCL1Y4TjLXQHEEPxBXr81-AcFRFNh2ON1dlyEowTT-HRRGwH1aWApqDqIVwe_"
+    "QkGfbzaVJfzI5_t2CA4vpZSr6j_JQGXrc2ueYsxK1eVw2P8z5AU3_2uJRp1q7n; guidesStatus=off; highContrastMode=defaltMode; "
+    "cursorStatus=off; _jc_save_fromStation=%u5929%u6D25%2CTJP; _jc_save_toStation=%u4E0A%u6D77%2CSHH; "
+    "_jc_save_wfdc_flag=dc; BIGipServerpassport=1005060362.50215.0000; BIGipServerpool_passport=182714890.50215.0000; "
+    "route=9036359bb8a8a461c164a04f8f50b252; _jc_save_toDate=2022-10-08; _jc_save_fromDate=2022-10-08; "
+    "BIGipServerotn=552600074.38945.0000; "
+    "fo=6m3dym59hdrung68a4qFdNZipa0KnkvOtN00Apip_8QWNjs-peG2Ul82CkwR8-"
+    "fY2uRMyU63wQdojKF7ItcsQydjj44t8iFCMR7PEFETtwIgeRPylpvEcyF6dFtqfeZR5hLvx7UaQwI0CyvpnRyvpDol1K7AL44R2PKAFqvjCLmuPYSc"
+    "4DAfyyDnlG0RL3nvOMq-HS_dfIRGTtLA";
+
+const std::string queryUserAgent =
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36";
 
 struct StationDetail {
     int         m_nStationNumber;
@@ -54,8 +70,10 @@ public:
     TicketQueryMgr() {
         client_.setConnectTimeout(10);
         client_.setHttpVersion("HTTP/1.1");
-        client_.setUserAgent("httpclient/1.0");
-        client_.setAccept("*/*");
+        client_.setAcceptEncoding("gzip, deflate");
+        client_.setHeader(Connection, "keep-alive");
+        client_.setCookie(queryCookie);
+        client_.setUserAgent(queryUserAgent);
     }
 
     enum TravelerType { TYPE_CHILD, TYPE_ADULT };
@@ -181,7 +199,6 @@ void TicketQueryMgr::initStationDetail(const std::string &strStationPath) {
 
 void TicketQueryMgr::QueryLeftTicket(const std::string &fromStation, const std::string &destStation,
                                      const std::string &travelDate, TravelerType type) {
-    InitTicketQuery(fromStation, destStation, travelDate);
     std::string reqUrl = formattedLeftTicketUrl(fromStation, destStation, travelDate, type);
     logger.info("begin to request url:%s", reqUrl);
     auto result = client_.Get(reqUrl, false, true);
@@ -211,24 +228,18 @@ std::string TicketQueryMgr::getStationCode(const std::string &stationName) {
 
 std::string TicketQueryMgr::formattedLeftTicketUrl(const std::string &fromStation, const std::string &destStation,
                                                    const std::string &travelDate, TravelerType type) {
-    // "https://kyfw.12306.cn/otn/leftTicket/query?leftTicketDTO.train_date=%s&leftTicketDTO.from_station=%s&leftTicketDTO.to_station=%s&purpose_codes=%s";
-    std::string baseString = "https://kyfw.12306.cn/otn/leftTicket/query?";
-    baseString.append("leftTicketDTO.train_date=");
-    baseString.append(travelDate);
-    baseString.append("&");
-    baseString.append("leftTicketDTO.from_station=");
-    baseString.append(getStationCode(fromStation));
-    baseString.append("&");
-    baseString.append("leftTicketDTO.to_station=");
-    baseString.append(getStationCode(destStation));
-    baseString.append("&");
-    baseString.append("purpose_codes=");
+    std::string travelerType;
     if (type == TYPE_ADULT) {
-        baseString.append("ADUIT");
+        travelerType.append("ADUIT");
     } else {
-        baseString.append("CHILD");
+        travelerType.append("CHILD");
     }
-    return baseString;
+    return FmtString(LeftTicketUrl)
+        .arg(travelDate)
+        .arg(getStationCode(fromStation))
+        .arg(getStationCode(destStation))
+        .arg(travelerType)
+        .str();
 }
 
 void TicketQueryMgr::InitTicketQuery(const std::string &from, const std::string &to, const std::string &date) {
@@ -244,7 +255,6 @@ void TicketQueryMgr::InitTicketQuery(const std::string &from, const std::string 
                        .str();
 
     logger.info("init url is:%s", initUrl);
-
     auto resp = client_.Get(initUrl);
     logger.info("get body header cookie %s", resp.getHeader("Set-Cookie"));
 }
@@ -263,7 +273,7 @@ int main(int, char **) {
     mgr.initStationDetail();
     logger.info("重庆: Code:%s", mgr.getStationCode("重庆"));
     logger.info("黔江: Code:%s", mgr.getStationCode("黔江"));
-    mgr.QueryLeftTicket("天津", "上海", "2022-12-06");
+    mgr.QueryLeftTicket("重庆", "黔江", "2022-10-10");
 
     return 0;
 }

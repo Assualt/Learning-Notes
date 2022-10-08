@@ -34,7 +34,7 @@ std::vector<std::string> RedisClient::keys() {
         return {};
     }
 
-    if (res.value().empty()) {
+    if (res.value().empty() || res.value().size() == 1) {
         return {};
     }
 
@@ -56,7 +56,7 @@ std::string RedisClient::get(const std::string &key) {
 }
 
 void RedisClient::set(const std::string &key, const std::string &val) {
-    bool execResult = execute("set " + key + " " + val);
+    bool execResult = execute("set " + key + " \"" + val + "\"");
     if (!execResult) {
         logger.warning("set for key %s error", key);
     }
@@ -98,4 +98,33 @@ std::string RedisClient::type(const std::string &key) {
     }
 
     return ret.value().front();
+}
+
+std::vector<std::string> RedisClient::lrange(const std::string &key, int32_t start, int32_t end) {
+    std::stringstream ss;
+    ss << "lrange \"" << key << "\" " << start << " " << end;
+    auto result = executeWithResult<std::string>(ss.str());
+    if (!result.has_value()) {
+        return {};
+    }
+
+    if (result.value().empty() || result.value().size() == 1) {
+        return {};
+    }
+
+    return {result.value().begin() + 1, result.value().end()};
+}
+
+int32_t RedisClient::llen(const std::string &key) {
+    auto ret = executeWithResult<std::string>("llen \"" + key + "\"");
+    if (!ret.has_value()) {
+        return 0;
+    }
+
+    if (ret.value().empty()) {
+        return 0;
+    }
+
+    auto str = ret.value().front();
+    return atoi(str.substr(str.find(":") + 1).c_str());
 }

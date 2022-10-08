@@ -6,7 +6,7 @@
 #include "db/redis_cli.h"
 using namespace muduo::base;
 
-int main(int argc, char **argv) {
+int main(int, char **) {
     auto &log       = Logger::getLogger();
     auto  stdHandle = std::make_shared<StdOutLogHandle>();
     log.BasicConfig(LogLevel::Debug,
@@ -63,6 +63,46 @@ int main(int argc, char **argv) {
     client.set("key_4", "5");
     logger.info("type key \"key_4\":%s", client.type("key_4"));
     logger.info("type for not exists key \"key_5\":%s", client.type("key_5"));
+
+    logger.info("-------lpush-key---------");
+    client.lpush("key_5", 123);
+    client.lpush("key_5", 124);
+    client.lpush("key_5", 125);
+    auto result = client.lrange("key_5");
+    std::for_each(result.begin(), result.end(), [](auto item) { logger.info("item => %s", item); });
+    logger.info("-------lpop-key---------");
+    client.lpop("key_5");
+    result = client.lrange("key_5");
+    std::for_each(result.begin(), result.end(), [](auto item) { logger.info("item => %s", item); });
+    logger.info("-------lpop-key---------");
+    client.lpop("key_5");
+    result = client.lrange("key_5");
+    std::for_each(result.begin(), result.end(), [](auto item) { logger.info("item => %s", item); });
+    logger.info("-------lpop-key---------");
+    client.lpop("key_5");
+    result = client.lrange("key_5");
+    std::for_each(result.begin(), result.end(), [](auto item) { logger.info("item => %s", item); });
+
+    logger.info("-------rpush-key---------");
+    client.rpush("key_5", 123);
+    client.rpush("key_5", 124);
+    client.rpush("key_5", 125);
+    logger.info("length of list is: %d", client.llen("key_5"));
+    result = client.lrange("key_5");
+    std::for_each(result.begin(), result.end(), [](auto item) { logger.info("item => %s", item); });
+    logger.info("-------rpop-key---------");
+    client.rpop("key_5");
+    result = client.lrange("key_5");
+    std::for_each(result.begin(), result.end(), [](auto item) { logger.info("item => %s", item); });
+    logger.info("-------rpop-key---------");
+    client.rpop("key_5");
+    result = client.lrange("key_5");
+    std::for_each(result.begin(), result.end(), [](auto item) { logger.info("item => %s", item); });
+    logger.info("-------rpop-key---------");
+    client.rpop("key_5");
+    result = client.lrange("key_5");
+    std::for_each(result.begin(), result.end(), [](auto item) { logger.info("item => %s", item); });
+
 
     return 0;
 }

@@ -10,6 +10,13 @@ using namespace muduo::base;
 static const in_addr_t kInaddrAny      = INADDR_ANY;
 static const in_addr_t kInaddrLoopback = INADDR_LOOPBACK;
 
+InetAddress::InetAddress(const std::string &ip, uint16_t port) {
+    bzero(&m_uAddr, sizeof m_uAddr);
+    m_uAddr.sin_family      = AF_INET;
+    m_uAddr.sin_addr.s_addr = sockets::hostToNetwork32(inet_addr(ip.c_str()));
+    m_uAddr.sin_port        = sockets::hostToNetwork16(port);
+}
+
 InetAddress::InetAddress(uint16_t port, bool loopbackOnly, bool ipv6) {
     if (ipv6) {
         bzero(&addr6_, sizeof addr6_);

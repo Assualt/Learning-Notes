@@ -10,6 +10,8 @@ class InetAddress {
 public:
     InetAddress() = default;
 
+    explicit InetAddress(const std::string &ip, uint16_t port);
+
     explicit InetAddress(uint16_t port, bool loopBackOnly = false, bool ipv6 = false);
 
     explicit InetAddress(const sockaddr_in6 &addr);
