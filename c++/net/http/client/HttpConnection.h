@@ -19,6 +19,8 @@ public:
 
     void showTlsInfo();
 
+    void disConnect() { client_->close(); }
+
 protected:
     bool connect(const HttpUrl &url);
 

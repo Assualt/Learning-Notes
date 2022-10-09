@@ -1,4 +1,6 @@
 #include "HttpClient.h"
+#include "base/StringUtil.h"
+#include "base/Timer.h"
 #include "net/http/HttpContext.h"
 #include <sys/time.h>
 
@@ -40,7 +42,8 @@ HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &url, co
     }
 
 request:
-    auto   startTick  = clock();
+    struct timespec startTime = {0};
+    clock_gettime(CLOCK_REALTIME, &startTime);
     size_t writeBytes = conn_.send(GetRequestBuffer(reqUrl));
     if (writeBytes <= 0) {
         logger.info("send data to server failed. write bytes:%d", writeBytes);
@@ -63,21 +66,70 @@ request:
         std::cout << resp;
     }
 
-    if (verbose) {
-        auto costTick     = clock() - startTick;
-        auto downloadBits = resp.getBody().size() * 1.0;
-        if (downloadBits == 0) {
-            downloadBits = resp.getBodyBuf().readableBytes() * 1.0;
-        }
-        logger.info("download speed %f MB/s", downloadBits / 1024.0 / 1024.0 / (costTick * 1.0 / CLOCKS_PER_SEC));
+    struct timespec endTime;
+    clock_gettime(CLOCK_REALTIME, &endTime);
+
+    float costTime =
+        (endTime.tv_sec - startTime.tv_sec) + (endTime.tv_nsec - startTime.tv_nsec) / 1000.0 / 1000.0 / 1000.0;
+    auto downloadBits = resp.getBody().size() * 1.0;
+    if (downloadBits == 0) {
+        downloadBits = resp.getBodyBuf().readableBytes() * 1.0;
     }
-    if (resp.getStatusCode() == HttpStatusCode::k302MovedPermanently && needRedirect) {
+
+    auto speed = downloadBits / 1024.0 / costTime;
+    logger.info("download %d KB, cost time:%f ms, speed %f kb/s", downloadBits / 1024.0, costTime * 1000, speed);
+
+    if ((resp.getStatusCode() == HttpStatusCode::k302MovedPermanently ||
+         resp.getStatusCode() == HttpStatusCode::k301MovedPermanently) &&
+        needRedirect) {
         reqUrl = resp.getHeader(Location);
         logger.info("begin to redirect url:%s ", reqUrl);
+        if (util::StartsWithIgnoreCase(reqUrl, "http")) { // 说明是一个非当前host的地址,需要重新链接
+            conn_.disConnect();
+            auto ret = conn_.connect(reqUrl);
+            logger.info("reconnect to url:%s result is %b", reqUrl, ret);
+        }
         goto request;
     }
 
     return resp;
+}
+
+bool HttpClient::IsBinaryContentType(const std::string &type) {
+    if (strncasecmp(type.c_str(), "text/", 5) == 0) {
+        return true;
+    } else if (util::EqualsIgnoreCase(type, "application/xml") || util::EqualsIgnoreCase(type, "application/json") ||
+               util::EqualsIgnoreCase(type, "application/x-www-form-urlencoded") ||
+               util::EqualsIgnoreCase(type, "application/xhtml+xml") ||
+               util::EqualsIgnoreCase(type, "application/atom+xml")) {
+        return true;
+    }
+    return false;
+}
+
+void HttpClient::TryDecodeBuffer(const HttpRequest &req, HttpResponse &resp) {
+    auto           encodeType = req.get(ContentEncoding);
+    auto           buf        = req.getBodyBuffer();
+    MyStringBuffer in, out;
+    in.sputn(buf.peek(), buf.readableBytes());
+    if (util::EqualsIgnoreCase(encodeType, "gzip")) {
+        auto length = ZlibStream::GzipDecompress(in, out);
+        logger.info("gzip decode length is %d", length);
+    } else if (util::EqualsIgnoreCase(encodeType, "deflate")) {
+        auto length = ZlibStream::DeflateDecompress(in, out);
+    } else if (util::EqualsIgnoreCase(encodeType, "zlib")) {
+        auto length = ZlibStream::ZlibDeCompress(in, out);
+    } else {
+        resp.setBody(buf);
+        return;
+    }
+
+    auto isText = IsBinaryContentType(req.get(ContentType));
+    if (isText) {
+        resp.setBody(out.toString());
+    } else {
+        resp.setBody(buf);
+    }
 }
 
 HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
@@ -88,6 +140,7 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
         return resp;
     }
 
+    auto preSize = context.request().getBodySize();
     if (!context.gotEnd()) {
         int32_t size = 0;
         while (true) {
@@ -102,7 +155,7 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
             context.parseRequest(&buffer, Timestamp());
             size += nRead;
         }
-        logger.info("read left size with body %d, totalSize:%d", size, context.request().getBodySize());
+        logger.info("preSize:%d left size with body %d, totalSize:%d", preSize, size, context.request().getBodySize());
     }
 
     HttpRequest req = context.request();
@@ -111,30 +164,8 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
     }
     resp.setStatusMessage(static_cast<HttpStatusCode>(req.getStatusCode()), req.getHttpVersion(),
                           req.getStatusMessage());
-    if (req.get(ContentType).find("text/") != std::string::npos) {
-        auto encodingType = req.get(ContentEncoding);
-        if (strcasecmp(encodingType.c_str(), "gzip") == 0) {
-            auto           buf = req.getBodyBuffer();
-            MyStringBuffer in, out;
-            in.sputn(buf.peek(), buf.readableBytes());
-            auto ret = ZlibStream::GzipDecompress(in, out);
-            logger.info("gzip decode length is %d", ret);
-            if (ret <= 0) {
-                resp.setBody("");
-            } else {
-                resp.setBody(out.toString());
-            }
-        } else {
-            if (!req.getPostParams().empty()) {
-                resp.setBody(req.getPostParams());
-            } else {
-                resp.setBody({req.getBodyBuffer().peek(), req.getBodyBuffer().readableBytes()});
-            }
-        }
-    } else {
-        resp.setBody(req.getBodyBuffer());
-    }
 
+    TryDecodeBuffer(req, resp);
     return resp;
 }
 
@@ -145,7 +176,7 @@ Buffer HttpClient::GetRequestBuffer(const std::string &url) {
         if (path.back() != '?')
             path.append("?");
         path.append(u.query);
-    } else {
+    } else if (path.empty()) {
         path = "/";
     }
     request_.setRequestPath(path);

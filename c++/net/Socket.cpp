@@ -269,13 +269,14 @@ void Socket::sslDisConnect() {
         return;
     }
     if (sslConn_->m_ptrHandle) {
-        SSL_shutdown(sslConn_->m_ptrHandle);
+        SSL_free(sslConn_->m_ptrHandle);
         sslConn_->m_ptrHandle = nullptr;
     }
     if (sslConn_->m_ptrContext) {
         SSL_CTX_free(sslConn_->m_ptrContext);
         sslConn_->m_ptrContext = nullptr;
     }
+    sslConn_ = nullptr;
 #endif
 }
 

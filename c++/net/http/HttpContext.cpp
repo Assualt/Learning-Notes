@@ -150,7 +150,6 @@ void HttpContext::parseBodyByContentLength(Buffer *buf) {
     }
     m_request.appendBodyBuffer(buf->peek(), buf->readableBytes());
     auto recvLen = m_request.getBodySize();
-    logger.info("content length:%d recv length:%d", reqLen, recvLen);
     if (recvLen >= reqLen) {
         m_state = kGotEnd;
     }

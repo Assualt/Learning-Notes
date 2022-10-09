@@ -50,8 +50,12 @@ private:
     HttpResponse Request(ReqType type, const std::string &reqUrl, const Buffer &buff, bool redirect, bool verbose);
     Buffer       GetRequestBuffer(const std::string &url);
     HttpResponse TransBufferToResponse(Buffer &buffer);
+    bool         IsBinaryContentType(const std::string &type);
+
+    void TryDecodeBuffer(const HttpRequest &req, HttpResponse &resp);
 
 private:
     HttpConnection conn_;
     HttpRequest    request_;
+    std::string    lastRequestHost_;
 };

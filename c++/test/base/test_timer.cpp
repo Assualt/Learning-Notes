@@ -1,5 +1,4 @@
 #include "base/Logging.h"
-#include "base/Timer.h"
 #include "base/Timestamp.h"
 using namespace muduo::base;
 class T {

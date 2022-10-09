@@ -19,7 +19,7 @@ cmdline::parser cmdParse(int, char **) {
                           cmdline::oneof<string>("GET", "POST", "DELETE", "PUT", "HEAD", "Download"));
     cmdParser.add<bool>("enable_redirect", 0,
                         "when response of request's url contains `location` and status code is 3xx, redirect now?",
-                        false, false, cmdline::oneof<bool>(true, false));
+                        false, true, cmdline::oneof<bool>(true, false));
     cmdParser.add<bool>("verbose", 'V', "display the debug process message", false, false,
                         cmdline::oneof<bool>(true, false));
     cmdParser.add<string>("userAgent", 0, "set request's header userAgent", false, UserAgent_Default);
@@ -93,6 +93,10 @@ int main(int argc, char *argv[]) {
     auto outPath = parser.get<std::string>("output");
     int httpVersion = parser.get<int>("http_version");
     client.setHttpVersion("HTTP/1.1");
+
+    if (!outPath.empty()) {
+        verbose = false;
+    }
 
     std::string strCookie = parser.get<string>("cookie");
     if (!strCookie.empty())
