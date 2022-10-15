@@ -1,7 +1,6 @@
 #pragma once
 #include <cstdint>
-namespace muduo::base {
-namespace ProcInfo {
+namespace muduo::base::ProcInfo {
 
 void RegDefaultGetThreadAction();
 
@@ -11,7 +10,5 @@ void ThreadSignalCallback(int sig);
 
 // 获取当前进程的所有线程数量
 uint32_t GetCurrentProcThreadNum();
-
-} // namespace ProcInfo
 
 } // namespace muduo::base

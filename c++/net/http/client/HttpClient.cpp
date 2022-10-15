@@ -1,10 +1,13 @@
 #include "HttpClient.h"
+#include "HttpUrl.h"
 #include "base/StringUtil.h"
-#include "base/Timer.h"
 #include "net/http/HttpContext.h"
-#include <sys/time.h>
+#include <ctime>
 
 using namespace muduo::net;
+
+HttpClient::HttpClient()
+    : TcpClient(true) {}
 
 HttpResponse HttpClient::Get(const string &url, bool needRedirect, bool verbose) {
     Buffer buffer;
@@ -24,13 +27,19 @@ HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &url, co
                                  bool verbose) {
     HttpResponse resp(false);
     std::string  reqUrl = url;
-    if (!conn_.connect(reqUrl)) {
+    HttpUrl      u(reqUrl);
+    bool         switchSSL = false;
+    if (u.scheme == "https") {
+        switchSSL = true;
+    }
+
+    if (!connect(u.host, u.port, switchSSL)) {
         logger.info("connect the url:%s error", reqUrl);
         return resp;
     }
 
     if (verbose) {
-        conn_.showTlsInfo();
+        TcpClient::showTlsInfo();
     }
 
     if (type == Type_GET) {
@@ -44,7 +53,7 @@ HttpResponse HttpClient::Request(HttpClient::ReqType type, const string &url, co
 request:
     struct timespec startTime = {0};
     clock_gettime(CLOCK_REALTIME, &startTime);
-    size_t writeBytes = conn_.send(GetRequestBuffer(reqUrl));
+    size_t writeBytes = sendRequest(GetRequestBuffer(reqUrl));
     if (writeBytes <= 0) {
         logger.info("send data to server failed. write bytes:%d", writeBytes);
         return resp;
@@ -55,7 +64,7 @@ request:
     }
 
     Buffer respBuf;
-    size_t readBytes = conn_.recv(respBuf);
+    size_t readBytes = recvResponse(respBuf);
     if (readBytes <= 0) {
         logger.info("read data to server failed. write bytes:%d", readBytes);
         return resp;
@@ -66,7 +75,7 @@ request:
         std::cout << resp;
     }
 
-    struct timespec endTime;
+    timespec endTime;
     clock_gettime(CLOCK_REALTIME, &endTime);
 
     float costTime =
@@ -85,8 +94,10 @@ request:
         reqUrl = resp.getHeader(Location);
         logger.info("begin to redirect url:%s ", reqUrl);
         if (util::StartsWithIgnoreCase(reqUrl, "http")) { // 说明是一个非当前host的地址,需要重新链接
-            conn_.disConnect();
-            auto ret = conn_.connect(reqUrl);
+            TcpClient::close();
+            HttpUrl o(reqUrl);
+            switchSSL = o.scheme == "https";
+            auto ret  = connect(o.host, o.port, switchSSL);
             logger.info("reconnect to url:%s result is %b", reqUrl, ret);
         }
         goto request;
@@ -147,7 +158,7 @@ HttpResponse HttpClient::TransBufferToResponse(Buffer &buffer) {
             if (context.gotEnd()) {
                 break;
             }
-            auto nRead = conn_.recv(buffer);
+            auto nRead = recvResponse(buffer);
             if (nRead <= 0) {
                 logger.info("recv buf length is nullptr");
                 break;

@@ -1,14 +1,15 @@
 #pragma once
 #include "Exception.h"
 #include "Format.h"
+#include "System.h"
 #include "Timestamp.h"
+#include <cstdio>
+#include <cstring>
+#include <ctime>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <stdio.h>
-#include <string.h>
 #include <sys/stat.h>
-#include <time.h>
 #include <unistd.h>
 
 #define BASIC_TIME_POSTFIX "%Y-%m-%d"
@@ -16,8 +17,7 @@
 using std::string;
 using std::stringstream;
 
-namespace muduo {
-namespace base {
+namespace muduo::base {
 
 class LogHandle {
 public:
@@ -27,7 +27,9 @@ public:
 
 class StdOutLogHandle : public LogHandle {
 public:
-    virtual void writeData(const char *pData, size_t nSize) { std::cout.write(pData, nSize).flush(); }
+    void writeData(const char *pData, size_t nSize) override {
+        std::cout.write(pData, static_cast<long>(nSize)).flush();
+    }
 };
 
 class RollingFileLogHandle : public LogHandle {
@@ -38,30 +40,30 @@ public:
         , m_strFilePrefix(filePrefix)
         , m_strTimePostfix(timePostfix) {}
 
-    virtual void writeData(const char *data, size_t nLength) {
+    void writeData(const char *data, size_t nLength) override {
         changeAccessFile();
-        fOutputStream.write(data, nLength).flush();
+        output.write(data, static_cast<long>(nLength)).flush();
     }
 
-    ~RollingFileLogHandle() { fOutputStream.close(); }
+    ~RollingFileLogHandle() override { output.close(); }
 
 protected:
-    string getCurrentFileName() {
+    string getNextFileName() {
         Timestamp tNow             = Timestamp::fromUnixTime(time(nullptr));
-        auto      formatTimeString = tNow.toFormattedString(m_strTimePostfix.c_str());
+        auto      formatTimeString = tNow.toFmtString(m_strTimePostfix.c_str());
         return FmtString("%.%").arg(m_strFilePrefix).arg(formatTimeString).str();
     }
 
     bool changeAccessFile() {
-        string currentFile = getCurrentFileName();
+        string currentFile = getNextFileName();
         if (currentFile == m_strCurrentFile) {
             return false;
         }
-        if (fOutputStream.is_open()) {
-            fOutputStream.close();
+        if (output.is_open()) {
+            output.close();
         }
         string FullFileName = FmtString("%/%").arg(m_strFilePathDir).arg(currentFile).str();
-        fOutputStream.open(FullFileName, std::ios::app | std::ios::out);
+        output.open(FullFileName, std::ios::app | std::ios::out);
         m_strCurrentFile = currentFile;
         return true;
     }
@@ -71,7 +73,7 @@ private:
     string        m_strFilePathDir; // current Log File Path
     string        m_strFilePrefix;  // filePrefix
     string        m_strTimePostfix; //
-    std::ofstream fOutputStream;    // output stream
+    std::ofstream output;           // output stream
 };
 
 class RollingFile2LogHandle : public LogHandle {
@@ -96,11 +98,11 @@ public:
         return file;
     }
 
-    virtual void writeData(const char *data, size_t nLength) {
+    void writeData(const char *data, size_t nLength) override {
         string strDirPath;
         string currentFile = CurrentFile(strDirPath);
         if (access(strDirPath.c_str(), F_OK)) {
-            mkdir(strDirPath.c_str(), 0666);
+            System::mkdir(strDirPath, 0666);
         }
         if (currentFile != m_strLastFile) {
             fout.close();
@@ -109,10 +111,10 @@ public:
         if (!fout.is_open()) {
             fout.open(m_strLastFile);
         }
-        fout.write(data, nLength).flush();
+        fout.write(data, static_cast<long>(nLength)).flush();
     }
 
-    ~RollingFile2LogHandle() { fout.close(); }
+    ~RollingFile2LogHandle() override { fout.close(); }
 
 private:
     string        m_strFileRootPath;
@@ -130,34 +132,35 @@ public:
         , m_nIndex(0) {
         m_strFilePrefix = FmtString("%/%").arg(filepath).arg(filePrefix).str();
     }
-    virtual void writeData(const char *data, size_t nLength) {
-        int nLeftBytes = 0;
-        if (!changeAccessFile(data, nLength, nLeftBytes)) {
-            fout.write(data, nLength).flush();
+
+    void writeData(const char *data, size_t nLength) override {
+        int leftBytes = 0;
+        if (!changeAccessFile(data, nLength, leftBytes)) {
+            fout.write(data, static_cast<long>(nLength)).flush();
         } else {
-            fout.write(data + nLength - nLeftBytes, nLeftBytes).flush();
+            fout.write(data + nLength - leftBytes, leftBytes).flush();
         }
     }
 
-    bool changeAccessFile(const char *data, size_t nCurrentSize, int &nLeftBytes) {
+    bool changeAccessFile(const char *data, size_t curSize, int &leftBytes) {
         if (!fout.is_open()) {
             fout.open(FmtString("%.%").arg(m_strFilePrefix).arg(m_nIndex).str());
         }
-        if (m_nCurrentFileSize + nCurrentSize <= m_nRollingFileSize) {
-            m_nCurrentFileSize += nCurrentSize;
+        if (m_nCurrentFileSize + curSize <= m_nRollingFileSize) {
+            m_nCurrentFileSize += curSize;
             return false;
         }
-        int writeBytes = m_nRollingFileSize - m_nCurrentFileSize;
-        nLeftBytes     = nCurrentSize - writeBytes;
-        fout.write(data, writeBytes).flush();
-        m_nCurrentFileSize = nLeftBytes;
+        auto writeBytes = m_nRollingFileSize - m_nCurrentFileSize;
+        leftBytes      = curSize - writeBytes;
+        fout.write(data, static_cast<long>(writeBytes)).flush();
+        m_nCurrentFileSize = leftBytes;
         fout.close();
         m_nIndex++;
         fout.open(FmtString("%.%").arg(m_strFilePrefix).arg(m_nIndex).str());
         return true;
     }
 
-    ~RollingFileSizeLogHandle() {
+    ~RollingFileSizeLogHandle() override {
         if (fout.is_open()) {
             fout.close();
         }
@@ -173,5 +176,4 @@ private:
 
 class [[maybe_unused]] AsyncHttpLogHandle : public StdOutLogHandle {};
 
-} // namespace base
-} // namespace muduo
+} // namespace muduo::base

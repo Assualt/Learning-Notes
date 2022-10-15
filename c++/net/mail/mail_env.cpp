@@ -15,7 +15,7 @@ MailEnv::MailEnv()
     , m_nCommandPort(8026)
     , m_nMaxClients(1000)
     , m_strMailServerPrimaryDomain("test.com") {
-    m_strMailServerBuildDate = Timestamp::now().toFormattedString();
+    m_strMailServerBuildDate = Timestamp::now().toFmtString();
 }
 MailEnv &MailEnv::getInstance() {
     static MailEnv env;

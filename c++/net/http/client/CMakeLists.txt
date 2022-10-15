@@ -1,6 +1,5 @@
 set(client_source
     HttpClient.cpp
-    HttpConnection.cpp
     main_client.cpp
     )
 
@@ -21,7 +20,7 @@ add_test(
     NAME
     test_client
     COMMAND
-    httpclient --url http://127.0.0.1:8100/login/test/xhou?query=123 --verbose 0
+    httpclient --url http://127.0.0.1:8100/login/test/xhou?query=123 --verbose 1
 )
 
 add_test(

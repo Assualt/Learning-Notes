@@ -74,7 +74,7 @@ void TcpServer::RemoveConnectionInLoop(const TcpConnectionPtr &conn) {
     logger.info("TcpServer::RemoveConnectionInLoop name:%s - connection Name:%s", m_strServerName, conn->name());
     size_t     n    = m_connectionMap.erase(conn->name());
     EventLoop *loop = conn->getLoop();
-    loop->queueInLoop(std::bind(&TcpConnection::connectDestory, conn));
+    loop->queueInLoop(std::bind(&TcpConnection::connectDestroyed, conn));
 }
 
 void TcpServer::SetConnectionCallback(const ConnectionCallback &callback) { connectionCallback = callback; }

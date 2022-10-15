@@ -79,7 +79,7 @@ void TcpConnection::connectEstablished() {
     m_connCallBack(shared_from_this());
 }
 
-void TcpConnection::connectDestory() {
+void TcpConnection::connectDestroyed() {
     m_pLoop->assertLoopThread();
     if (m_state == TcpState::Connected) {
         m_channel->disableAll();

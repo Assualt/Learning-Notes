@@ -45,7 +45,7 @@ std::string Timestamp::toString() {
     return ss.str();
 }
 
-std::string Timestamp::toFormattedString(const char *fmt) const {
+std::string Timestamp::toFmtString(const char *fmt) const {
     time_t     ts                = seconds();
     struct tm *t                 = localtime(&ts);
     char       timeBuffer[ 128 ] = {0};

@@ -83,7 +83,7 @@ public:
                          TravelerType type = TYPE_ADULT);
     std::string getStationCode(const std::string &stationName);
 
-    void InitTicketQuery(const std::string &from, const std::string &to, const std::string &date);
+    [[maybe_unused]] void InitTicketQuery(const std::string &from, const std::string &to, const std::string &date);
 
 private:
     int         SplitStringToStationDetail(const std::string &ss);
@@ -159,7 +159,7 @@ int TicketQueryMgr::SplitStringToStationDetail(const std::string &strStation) {
                 logger.info("current %s line is not normal.", tempString);
                 continue;
             }
-            StationDetail detail(atoi(valVec.back().c_str()), valVec[ 1 ], valVec[ 2 ], valVec[ 3 ], valVec[ 4 ]);
+            StationDetail detail(std::atoi(valVec.back().c_str()), valVec[ 1 ], valVec[ 2 ], valVec[ 3 ], valVec[ 4 ]);
             m_mStationDetailVec.push_back(detail);
             nIndex++;
             tempString.clear();
@@ -212,7 +212,7 @@ void TicketQueryMgr::QueryLeftTicket(const std::string &fromStation, const std::
 }
 
 std::string TicketQueryMgr::getStationCode(const std::string &stationName) {
-    for (auto item : m_mStationDetailVec) {
+    for (const auto &item : m_mStationDetailVec) {
         if (item.m_strStationPinYin == stationName) {
             return item.m_strStationCode;
         }
@@ -242,7 +242,7 @@ std::string TicketQueryMgr::formattedLeftTicketUrl(const std::string &fromStatio
         .str();
 }
 
-void TicketQueryMgr::InitTicketQuery(const std::string &from, const std::string &to, const std::string &date) {
+[[maybe_unused]] void TicketQueryMgr::InitTicketQuery(const std::string &from, const std::string &to, const std::string &date) {
     auto initUrl = FmtString(TicketInitUrl)
                        .arg(UrlUtils::UrlEncode(from))
                        .arg(getStationCode(from))
@@ -263,7 +263,7 @@ void TicketQueryMgr::InitTicketQuery(const std::string &from, const std::string 
 
 int main(int, char **) {
     auto &log = muduo::base::Logger::getLogger();
-    log.BasicConfig(static_cast<LogLevel>(Info),
+    log.BasicConfig(static_cast<LogLevel>(Debug),
                     "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)", "", "");
     log.setAppName("app");
     auto stdHandle = std::make_shared<StdOutLogHandle>();

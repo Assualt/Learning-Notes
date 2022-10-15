@@ -1,5 +1,4 @@
 #include "EventLoop.h"
-#include "Channel.h"
 #include "CurrentThread.h"
 #include "SocketsOp.h"
 #include "base/Logging.h"
@@ -11,9 +10,8 @@ namespace muduo {
 namespace net {
 using muduo::net::Channel;
 
-__thread EventLoop *t_loopInThisThread = 0;
-constexpr int       kPollTimeMs        = 10000;
-constexpr int       kNoEventTimes      = 2;
+constexpr int kPollTimeMs   = 10000;
+constexpr int kNoEventTimes = 2;
 
 int CreateEventFd() {
     int evtFd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
@@ -107,6 +105,7 @@ void EventLoop::loop() {
 
 void EventLoop::assertLoopThread() {
     if (m_nThreadId != CurrentThread::tid()) {
+        logger.fatal("thread id %s is not match current thread id:%s", m_nThreadId, CurrentThread::tid());
     }
 }
 

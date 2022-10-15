@@ -6,12 +6,13 @@
 
 #define INLINE_OPERATOR(ops, type, val)                                                                                \
     inline bool operator ops(type lhs, type rhs) { return lhs.val ops rhs.val; }
-namespace muduo {
-namespace base {
+
+namespace muduo::base {
 class Timestamp {
 
 public:
     Timestamp();
+
     explicit Timestamp(int64_t val);
 
 public:
@@ -19,13 +20,13 @@ public:
 
     std::string toString();
 
-    std::string toFormattedString(const char *fmt = "%Y-%m-%d %H:%M:%S.000.%Z%z") const;
+    std::string toFmtString(const char *fmt = "%Y-%m-%d %H:%M:%S.000.%Z%z") const;
 
-    bool valid() const;
+    [[nodiscard]] bool valid() const;
 
-    int64_t microSeconds() const;
+    [[nodiscard]] int64_t microSeconds() const;
 
-    time_t seconds() const;
+    [[nodiscard]] time_t seconds() const;
 
 public:
     static Timestamp now();
@@ -45,5 +46,4 @@ INLINE_OPERATOR(<=, Timestamp, microSeconds())
 INLINE_OPERATOR(>, Timestamp, microSeconds())
 INLINE_OPERATOR(>=, Timestamp, microSeconds())
 
-} // namespace base
-} // namespace muduo
+} // namespace muduo::base

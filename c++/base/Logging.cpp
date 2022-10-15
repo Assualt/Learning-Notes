@@ -97,7 +97,7 @@ void Logger::getKeyString(const std::string &key, std::stringstream &ss, const s
         {"(asctime)",
          [ this ](std::stringstream &ss, const std::string &msg, LogLevel) { ss << getCurrentHourTime(true); }},
         {"(ctime)",
-         [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << Timestamp::now().toFormattedString(); }},
+         [](std::stringstream &ss, const std::string &msg, LogLevel) { ss << Timestamp::now().toFmtString(); }},
         {"(lineno)", [ this ](std::stringstream &ss, const std::string &msg,
                               LogLevel) { ss << std::dec << m_FileAttribute.lineNo; }},
         {"(filename)", [ this ](std::stringstream &ss, const std::string &msg,

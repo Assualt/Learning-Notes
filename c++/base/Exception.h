@@ -11,20 +11,19 @@
         exp(const exp &re) throw()                                                                                     \
             : expParent(re) {}                                                                                         \
     };
-namespace muduo {
-namespace base {
+namespace muduo::base {
 class Exception : public std::exception {
 public:
-    Exception(const char *what) throw()
+    explicit Exception(const char *what) noexcept
         : m_strErrorMsg(what) {}
-    const char          *what() const throw() { return m_strErrorMsg.c_str(); }
-    friend std::ostream &operator<<(std::ostream &out, Exception &e) {
-        out << e.what();
-        return out;
+
+    [[nodiscard]] const char *what() const noexcept override { return m_strErrorMsg.c_str(); }
+    friend std::ostream      &operator<<(std::ostream &out, Exception &e) {
+         out << e.what();
+         return out;
     }
 
 private:
     std::string m_strErrorMsg;
 };
-} // namespace base
-} // namespace muduo
+} // namespace muduo::base

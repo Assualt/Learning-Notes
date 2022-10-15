@@ -74,7 +74,7 @@ bool DefaultController::onGet(const HttpRequest &request, HttpResponse &response
         } else {
             out << "0," << attr.GetSize() << ",\"" << utils::toSizeString(attr.GetSize()) << "\",";
         }
-        out << attr.GetModifyTime().seconds() << ",\"" << attr.GetModifyTime().toFormattedString("%Y/%m/%d %H:%M:%S")
+        out << attr.GetModifyTime().seconds() << ",\"" << attr.GetModifyTime().toFmtString("%Y/%m/%d %H:%M:%S")
             << "\");</script>\r\n";
         tmplateHtml.append(out.str());
     }

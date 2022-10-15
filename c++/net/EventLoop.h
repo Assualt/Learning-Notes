@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include "Channel.h"
 #include "base/Mutex.h"
 #include "base/Timestamp.h"
 #include "base/nonecopyable.h"
@@ -18,8 +19,6 @@ using muduo::base::Timestamp;
 namespace muduo {
 namespace net {
 
-class Channel;
-class TimerQueue;
 class EventLoop : nonecopyable {
 
 public:

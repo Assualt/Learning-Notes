@@ -2,8 +2,7 @@
 #include "Mutex.h"
 #include "nonecopyable.h"
 
-namespace muduo {
-namespace base {
+namespace muduo::base {
 
 class Condition : nonecopyable {
 public:
@@ -23,5 +22,4 @@ private:
     pthread_cond_t m_cond{};
     MutexLock     &m_lock;
 };
-} // namespace base
 } // namespace muduo

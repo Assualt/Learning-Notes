@@ -35,7 +35,7 @@ public:
 
     void connectEstablished();
 
-    void connectDestory();
+    void connectDestroyed();
 
     void setConnectionCallBack(ConnectionCallback cb) { m_connCallBack = cb; }
 

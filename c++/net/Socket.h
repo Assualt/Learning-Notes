@@ -71,7 +71,7 @@ public:
 
     void shutdownWrite();
 
-    bool switchToSSL(bool isClient = true);
+    bool switchToSSL(bool isClient = true, const std::string &host = "");
 
     bool initSSL();
 

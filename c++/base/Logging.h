@@ -18,13 +18,12 @@
 #define APP "app"
 #endif
 
-namespace muduo {
-namespace base {
+namespace muduo::base {
 
 DECLARE_EXCEPTION(LogException, Exception)
 
 enum LogLevel { Debug, Info, Except, Warn, Error, Fatal, Alert, Emergency };
-class Logger final {
+class Logger {
 public:
     ~Logger() { m_vHandleList.clear(); }
 
@@ -182,8 +181,7 @@ protected:
     bool                     m_MessageAppendCRLF{true};
 };
 
-} // namespace base
-} // namespace muduo
+} // namespace muduo::base
 
 #define LOG(appName) muduo::base::Logger::getLogger(appName).setFileAttr(__FILE__, __func__, __LINE__)
 

@@ -3,14 +3,17 @@
 #include "InetAddress.h"
 #include "Socket.h"
 #include "TcpConnection.h"
+#include <optional>
 
 namespace muduo::net {
 
 class TcpClient {
 public:
-    TcpClient(bool useSsl = false);
+    explicit TcpClient(bool useSsl = false);
 
     void setTimeOut(int connectTimeout, int sendTimeOut, int recvTimeout);
+
+    bool connect(const std::string &host, uint16_t port, bool needSwitchSSL = false);
 
     bool connect(const InetAddress &address);
 
@@ -27,7 +30,7 @@ public:
     ~TcpClient();
 
 private:
-    uint32_t switchToSSLConnect();
+    uint32_t switchToSSLConnect(const InetAddress &address);
 
 private:
     std::unique_ptr<Socket>        socket_{nullptr};

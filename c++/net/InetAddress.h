@@ -26,10 +26,17 @@ public:
 
     std::string toIpPort() const;
 
+    std::string host() const { return host_; }
+
+    void setHost(const std::string &host) { host_ = host; }
+
+private:
     union {
         struct sockaddr_in  m_uAddr;
         struct sockaddr_in6 addr6_;
     };
+
+    std::string host_;
 };
 
 } // namespace net

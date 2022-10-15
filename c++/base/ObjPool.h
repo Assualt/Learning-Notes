@@ -7,8 +7,7 @@
 #include <memory>
 #include <vector>
 
-namespace muduo {
-namespace base {
+namespace muduo::base {
 
 using Creator = std::function<muduo::base::Object *()>;
 #define REG_OBJECT(ClassName)                                                                                          \
@@ -69,7 +68,7 @@ public:
         return (iter != m_objMap.end()) ? iter->second : nullptr;
     }
 
-    int size() { return m_objMap.size(); }
+    int size() const { return m_objMap.size(); }
 
     template <class Function, class... Args>
     auto Invoke(Function func, Args... args) -> std::result_of<Function(Args...)> {
@@ -82,5 +81,4 @@ private:
     std::map<size_t, std::shared_ptr<Object>> m_objMap;
 };
 
-} // namespace base
-} // namespace muduo
+} // namespace muduo::base

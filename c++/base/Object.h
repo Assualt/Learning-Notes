@@ -24,8 +24,10 @@ public:
         return InitFinish();
     }
 
-    virtual bool InitSelf()  = 0;
+    virtual bool InitSelf() = 0;
+
     virtual bool InitOther() = 0;
+
     virtual bool InitFinish() { return true; }
 
 public:

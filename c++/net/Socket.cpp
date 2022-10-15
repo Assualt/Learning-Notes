@@ -280,7 +280,7 @@ void Socket::sslDisConnect() {
 #endif
 }
 
-bool Socket::switchToSSL(bool isClient) {
+bool Socket::switchToSSL(bool isClient, const std::string &host) {
 #ifdef USE_SSL
     sslConn_ = std::make_unique<SSL_Connection>();
     if (isClient) {
@@ -315,6 +315,13 @@ bool Socket::switchToSSL(bool isClient) {
         sslDisConnect();
         PrintSSLError("SSL_set_fd", 0);
         return false;
+    }
+
+    // 对于某些拥有超过1个主机名的web服务器，客户端必须告诉服务器客户端试图连接的确切主机名，这样web服务器才可以提供正确的SSL证书
+    // resolve promblem sslv3 Alert Handshake Failure
+    if (!host.empty()) {
+        (void)SSL_set_tlsext_host_name(sslConn_->m_ptrHandle, host.c_str());
+        logger.debug("set tlsext host name is %s", host);
     }
 
     int ret;

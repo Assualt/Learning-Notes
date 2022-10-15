@@ -6,8 +6,7 @@
 #include <functional>
 #include <memory>
 
-namespace muduo {
-namespace base {
+namespace muduo::base {
 
 using TimerCallback = std::function<void(uintptr_t, uint32_t)>;
 
@@ -45,5 +44,4 @@ private:
 
     Params userParam_;
 };
-} // namespace base
 } // namespace muduo

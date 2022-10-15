@@ -124,7 +124,7 @@ static void dump(const Json::array &values, string &out) {
 
 static void dump(const Timestamp &stamp, string &out) {
     //    out += std::to_string(stamp.seconds());
-    out += "\"" + stamp.toFormattedString() + "\"";
+    out += "\"" + stamp.toFmtString() + "\"";
 }
 
 static void dump(const Json::object &values, string &out) {

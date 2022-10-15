@@ -1,6 +1,8 @@
 #include "base/Logging.h"
+#include "base/Timer.h"
 #include "base/Timestamp.h"
 using namespace muduo::base;
+
 class T {
 public:
     T(TimerCallback cb) { t = std::make_unique<Timer>(UINT32_MAX, 0.5, cb, reinterpret_cast<uintptr_t>(this), 20); }
