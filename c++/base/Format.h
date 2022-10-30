@@ -1,9 +1,9 @@
 #pragma once
+#include <cstring>
+#include <iomanip>
 #include <sstream>
-#include <string.h>
-namespace muduo {
-namespace base {
 
+namespace muduo::base {
 template <class typeStream> class FormatStream : public typeStream {
 public:
     FormatStream()
@@ -64,10 +64,14 @@ protected:
 template <class typeStream> char FormatStream<typeStream>::g_nEndFlags = '\0';
 
 class FmtString : public FormatStream<std::stringstream> {
-
 public:
-    FmtString(const std::string &format) { FormatStream::format(format.c_str()); }
+    explicit FmtString(const std::string &format) { FormatStream::format(format.c_str()); }
 };
 
-} // namespace base
-} // namespace muduo
+template <class T> std::string toFixedString(T val, int width, bool isLeft, char ch = '0') {
+    std::stringstream ss;
+    ss << std::setw(width) << (isLeft ? std::left : std::right) << std::setfill(ch) << val;
+    return ss.str();
+}
+
+} // namespace muduo::base

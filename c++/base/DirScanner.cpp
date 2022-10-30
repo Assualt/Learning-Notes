@@ -57,6 +57,6 @@ bool DirScanner::Fetch(FileAttr &attr) {
     if (dp == nullptr) {
         return false;
     }
-    attr.SetInfor(dp->d_name);
+    attr.setName(dp->d_name);
     return true;
 }

@@ -40,14 +40,14 @@ void ConfigureManager::GetAllFiles(cstring path, cstring suffix) {
 }
 
 void ConfigureManager::Init() {
-    for (auto file : m_vAllConfFiles) {
+    for (const auto& file : m_vAllConfFiles) {
         InitFile(file);
     }
 }
 
 void ConfigureManager::InitFile(cstring file) {
     std::string strPrefix = "/";
-    size_t      pos       = file.rfind("/");
+    size_t      pos       = file.rfind('/');
     if (pos != std::string::npos) {
         strPrefix.append(util::trimRight(file.substr(pos + 1), m_Suffix));
     } else {

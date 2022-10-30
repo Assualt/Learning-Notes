@@ -4,11 +4,11 @@
 #define DECLARE_EXCEPTION(exp, expParent)                                                                              \
     class exp : public expParent {                                                                                     \
     public:                                                                                                            \
-        explicit exp(const char *lpszMsg) throw()                                                                      \
+        explicit exp(const char *lpszMsg) noexcept                                                                     \
             : expParent(lpszMsg) {}                                                                                    \
-        explicit exp(const std::string &strMsg) throw()                                                                \
+        explicit exp(const std::string &strMsg) noexcept                                                               \
             : expParent(strMsg.c_str()) {}                                                                             \
-        exp(const exp &re) throw()                                                                                     \
+        exp(const exp &re) noexcept                                                                                    \
             : expParent(re) {}                                                                                         \
     };
 namespace muduo::base {
@@ -19,8 +19,8 @@ public:
 
     [[nodiscard]] const char *what() const noexcept override { return m_strErrorMsg.c_str(); }
     friend std::ostream      &operator<<(std::ostream &out, Exception &e) {
-         out << e.what();
-         return out;
+             out << e.what();
+             return out;
     }
 
 private:

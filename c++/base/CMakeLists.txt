@@ -22,7 +22,7 @@ set(muduo_base_objects
     json/json.cpp
     stream/StreamBase.cpp
     stream/BinaryStream.cpp
-    )
+        LogHandle.cpp)
 
 add_subdirectory(fsm)
 

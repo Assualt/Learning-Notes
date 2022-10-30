@@ -10,13 +10,15 @@
 
 namespace muduo::base::System {
 
-inline int mkdir(const std::string &path, int mode) { return ::mkdir(path.c_str(), mode); }
+inline int Mkdir(const std::string &path, int mode) { return ::mkdir(path.c_str(), mode); }
 
-inline int rename(const std::string &srcFilePath, const std::string &dstFileName) {
+inline int Rename(const std::string &srcFilePath, const std::string &dstFileName) {
     return ::rename(srcFilePath.c_str(), dstFileName.c_str());
 }
 
-inline int remove(const std::string &path) { return ::remove(path.c_str()); }
+inline int Remove(const std::string &path) { return ::remove(path.c_str()); }
+
+inline bool Access(const std::string &file, int flag) { return access(file.c_str(), flag) == 0; }
 
 inline std::string GetCurrentThreadName() {
     char tempName[ 256 ] = {0};

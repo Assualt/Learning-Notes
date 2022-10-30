@@ -45,7 +45,6 @@ cmdline::parser cmdParse(int, char **) {
 
 void DisplayVersion() {
     std::string version = "httpserver: 1.1.0";
-
     std::cout << version << std::endl;
 }
 
@@ -89,9 +88,10 @@ int main(int argc, char *argv[]) {
     client.setUserAgent(parser.get<string>("userAgent"));
     client.setAcceptEncoding(parser.get<string>("acceptEncoding"));
     client.setAcceptLanguage(parser.get<string>("acceptLanguage"));
-    client.setHeader("Connection", "keep-alive");
+    client.setHeader(Connection, "close");
+    client.setContentType(parser.get<string>("content-type"));
     auto outPath = parser.get<std::string>("output");
-    int httpVersion = parser.get<int>("http_version");
+    //    int  httpVersion = parser.get<int>("http_version");
     client.setHttpVersion("HTTP/1.1");
 
     if (!outPath.empty()) {
@@ -99,13 +99,14 @@ int main(int argc, char *argv[]) {
     }
 
     std::string strCookie = parser.get<string>("cookie");
-    if (!strCookie.empty())
+    if (!strCookie.empty()) {
         client.setCookie(strCookie);
+    }
 
     std::string strAuthBasic = parser.get<string>("auth-basic");
-    if (!strAuthBasic.empty() && strAuthBasic.find(":") != std::string::npos) {
-        std::string strUser = strAuthBasic.substr(0, strAuthBasic.find(":"));
-        std::string strPass = strAuthBasic.substr(strAuthBasic.find(":") + 1);
+    if (!strAuthBasic.empty() && strAuthBasic.find(':') != std::string::npos) {
+        std::string strUser = strAuthBasic.substr(0, strAuthBasic.find(':'));
+        std::string strPass = strAuthBasic.substr(strAuthBasic.find(':') + 1);
         client.setBasicAuthUserPass(strUser, strPass);
     }
 
@@ -135,6 +136,5 @@ int main(int argc, char *argv[]) {
     } else {
         std::cout << resp.getBody();
     }
-
     return 0;
 }

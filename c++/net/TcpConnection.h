@@ -9,8 +9,7 @@
 #include <iostream>
 #include <memory>
 
-namespace muduo {
-namespace net {
+namespace muduo::net {
 
 class EventLoop;
 class Socket;
@@ -25,7 +24,7 @@ public:
     ~TcpConnection();
 
 public:
-    void handleRead(const Timestamp &tistamp);
+    void handleRead(const Timestamp &timestamp);
 
     void handleWrite();
 
@@ -69,7 +68,7 @@ protected:
     void sendInLoop(const void *data, size_t len);
 
 protected:
-    EventLoop               *m_pLoop;
+    EventLoop               *m_pLoop{nullptr};
     const InetAddress        m_locAddr;
     const InetAddress        m_peerAddr;
     TcpState                 m_state;
@@ -88,5 +87,4 @@ protected:
     Buffer m_output;
 };
 
-} // namespace net
-} // namespace muduo
+} // namespace muduo::net

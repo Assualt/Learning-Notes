@@ -8,7 +8,12 @@ namespace muduo::base {
 
 class FileAttr {
     //!	The attribute flags
-    enum TFileFlags { type_None = 0x00, type_FILE = 0x01, type_DIR = 0x02, type_Link = 0x03 };
+    enum TFileFlags {
+        type_None = 0x00,
+        type_FILE = 0x01,
+        type_DIR  = 0x02,
+        type_Link = 0x03,
+    };
 
 public:
     explicit FileAttr(const std::string &strName = "", const std::string &strParent = "", TFileFlags attr = type_None)
@@ -21,14 +26,7 @@ public:
         , m_tRead(0) {}
 
     //! copy constructor
-    FileAttr(const FileAttr &rt)
-        : m_strParent(rt.m_strParent)
-        , m_strName(rt.m_strName)
-        , m_nFlags(rt.m_nFlags)
-        , m_nSize(rt.m_nSize)
-        , m_tCreate(rt.m_tCreate)
-        , m_tModify(rt.m_tModify)
-        , m_tRead(rt.m_tRead) {}
+    FileAttr(const FileAttr &rt) = default;
 
     //! destrcutor
     ~FileAttr() = default;
@@ -47,7 +45,7 @@ public:
         Swap(attr);
     }
 
-    void SetInfor(const std::string &strName) {
+    void setName(const std::string &strName) {
         clear();
         m_strName = strName;
     }

@@ -90,32 +90,35 @@ void TcpConnection::connectDestroyed() {
 }
 
 void TcpConnection::send(const void *message, int len) {
-    if (m_state == TcpState::Connected) {
-        if (m_pLoop->isInLoopThread()) {
-            sendInLoop(message, len);
-        } else {
-            //
-        }
+    if (m_state != TcpState::Connected) {
+        logger.error("can't send buf with wrong state. cur state:%d", static_cast<uint32_t>(m_state));
+        return;
+    }
+    if (m_pLoop->isInLoopThread()) {
+        sendInLoop(message, len);
     }
 }
 
 void TcpConnection::send(Buffer *buf) {
-    if (m_state == TcpState::Connected) {
-        if (m_pLoop->isInLoopThread()) {
-            sendInLoop(buf->peek(), buf->readableBytes());
-            buf->retrieveAll();
-        } else {
-            //
-        }
+    if (m_state != TcpState::Connected) {
+        logger.error("can't send buf with wrong state. cur state:%d", static_cast<uint32_t>(m_state));
+        return;
+    }
+
+    if (m_pLoop->isInLoopThread()) {
+        sendInLoop(buf->peek(), buf->readableBytes());
+        buf->retrieveAll();
     }
 }
 
 void TcpConnection::shutdown() {
-    if (m_state == TcpState::Connected) {
-        m_state = TcpState::DisConnecting;
-        // FIXME: shared_from_this()?
-        m_pLoop->runInLoop(std::bind(&TcpConnection::shutdownInLoop, this));
+    if (m_state != TcpState::Connected) {
+        logger.error("can't shutdown with wrong state. cur state:%d", static_cast<uint32_t>(m_state));
+        return;
     }
+    m_state = TcpState::DisConnecting;
+    // FIXME: shared_from_this()?
+    m_pLoop->runInLoop([ this ] { shutdownInLoop(); });
 }
 
 void TcpConnection::shutdownInLoop() {

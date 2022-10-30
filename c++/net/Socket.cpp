@@ -111,9 +111,9 @@ std::pair<int, void *> Socket::accept(InetAddress *remoteAddr) {
 #endif
 }
 
-void Socket::shutdownWrite() { sockets::shutdownWrite(sockFd_); }
+void Socket::shutdownWrite() const { sockets::shutdownWrite(sockFd_); }
 
-void Socket::setTcpNoDelay(bool on) {
+void Socket::setTcpNoDelay(bool on) const {
     int opt = on ? 1 : 0;
     ::setsockopt(sockFd_, SOL_SOCKET, TCP_NODELAY, &opt, static_cast<socklen_t>(sizeof opt));
 }
@@ -135,10 +135,8 @@ bool Socket::connect(const InetAddress &addr, int timeout) {
         return false;
     }
 
-    struct timeval tm {
-        .tv_sec = timeout, .tv_usec = 0
-    };
-    fd_set writeSet;
+    struct timeval tm = {.tv_sec = timeout, .tv_usec = 0};
+    fd_set         writeSet;
     FD_ZERO(&writeSet);
     FD_SET(sockFd_, &writeSet);
     ret = select(sockFd_ + 1, nullptr, &writeSet, nullptr, &tm);
@@ -156,7 +154,7 @@ bool Socket::connect(const InetAddress &addr, int timeout) {
     }
 
     int       error = -1;
-    socklen_t len   = sizeof(error);
+    socklen_t len   = sizeof(int);
     if (getsockopt(sockFd_, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
         logger.warning("get socket option failed");
         return false;

@@ -7,8 +7,7 @@
 #include <unistd.h>
 using namespace muduo::base;
 using muduo::base::FmtString;
-namespace muduo {
-namespace net {
+namespace muduo::net {
 
 DECLARE_EXCEPTION(SocketException, base::Exception)
 
@@ -133,5 +132,4 @@ void sockets::shutdownWrite(int sockFd) {
     }
 }
 
-} // namespace net
 } // namespace muduo

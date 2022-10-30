@@ -12,7 +12,7 @@ class WebSockController : public IController {
 public:
     WebSockController()
         : IController("[WebSocket Controller]", {"/ws", REQ_TYPE::TYPE_GET, false, true}) {}
-    virtual ~WebSockController() override = default;
+    ~WebSockController() override = default;
     DECLARE_CONTROLLER
 
 private:

@@ -38,7 +38,7 @@ public:
 
     void removeChannel(Channel *channel);
 
-    bool hasChannel(Channel *channel);
+    [[maybe_unused]] bool hasChannel(Channel *channel);
 
     void runInLoop(Functor callback);
 
@@ -46,13 +46,13 @@ public:
 
     void assertLoopThread();
 
-    void wakeup();
+    void wakeup() const;
 
     void handleRead();
 
     bool isInLoopThread() const;
 
-    void printActiveChannels() const;
+    [[maybe_unused]] void printActiveChannels() const;
 
 protected:
     void doPendingFunctors();

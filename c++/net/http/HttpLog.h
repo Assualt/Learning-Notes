@@ -15,7 +15,7 @@ using muduo::base::Thread;
 
 class HttpLog : muduo::base::nonecopyable {
 public:
-    HttpLog(Logger &log);
+    explicit HttpLog(Logger &log);
     ~HttpLog();
     bool Init();
 

@@ -1,15 +1,18 @@
 #pragma once
 
+#include "Exception.h"
 #include "copyable.h"
-#include <chrono>
 #include <iostream>
+#include <string>
 
 #define INLINE_OPERATOR(ops, type, val)                                                                                \
     inline bool operator ops(type lhs, type rhs) { return lhs.val ops rhs.val; }
 
 namespace muduo::base {
-class Timestamp {
 
+DECLARE_EXCEPTION(TimeStampException, Exception)
+
+class Timestamp {
 public:
     Timestamp();
 
@@ -18,7 +21,7 @@ public:
 public:
     void swap(Timestamp &other);
 
-    std::string toString();
+    [[nodiscard]] std::string toString() const;
 
     std::string toFmtString(const char *fmt = "%Y-%m-%d %H:%M:%S.000.%Z%z") const;
 
@@ -28,16 +31,17 @@ public:
 
     [[nodiscard]] time_t seconds() const;
 
+    [[nodiscard]] int64_t mseconds() const;
+
 public:
     static Timestamp now();
     static Timestamp invalid();
     static Timestamp fromUnixTime(time_t t);
     static Timestamp fromUnixTime(time_t t, int microSecond);
     static Timestamp fromTimeStr(const std::string &str, const std::string &fmt = "%Y-%m-%d %H:%M:%S");
-    static int64_t   kMicroSecondsPerSecond;
 
 private:
-    int64_t microSecondsPerSeconds_;
+    int64_t microSecondsPerSeconds_{0};
 };
 
 INLINE_OPERATOR(==, Timestamp, microSeconds())

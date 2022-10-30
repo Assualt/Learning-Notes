@@ -52,7 +52,7 @@ public:
     ///
     /// Enable/disable TCP_NODELAY (disable/enable Nagle's algorithm).
     ///
-    void setTcpNoDelay(bool on);
+    void setTcpNoDelay(bool on) const;
 
     ///
     /// Enable/disable SO_REUSEADDR
@@ -69,7 +69,7 @@ public:
     ///
     void setKeepAlive(bool on);
 
-    void shutdownWrite();
+    void shutdownWrite() const;
 
     bool switchToSSL(bool isClient = true, const std::string &host = "");
 

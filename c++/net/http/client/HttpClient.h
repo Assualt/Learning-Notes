@@ -23,7 +23,9 @@ public:
 
     HttpResponse Head(const std::string &url, bool needRedirect = false, bool verbose = false);
 
-    template <class Val> void SetHeader(const std::string &key, const Val &val) { request_.setHeader(key, val); }
+    template <class Val> [[maybe_unused]] void SetHeader(const std::string &key, const Val &val) {
+        request_.setHeader(key, val);
+    }
 
     void setUserAgent(const std::string &AgentVal) { this->setHeader(UserAgent, AgentVal); }
 
@@ -49,9 +51,12 @@ public:
 
 private:
     HttpResponse Request(ReqType type, const std::string &reqUrl, const Buffer &buff, bool redirect, bool verbose);
-    Buffer       GetRequestBuffer(const std::string &url);
+
+    Buffer GetRequestBuffer(const std::string &url);
+
     HttpResponse TransBufferToResponse(Buffer &buffer);
-    static bool  IsBinaryContentType(const std::string &type);
+
+    static bool IsBinaryContentType(const std::string &type);
 
     void TryDecodeBuffer(const HttpRequest &req, HttpResponse &resp);
 

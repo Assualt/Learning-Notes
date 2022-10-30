@@ -1,11 +1,12 @@
 #include "HttpLog.h"
+
 #include "base/LogHandle.h"
-#include "base/Thread.h"
+#include <memory>
 
 #define MAX_BUF_SIZE 100
 using namespace muduo::base;
 
-static std::shared_ptr<LogHandle> RollFileHandler(new RollingFileLogHandle("./", "access.log"));
+static std::shared_ptr<LogHandle> rollFileHdr(new RollingFileLogHandle("./", "access.log"));
 
 HttpLog::HttpLog(Logger &log)
     : m_pLogger(log) {}
@@ -17,9 +18,9 @@ HttpLog::~HttpLog() {
 }
 
 bool HttpLog::Init() {
-    m_pLogger.addLogHandle(RollFileHandler.get());
+    m_pLogger.addLogHandle(rollFileHdr.get());
     m_pLogger.SetAppendLF(false);
-    m_pThread.reset(new Thread(std::bind(&HttpLog::LogTaskThread, this), "AsyncTask"));
+    m_pThread = std::make_unique<Thread>([ this ] { LogTaskThread(); }, "AsyncTask");
     m_pThread->Start();
     return true;
 }

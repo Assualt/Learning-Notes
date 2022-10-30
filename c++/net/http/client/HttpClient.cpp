@@ -120,7 +120,7 @@ bool HttpClient::IsBinaryContentType(const std::string &type) {
 
 void HttpClient::TryDecodeBuffer(const HttpRequest &req, HttpResponse &resp) {
     auto           encodeType = req.get(ContentEncoding);
-    auto           buf        = req.getBodyBuffer();
+    const auto    &buf        = req.getBodyBuffer();
     MyStringBuffer in, out;
     in.sputn(buf.peek(), buf.readableBytes());
     if (util::EqualsIgnoreCase(encodeType, "gzip")) {
@@ -128,8 +128,10 @@ void HttpClient::TryDecodeBuffer(const HttpRequest &req, HttpResponse &resp) {
         logger.info("gzip decode length is %d", length);
     } else if (util::EqualsIgnoreCase(encodeType, "deflate")) {
         auto length = ZlibStream::DeflateDecompress(in, out);
+        logger.info("deflate decode length is %d", length);
     } else if (util::EqualsIgnoreCase(encodeType, "zlib")) {
         auto length = ZlibStream::ZlibDeCompress(in, out);
+        logger.info("zlib decode length is %d", length);
     } else {
         resp.setBody(buf);
         return;

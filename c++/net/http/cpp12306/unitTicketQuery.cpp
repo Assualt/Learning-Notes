@@ -96,11 +96,11 @@ protected:
     std::vector<StationDetail> m_mStationDetailVec;
     HttpClient                 client_;
 
-    std::string m_strDeviceID;        // dfp
-    size_t      m_nExpireTimeSeconds; // exp
-    std::string m_strRoute;           // route
-    std::string m_strJsessionID;      // JSESSIONID
-    std::string m_strBIGipServerotn;  // BIGipServerotn
+    std::string m_strDeviceID;          // dfp
+    size_t      m_nExpireTimeSeconds{}; // exp
+    std::string m_strRoute;             // route
+    std::string m_strJsessionID;        // JSESSIONID
+    std::string m_strBIGipServerotn;    // BIGipServerotn
 };
 
 void TicketQueryMgr::LoadStationDetail(std::ifstream &fin) {
@@ -152,8 +152,8 @@ void TicketQueryMgr::saveStationDetail(const std::string &strStationPath) {
 int TicketQueryMgr::SplitStringToStationDetail(const std::string &strStation) {
     std::string tempString;
     int         nIndex = 0;
-    for (size_t i = 0; i < strStation.size(); i++) {
-        if (strStation[ i ] == '@') {
+    for (char i : strStation) {
+        if (i == '@') {
             auto valVec = util::splitToVector(tempString, '|');
             if (valVec.size() != 6) {
                 logger.info("current %s line is not normal.", tempString);
@@ -165,7 +165,7 @@ int TicketQueryMgr::SplitStringToStationDetail(const std::string &strStation) {
             tempString.clear();
             continue;
         }
-        tempString.push_back(strStation[ i ]);
+        tempString.push_back(i);
     }
     logger.info("success insert %d station into map. totalSize:%d", nIndex, m_mStationDetailVec.size());
     return nIndex;
@@ -242,7 +242,8 @@ std::string TicketQueryMgr::formattedLeftTicketUrl(const std::string &fromStatio
         .str();
 }
 
-[[maybe_unused]] void TicketQueryMgr::InitTicketQuery(const std::string &from, const std::string &to, const std::string &date) {
+[[maybe_unused]] void TicketQueryMgr::InitTicketQuery(const std::string &from, const std::string &to,
+                                                      const std::string &date) {
     auto initUrl = FmtString(TicketInitUrl)
                        .arg(UrlUtils::UrlEncode(from))
                        .arg(getStationCode(from))

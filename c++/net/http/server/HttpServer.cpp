@@ -8,6 +8,7 @@
 #include "net/http/HttpUtils.h"
 #include <any>
 #include <functional>
+#include <utility>
 
 SigHandleMap  HttpServer::m_signalCallBack;
 RequestMapper HttpServer::m_mapper;
@@ -18,18 +19,18 @@ HttpServer::HttpServer(EventLoop *loop, const InetAddress &address, const std::s
     auto &accessLogger = Logger::getLogger("AccessLogger");
     accessLogger.BasicConfig(LogLevel::Debug, "%(message)", "access.log", "");
     m_httpLog.reset(new HttpLog(accessLogger));
-    m_pServer->SetConnectionCallback([ this ](TcpConnectionPtr conn) { onConnect(conn); });
+    m_pServer->SetConnectionCallback([ this ](const TcpConnectionPtr& conn) { onConnect(conn); });
     m_pServer->SetMessageCallback(
-        [ this ](const TcpConnectionPtr conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
+        [ this ](const TcpConnectionPtr& conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
     m_httpLog->Init();
-    m_hConfig.Init(cfgPath);
+    m_config.Init(cfgPath);
 
-    if (m_hConfig.getSupportWebSocket()) {
-        m_pWsServer = std::make_shared<WsServer>(loop, InetAddress(m_hConfig.getWebSocketPort()), m_hConfig, useHttps);
+    if (m_config.getSupportWebSocket()) {
+        m_pWsServer = std::make_shared<WsServer>(loop, InetAddress(m_config.getWebSocketPort()), m_config, useHttps);
     }
 }
 
-void HttpServer::SetRequestCallBack(CallBack callback) { m_requestCallBack = callback; }
+void HttpServer::SetRequestCallBack(CallBack callback) { m_requestCallBack = std::move(callback); }
 
 void HttpServer::onConnect(const TcpConnectionPtr &conn) {
     if (conn->isConnected()) {
@@ -62,9 +63,9 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
     if (strcasecmp(request.get(Connection).c_str(), "keep-alive") == 0) {
         close = false;
     }
-    HttpResponse response(close);
 
-    std::string basicRequestPath = m_hConfig.getServerRoot();
+    HttpResponse response(close);
+    std::string basicRequestPath = m_config.getServerRoot();
     if (basicRequestPath.back() != '/') {
         basicRequestPath += "/";
     }
@@ -79,16 +80,16 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
         m_mapper.findHandle(request.getRequestPath(), request.getRequestType(), request.GetRequestQueryMap());
     bool fileExists = utils::FileExists(basicRequestPath);
     if (!fileExists && objHandle.has_value()) {
-        reinterpret_cast<IController *>(objHandle.value())->onRequest(request, response, m_hConfig);
+        reinterpret_cast<IController *>(objHandle.value())->onRequest(request, response, m_config);
     } else if (utils::IsDir(basicRequestPath)) { // 展示目录
         auto obj = m_mapper.findHandle(DefaultPattern, request.getRequestType(), request.GetRequestQueryMap());
-        reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_hConfig);
+        reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_config);
     } else {
         auto obj = m_mapper.findHandle(FilePattern, request.getRequestType(), request.GetRequestQueryMap());
-        auto ret = reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_hConfig);
+        auto ret = reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_config);
         if (!ret) { // 文件不存在
             obj = m_mapper.findHandle(NOTFOUND, request.getRequestType(), request.GetRequestQueryMap());
-            reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_hConfig);
+            reinterpret_cast<IController *>(obj.value())->onRequest(request, response, m_config);
         }
     }
 
@@ -129,13 +130,13 @@ void HttpServer::RegSignalCallback(int sig, uintptr_t param, SignalCallback cb) 
         return;
     }
 
-    if (m_signalCallBack.count(sig) != 0) {
+    if (m_signalCallBack.find(sig) != m_signalCallBack.end()) {
         logger.warning("repeated to reg sig %d cb.", sig);
         return;
     }
 
     m_signalCallBack[ sig ] = {cb, param};
-    struct sigaction sa;
+    struct sigaction sa{};
     sa.sa_handler = HttpServer::SignalHandler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;

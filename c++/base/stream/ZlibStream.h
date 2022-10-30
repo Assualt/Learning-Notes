@@ -2,11 +2,10 @@
 #include <cstring>
 #include <sstream>
 #include <fstream>
-#include <stdio.h>
+#include <cstdio>
 #include <zlib.h>
 #define MAX_BUF_SIZE 8192
-namespace muduo {
-namespace base {
+namespace muduo::base {
 
 class MyStringBuffer : public std::stringbuf {
 public:
@@ -170,5 +169,4 @@ public:
     // zlib
     static uLongf ZlibDeCompress(MyStringBuffer &in, MyStringBuffer &out) { return DecompressWithZlib(in, out, 3); }
 };
-} // namespace base
 } // namespace muduo

@@ -27,46 +27,21 @@ public:
 
 class StdOutLogHandle : public LogHandle {
 public:
-    void writeData(const char *pData, size_t nSize) override {
-        std::cout.write(pData, static_cast<long>(nSize)).flush();
-    }
+    void writeData(const char *pData, size_t nSize) override;
 };
 
 class RollingFileLogHandle : public LogHandle {
 public:
-    RollingFileLogHandle(const char *filePath, const char *filePrefix, const char *timePostfix = BASIC_TIME_POSTFIX)
-        : LogHandle()
-        , m_strFilePathDir(filePath)
-        , m_strFilePrefix(filePrefix)
-        , m_strTimePostfix(timePostfix) {}
+    RollingFileLogHandle(const char *filePath, const char *filePrefix, const char *timePostfix = BASIC_TIME_POSTFIX);
 
-    void writeData(const char *data, size_t nLength) override {
-        changeAccessFile();
-        output.write(data, static_cast<long>(nLength)).flush();
-    }
+    void writeData(const char *data, size_t nLength) override;
 
-    ~RollingFileLogHandle() override { output.close(); }
+    ~RollingFileLogHandle() override;
 
-protected:
-    string getNextFileName() {
-        Timestamp tNow             = Timestamp::fromUnixTime(time(nullptr));
-        auto      formatTimeString = tNow.toFmtString(m_strTimePostfix.c_str());
-        return FmtString("%.%").arg(m_strFilePrefix).arg(formatTimeString).str();
-    }
+private:
+    string getNextFileName();
 
-    bool changeAccessFile() {
-        string currentFile = getNextFileName();
-        if (currentFile == m_strCurrentFile) {
-            return false;
-        }
-        if (output.is_open()) {
-            output.close();
-        }
-        string FullFileName = FmtString("%/%").arg(m_strFilePathDir).arg(currentFile).str();
-        output.open(FullFileName, std::ios::app | std::ios::out);
-        m_strCurrentFile = currentFile;
-        return true;
-    }
+    bool changeAccessFile();
 
 private:
     string        m_strCurrentFile; // current Log File Name
@@ -78,43 +53,12 @@ private:
 
 class RollingFile2LogHandle : public LogHandle {
 public:
-    RollingFile2LogHandle(const char *filepath, const char *dirPrefix, const char *filePrefix)
-        : m_strFileRootPath(filepath)
-        , m_strFileDirPrefix(dirPrefix)
-        , m_strFilePrefix(filePrefix) {}
+    RollingFile2LogHandle(const char *filepath, const char *dirPrefix, const char *filePrefix);
+    void writeData(const char *data, size_t nLength) override;
+    ~RollingFile2LogHandle() override;
 
-    string CurrentFile(string &dirPath) {
-        time_t     t(time(nullptr));
-        struct tm *lTime = localtime(&t);
-
-        stringstream ss, ss1;
-        ss << m_strFileDirPrefix << std::setw(4) << std::setfill('0') << lTime->tm_year + 1900 << "_" << std::setw(2)
-           << std::setfill('0') << lTime->tm_mon << "_" << std::setw(2) << std::setfill('0') << lTime->tm_mday;
-
-        ss1 << m_strFilePrefix << std::setw(2) << std::setfill('0') << lTime->tm_hour << "_00_00.log";
-
-        dirPath     = FmtString("%/%").arg(m_strFileRootPath).arg(ss.str()).str();
-        string file = FmtString("%/%").arg(dirPath).arg(ss1.str()).str();
-        return file;
-    }
-
-    void writeData(const char *data, size_t nLength) override {
-        string strDirPath;
-        string currentFile = CurrentFile(strDirPath);
-        if (access(strDirPath.c_str(), F_OK)) {
-            System::mkdir(strDirPath, 0666);
-        }
-        if (currentFile != m_strLastFile) {
-            fout.close();
-            m_strLastFile = currentFile;
-        }
-        if (!fout.is_open()) {
-            fout.open(m_strLastFile);
-        }
-        fout.write(data, static_cast<long>(nLength)).flush();
-    }
-
-    ~RollingFile2LogHandle() override { fout.close(); }
+private:
+    std::pair<std::string, std::string> getCurrentFile();
 
 private:
     string        m_strFileRootPath;
@@ -126,49 +70,17 @@ private:
 
 class RollingFileSizeLogHandle : public LogHandle {
 public:
-    RollingFileSizeLogHandle(const char *filepath, const char *filePrefix, size_t RollingFileSize)
-        : m_nRollingFileSize(RollingFileSize)
-        , m_nCurrentFileSize(0)
-        , m_nIndex(0) {
-        m_strFilePrefix = FmtString("%/%").arg(filepath).arg(filePrefix).str();
-    }
+    RollingFileSizeLogHandle(const char *filepath, const char *filePrefix, size_t RollingFileSize);
 
-    void writeData(const char *data, size_t nLength) override {
-        int leftBytes = 0;
-        if (!changeAccessFile(data, nLength, leftBytes)) {
-            fout.write(data, static_cast<long>(nLength)).flush();
-        } else {
-            fout.write(data + nLength - leftBytes, leftBytes).flush();
-        }
-    }
+    void writeData(const char *data, size_t nLength) override;
 
-    bool changeAccessFile(const char *data, size_t curSize, int &leftBytes) {
-        if (!fout.is_open()) {
-            fout.open(FmtString("%.%").arg(m_strFilePrefix).arg(m_nIndex).str());
-        }
-        if (m_nCurrentFileSize + curSize <= m_nRollingFileSize) {
-            m_nCurrentFileSize += curSize;
-            return false;
-        }
-        auto writeBytes = m_nRollingFileSize - m_nCurrentFileSize;
-        leftBytes      = curSize - writeBytes;
-        fout.write(data, static_cast<long>(writeBytes)).flush();
-        m_nCurrentFileSize = leftBytes;
-        fout.close();
-        m_nIndex++;
-        fout.open(FmtString("%.%").arg(m_strFilePrefix).arg(m_nIndex).str());
-        return true;
-    }
+    bool changeAccessFile(const char *data, size_t curSize, int &leftBytes);
 
-    ~RollingFileSizeLogHandle() override {
-        if (fout.is_open()) {
-            fout.close();
-        }
-    }
+    ~RollingFileSizeLogHandle() override;
 
 private:
     size_t        m_nRollingFileSize;
-    size_t        m_nCurrentFileSize;
+    size_t        m_ngetCurrentFileSize;
     size_t        m_nIndex;
     string        m_strFilePrefix;
     std::ofstream fout;

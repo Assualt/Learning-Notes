@@ -94,8 +94,8 @@ public:
     }
 };
 
-FSM_REGISTER_STATE(CompNew);
-FSM_REGISTER_STATE(CompReady);
+FSM_REGISTER_STATE(CompNew)
+FSM_REGISTER_STATE(CompReady)
 int main(int argc, char **argv) {
 
     auto new_ = StateMachine<CompState, CompEvent, FLogger>::create();

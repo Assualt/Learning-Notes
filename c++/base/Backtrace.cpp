@@ -37,7 +37,7 @@ std::string TransLateDemangle(const std::string &str) {
         return str;
     }
 
-    std::string result = str.substr(0, pos);
+    std::string result = basename(str.substr(0, pos).c_str());
     size_t      pos3   = str.find(')', pos1 + 1);
     std::string name   = GetSymbolName(str.substr(pos + 1, pos1 - pos - 1));
     result += " ";

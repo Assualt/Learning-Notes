@@ -7,6 +7,6 @@ int main(int, char **) {
 
     std::cout << t.toString() << std::endl;
     std::cout << t.toFmtString() << std::endl;
-    std::cout << t.toFmtString("%Y-%m-%d %H:%M:%S") << std::endl;
+    std::cout << t.toFmtString("%Y-%m-%d %H:%M:%S.%k") << std::endl;
     return 0;
 }

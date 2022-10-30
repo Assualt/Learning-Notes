@@ -2,7 +2,6 @@
 #include "Buffer.h"
 #include "InetAddress.h"
 #include "Socket.h"
-#include "TcpConnection.h"
 #include <optional>
 
 namespace muduo::net {
@@ -33,13 +32,12 @@ private:
     uint32_t switchToSSLConnect(const InetAddress &address);
 
 private:
-    std::unique_ptr<Socket>        socket_{nullptr};
-    std::unique_ptr<TcpConnection> conn_{nullptr};
-    int                            fd_{0};
-    int                            connectTimeOut_{0};
-    int                            sendTimeOut_{0};
-    int                            readTimeOut_{0};
-    bool                           useSsl_{false};
+    std::unique_ptr<Socket> socket_{nullptr};
+    int                     fd_{0};
+    int                     connectTimeOut_{0};
+    int                     sendTimeOut_{0};
+    int                     readTimeOut_{0};
+    bool                    useSsl_{false};
 };
 
 } // namespace muduo::net

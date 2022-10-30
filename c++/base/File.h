@@ -8,8 +8,7 @@
 #include <sys/types.h>
 #include <system_error>
 
-namespace muduo {
-namespace base {
+namespace muduo::base {
 
 DECLARE_EXCEPTION(FileException, Exception)
 class File {
@@ -34,6 +33,7 @@ public:
      * Owns the file descriptor implicitly.
      */
     explicit File(const char *name, int flags = O_RDONLY, mode_t mode = 0666);
+
     explicit File(const std::string &name, int flags = O_RDONLY, mode_t mode = 0666);
 
     explicit File(StringPiece name, int flags = O_RDONLY, mode_t mode = 0666);
@@ -58,7 +58,8 @@ public:
     /**
      * Return the file descriptor, or -1 if the file was closed.
      */
-    int      Fd() const;
+    int Fd() const;
+
     explicit operator bool() const { return m_nFd != -1; }
 
     /**
@@ -91,7 +92,7 @@ public:
 
     // movable
     File(File &&) noexcept;
-    File &operator=(File &&);
+    File &operator=(File &&) noexcept;
 
     // FLOCK (INTERPROCESS) LOCKS
     //
@@ -117,10 +118,8 @@ private:
     void DoLock(int op);
     bool DoTryLock(int op);
 
-    //
     File(const File &)            = delete;
     File &operator=(const File &) = delete;
 };
 void Swap(File &a, File &b) noexcept;
-} // namespace base
-} // namespace muduo
+} // namespace muduo::base

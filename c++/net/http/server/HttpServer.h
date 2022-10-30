@@ -52,7 +52,7 @@ private:
 
 protected:
     std::shared_ptr<EventLoop> m_pLoop{nullptr};
-    HttpConfig                 m_hConfig;
+    HttpConfig                 m_config;
     CallBack                   m_requestCallBack;
     std::shared_ptr<TcpServer> m_pServer{nullptr};
     static RequestMapper       m_mapper;

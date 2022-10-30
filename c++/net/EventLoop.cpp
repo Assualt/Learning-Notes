@@ -3,11 +3,11 @@
 #include "SocketsOp.h"
 #include "base/Logging.h"
 #include <algorithm>
-#include <assert.h>
+#include <cassert>
 #include <sys/eventfd.h>
 #include <unistd.h>
-namespace muduo {
-namespace net {
+
+namespace muduo::net {
 using muduo::net::Channel;
 
 constexpr int kPollTimeMs   = 10000;
@@ -53,13 +53,13 @@ void EventLoop::queueInLoop(Functor cb) {
     }
 }
 
-void EventLoop::quit() {
+void EventLoop::quit() const {
     if (m_nThreadId == CurrentThread::tid()) {
         wakeup();
     }
 }
 
-void EventLoop::wakeup() {
+void EventLoop::wakeup() const {
     uint64_t one = 1;
     ssize_t  n   = sockets::write(m_nWakeUpFD, &one, sizeof one);
     if (n != sizeof one) {
@@ -105,17 +105,18 @@ void EventLoop::loop() {
 
 void EventLoop::assertLoopThread() {
     if (m_nThreadId != CurrentThread::tid()) {
-        logger.fatal("thread id %s is not match current thread id:%s", m_nThreadId, CurrentThread::tid());
+        logger.error("thread id %s is not match current thread id:%s", m_nThreadId, CurrentThread::tid());
     }
 }
 
 void EventLoop::updateChannel(Channel *channel) {
-    // assert(channel->ownerLoop() == this);
+    assert(channel->ownerLoop() == this);
     assertLoopThread();
     m_Poller->updateChannel(channel);
 }
+
 void EventLoop::removeChannel(Channel *channel) {
-    // assert(channel->ownerLoop() == this);
+    assert(channel->ownerLoop() == this);
     assertLoopThread();
     if (m_bEventHanding) {
         assert(m_pCurrentChannel == channel ||
@@ -123,8 +124,8 @@ void EventLoop::removeChannel(Channel *channel) {
     }
     m_Poller->removeChannel(channel);
 }
-bool EventLoop::hasChannel(Channel *channel) {
-    // assert(channel->ownerLoop() == this);
+[[maybe_unused]] bool EventLoop::hasChannel(Channel *channel) {
+    assert(channel->ownerLoop() == this);
     assertLoopThread();
     return m_Poller->hasChannel(channel);
 }
@@ -141,7 +142,7 @@ void EventLoop::doPendingFunctors() {
     m_bCallFuncs = false;
 }
 
-void EventLoop::handleRead() {
+void EventLoop::handleRead() const {
     uint64_t one     = 1;
     ssize_t  readNum = sockets::read(m_nWakeUpFD, &one, sizeof one);
     if (readNum != sizeof one) {
@@ -149,7 +150,7 @@ void EventLoop::handleRead() {
     }
 }
 
-void EventLoop::printActiveChannels() const {
+[[maybe_unused]] void EventLoop::printActiveChannels() const {
     for (auto channel : m_vActiveChannels) {
         logger.info("[channel: %s]", channel->reventsToString());
     }
@@ -157,5 +158,4 @@ void EventLoop::printActiveChannels() const {
 
 bool EventLoop::isInLoopThread() const { return m_nThreadId == CurrentThread::tid(); }
 
-} // namespace net
-} // namespace muduo
+} // namespace muduo::net

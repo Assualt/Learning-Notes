@@ -34,7 +34,7 @@ public:
         std::string fileName;
     };
 
-    void SetAppendLF(bool val) { m_MessageAppendCRLF = val; }
+    void SetAppendLF(bool val) { m_msgAppendCrlf = val; }
 
     Logger &BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix,
                         const char *fileFormat, const char *fileMode = "a+");
@@ -52,7 +52,7 @@ public:
     template <class... Args> void alert(const char *fmt, Args &&...arg) { this->LogMessage(Alert, fmt, arg...); }
 
     template <class... Args> void emergency(const char *fmt, Args &&...arg) {
-        this->LogMessage(LogLevel::Emergency, fmt, arg...);
+        this->LogMessage(Emergency, fmt, arg...);
     }
 
     template <class... Args> void exception(const char *fmt, Args &&...arg) {
@@ -61,7 +61,7 @@ public:
         this->LogMessage(Except, "%s%s", "\n", callstack);
     }
 
-    std::string getLevelName(LogLevel nLevel);
+    static std::string getLevelName(LogLevel nLevel);
 
     Logger &setFileAttr(const std::string &filename, const std::string &funcName, int lineno);
 
@@ -76,9 +76,7 @@ public:
     void setLevel(LogLevel nLevel) { m_nLevel = nLevel; }
 
 protected:
-    std::string getCurrentHourTime(bool showMicroSeconds);
-
-    void getKeyString(const std::string &key, std::stringstream &ss, const std::string &message, LogLevel nLevel);
+    void getKeyVal(const std::string &key, std::stringstream &ss, const std::string &message, LogLevel nLevel);
 
     std::string MessageFormat(const std::string &FormattedLogMessage, LogLevel nLevel);
 
@@ -88,7 +86,7 @@ protected:
         std::string logMessage = fmt;
         formatString(logMessage, arg...);
         std::string message = MessageFormat(logMessage, nLevel);
-        if (m_MessageAppendCRLF) {
+        if (m_msgAppendCrlf) {
             message.append("\n");
         }
         for (auto &handle : m_vHandleList) {
@@ -173,12 +171,12 @@ private:
 
 protected:
     LogLevel                 m_nLevel;
-    std::string              m_strMessageFormat;
+    std::string              m_strMsgFmt;
     std::string              m_strAppName;
     FileAttribute            m_FileAttribute;
     std::vector<LogHandle *> m_vHandleList;
     MutexLock                m_mutexLock;
-    bool                     m_MessageAppendCRLF{true};
+    bool                     m_msgAppendCrlf{true};
 };
 
 } // namespace muduo::base
