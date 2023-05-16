@@ -11,7 +11,7 @@ int main(int, char **) {
 
     TcpClient client;
     client.setTimeOut(10, 5, 5);
-    bool ret = client.connect(InetAddress(8000));
+    bool ret = client.connect(InetAddress(22087));
     if (!ret) {
         logger.info("connect 0.0.0.0:8000 failed.");
         return 0;
@@ -26,7 +26,7 @@ int main(int, char **) {
             break;
         }
 
-        if (str.size() == 0) {
+        if (str.empty()) {
             logger.info("send string is empty");
             continue;
         }

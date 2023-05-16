@@ -17,7 +17,7 @@ uint32_t g_threadCallbackSig = 47;
 } // namespace
 
 void ProcInfo::RegDefaultGetThreadAction() {
-    struct sigaction sa{};
+    struct sigaction sa {};
     sa.sa_handler = ProcInfo::ThreadSignalCallback;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;

@@ -105,7 +105,7 @@ protected:
         int         nBeginIndex;
         char        filledChar = ' ';
         while (!finished) {
-            index       = result.find("%", index);
+            index       = result.find('%', index);
             nBeginIndex = index;
             if (index == std::string::npos)
                 break;
@@ -184,7 +184,9 @@ protected:
 #define LOG(appName) muduo::base::Logger::getLogger(appName).setFileAttr(__FILE__, __func__, __LINE__)
 
 #define logger LOG(APP)
+
 #define LOG_SYSTEM LOG(APP).setAppName("system")
+
 #define LOG_IF(func)                                                                                                   \
     if (func)                                                                                                          \
     LOG(APP)

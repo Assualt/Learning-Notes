@@ -35,7 +35,10 @@ void TcpConnection::handleRead(const Timestamp &timeStamp) {
     ssize_t readNum = m_socket->read(m_input);
     //    ssize_t readNum = m_input.readFd(m_channel->fd(), &error);
     if (readNum > 0) {
+        m_isMsgProcessing  = true;
+        m_lastMsgTimeStamp = timeStamp;
         m_messCallBack(shared_from_this(), &m_input, timeStamp);
+        m_isMsgProcessing = false;
     } else if (readNum == 0) {
         handleClose();
     } else {

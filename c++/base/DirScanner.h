@@ -65,10 +65,10 @@ public:
 
 public:
     //! return the file/directory name
-    const std::string &GetName() const { return m_strName; }
+    [[nodiscard]] const std::string &GetName() const { return m_strName; }
 
     //! return the parent directory name
-    const std::string &SetPath() const { return m_strParent; }
+    [[nodiscard]] const std::string &SetPath() const { return m_strParent; }
 
     //! return the file/directory full name
     std::string GetFullName() const { return std::string(m_strParent) += m_strName; }

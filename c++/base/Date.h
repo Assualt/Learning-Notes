@@ -1,12 +1,10 @@
 #pragma once
 #include <string>
-namespace muduo {
-namespace base {
+
+namespace muduo::base {
 
 class Date {
 public:
-
 };
 
-} // namespace base
-} // namespace muduo
+} // namespace muduo::base

@@ -19,5 +19,6 @@ using MessageCallback       = std::function<void(const TcpConnectionPtr &, Buffe
 using CloseCallback         = std::function<void(const TcpConnectionPtr &)>;
 using WriteCompleteCallback = std::function<void(const TcpConnectionPtr &)>;
 using HighWaterMarkCallback = std::function<void(const TcpConnectionPtr &, size_t)>;
+using MsgTimeOutCallback    = std::function<void(const TcpConnectionPtr &)>;
 } // namespace net
 } // namespace muduo

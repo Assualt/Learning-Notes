@@ -33,7 +33,7 @@ File::File(File &&rhs) noexcept
     rhs.Release();
 }
 
-File &File::operator=(File &&rhs) {
+File &File::operator=(File &&rhs) noexcept {
     CloseNoThrow();
     Swap(rhs);
     return *this;

@@ -8,7 +8,7 @@ using namespace muduo;
 using namespace muduo::base;
 
 namespace {
-const std::string g_defaultAppName = "main";
+static const std::string g_defaultAppName = "main";
 
 std::string getCurrentHourTime() {
     Timestamp now = Timestamp::now();
@@ -94,7 +94,7 @@ void Logger::getKeyVal(const std::string &key, std::stringstream &ss, const std:
         {"(threadName)", [](auto &ss, auto &msg, auto) { ss << System::GetCurrentThreadName(); }},
         {"(appname)",
          [ this ](auto &ss, auto &msg, auto) {
-             ss << m_strAppName.empty() ? g_defaultAppName : m_strAppName;
+             ss << (m_strAppName.empty() ? g_defaultAppName : m_strAppName);
              m_strAppName.clear();
          }},
         {"(threadName)", [](auto &ss, auto &msg, auto) { ss << getpwuid(getuid())->pw_name; }},

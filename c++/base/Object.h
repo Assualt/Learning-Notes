@@ -1,7 +1,6 @@
 #pragma once
 #include "nonecopyable.h"
-namespace muduo {
-namespace base {
+namespace muduo::base {
 
 enum ConstructorStage {
     INIT_SELF,
@@ -35,5 +34,4 @@ public:
     virtual bool        equals(const Object &rhs) { return true; };
 };
 
-} // namespace base
 } // namespace muduo

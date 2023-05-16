@@ -7,7 +7,7 @@ public:
     CheckSumBase()
         : WriteStream(StreamBase::STATE_OPEN) {}
 
-    virtual size_t getResultSize() const = 0;
+    [[nodiscard]] virtual size_t getResultSize() const = 0;
 };
 
 class SimpleCheckSum : public CheckSumBase {
@@ -19,11 +19,14 @@ public:
         , sum_(0) {}
 
     virtual size_t write(const char *lpBuf, size_t nSize);
-    virtual size_t flush();
-    size_t         getCheckSum() const;
 
-    void           reset();
-    virtual size_t getResultSize() const;
+    size_t flush() override;
+
+    [[nodiscard]] size_t getCheckSum() const;
+
+    void reset();
+
+    [[nodiscard]] virtual size_t getResultSize() const;
 
 private:
     unsigned short r_;
@@ -38,11 +41,11 @@ public:
         : CheckSumBase()
         , sum_(UINT32_MAX) {}
 
-    virtual size_t write(const void *lpBuf, size_t nSize);
-    virtual size_t flush();
+    size_t write(const void *lpBuf, size_t nSize) override;
+    size_t flush() override;
     uint32_t       getChecksum() const;
     void           reset();
-    virtual size_t getResultSize() const;
+    [[nodiscard]] virtual size_t getResultSize() const;
 
 private:
     uint32_t sum_;

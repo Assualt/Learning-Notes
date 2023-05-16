@@ -13,17 +13,19 @@
 
 #include "Poller.h"
 #include <memory>
+
 using muduo::base::MutexLock;
 using muduo::base::nonecopyable;
 using muduo::base::Timestamp;
-namespace muduo {
-namespace net {
+
+namespace muduo::net {
 
 class EventLoop : nonecopyable {
 
 public:
     typedef std::function<void()>  Functor;
     typedef std::vector<Channel *> ChannelList;
+
     EventLoop();
 
     ~EventLoop();
@@ -32,7 +34,7 @@ public:
     void loop();
 
     // Quit Loop
-    void quit();
+    void quit() const;
 
     void updateChannel(Channel *channel);
 
@@ -48,7 +50,7 @@ public:
 
     void wakeup() const;
 
-    void handleRead();
+    void handleRead() const;
 
     bool isInLoopThread() const;
 
@@ -75,5 +77,4 @@ protected:
     pid_t                    m_nThreadId;
     std::unique_ptr<Channel> m_wakeupChannel{nullptr};
 };
-} // namespace net
-} // namespace muduo
+} // namespace muduo::net

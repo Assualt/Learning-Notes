@@ -64,6 +64,10 @@ public:
 
     void shutdownInLoop();
 
+    Timestamp getLastMsgTimeStamp() const { return m_lastMsgTimeStamp; }
+
+    bool isMsgProcessing() const { return m_isMsgProcessing; }
+
 protected:
     void sendInLoop(const void *data, size_t len);
 
@@ -85,6 +89,9 @@ protected:
     // Buffer
     Buffer m_input;
     Buffer m_output;
+
+    bool      m_isMsgProcessing{false};
+    Timestamp m_lastMsgTimeStamp;
 };
 
 } // namespace muduo::net

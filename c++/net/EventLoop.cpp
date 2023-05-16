@@ -124,6 +124,7 @@ void EventLoop::removeChannel(Channel *channel) {
     }
     m_Poller->removeChannel(channel);
 }
+
 [[maybe_unused]] bool EventLoop::hasChannel(Channel *channel) {
     assert(channel->ownerLoop() == this);
     assertLoopThread();
@@ -135,9 +136,7 @@ void EventLoop::doPendingFunctors() {
     m_bCallFuncs = true;
     { funcs.swap(m_vPendingFunctors); }
     {
-        for (const Functor &fun : funcs) {
-            fun();
-        }
+        std::for_each(funcs.begin(), funcs.end(), [](auto func) { func(); });
     }
     m_bCallFuncs = false;
 }

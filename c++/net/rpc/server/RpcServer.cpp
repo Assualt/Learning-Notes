@@ -11,6 +11,9 @@ RpcServer::RpcServer(EventLoop *loop, const InetAddress &addr, bool useSSL)
     m_tcpServer->SetMessageCallback([ this ](const TcpConnectionPtr &conn, Buffer *buffer, Timestamp recvTime) {
         onMessage(conn, buffer, recvTime);
     });
+
+    m_tcpServer->SetMsgTimeoutCallback(
+        5, [](auto &conn) { logger.info("msg timeout for connection from:%s", conn->peerAddress().toIpPort()); });
 }
 
 bool RpcServer::initEx(int threadNum) {
@@ -32,10 +35,10 @@ void RpcServer::onMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timestam
 
     logger.info("recv buffer is ==> %s <==", buffer->peek());
     Buffer out;
-    out.append("{\"name\":\"OK\"}");
+    out.append(R"({"name":"OK"})");
 
     conn->send(&out);
-    conn->shutdown();
+    buffer->retrieveAll();
 }
 
 void RpcServer::start() {

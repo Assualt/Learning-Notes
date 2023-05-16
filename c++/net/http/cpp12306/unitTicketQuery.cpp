@@ -86,7 +86,7 @@ public:
     [[maybe_unused]] void InitTicketQuery(const std::string &from, const std::string &to, const std::string &date);
 
 private:
-    int         SplitStringToStationDetail(const std::string &ss);
+    int         SplitStringToStationDetail(const std::string &strStation);
     std::string formattedLeftTicketUrl(const std::string &fromStation, const std::string &destStation,
                                        const std::string &travelDate, TravelerType type);
     void        saveStationDetail(const std::string &strStationPath = "station_name.txt");
