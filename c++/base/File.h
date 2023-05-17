@@ -44,7 +44,7 @@ public:
      * to something else you want to do with the open fd.
      */
 
-    template <typename... Args> static std::shared_ptr<File> makeFile(Args &&...arg) noexcept {
+    template <typename... Args> static std::shared_ptr<File> makeFile(Args &&... arg) noexcept {
         return std::make_shared<File>(new File(std::forward<Args>(arg)...));
     }
 
@@ -118,7 +118,7 @@ private:
     void DoLock(int op);
     bool DoTryLock(int op);
 
-    File(const File &)            = delete;
+    File(const File &) = delete;
     File &operator=(const File &) = delete;
 };
 void Swap(File &a, File &b) noexcept;

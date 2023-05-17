@@ -83,7 +83,6 @@ bool DefaultController::onGet(const HttpRequest &request, HttpResponse &response
     response.addHeader(ContentType, "text/html");
     response.addHeader(Date, utils::toResponseBasicDateString());
     return true;
-    return true;
 }
 
 bool DefaultController::onPost(const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) {

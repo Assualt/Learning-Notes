@@ -1,8 +1,5 @@
 #pragma once
 
 namespace fsm {
-class StateConfigure {
-
-
-};
+class StateConfigure {};
 } // namespace fsm

@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <unordered_map>
 
+#define MAX_PATH_SIZE 256
 namespace muduo::base::System {
 
 inline int Mkdir(const std::string &path, int mode) { return ::mkdir(path.c_str(), mode); }
@@ -21,8 +22,14 @@ inline int Remove(const std::string &path) { return ::remove(path.c_str()); }
 inline bool Access(const std::string &file, int flag) { return access(file.c_str(), flag) == 0; }
 
 inline std::string GetCurrentThreadName() {
-    char tempName[ 256 ] = {0};
+    char tempName[ MAX_PATH_SIZE ] = {0};
     (void)prctl(PR_GET_NAME, tempName);
+    return tempName;
+}
+
+inline std::string CurrentPwd() {
+    char tempName[ MAX_PATH_SIZE ] = {0};
+    (void)getcwd(tempName, sizeof(tempName));
     return tempName;
 }
 
@@ -38,7 +45,7 @@ inline const char *GetSigName(int sig) {
     static std::unordered_map<int, const char *> g_sigNameMapper = {
         {SIGINT, "SIGINT"},   {SIGSEGV, "SIGSEGV"}, {SIGHUP, "SIGHUP"},   {SIGPIPE, "SIGPIPE"},
         {SIGQUIT, "SIGQUIT"}, {SIGKILL, "SIGKILL"}, {SIGTERM, "SIGTERM"}, {SIGCHLD, "SIGCHLD"},
-        {SIGIOT, "SIGIOT"},   {SIGUSR1, "SIGUSR1"}, {SIGALRM, "SIGALRM"}};
+        {SIGIOT, "SIGIOT"},   {SIGUSR1, "SIGUSR1"}, {SIGALRM, "SIGALRM"}, {SIGBUS, "SIGBUS"}};
 
     auto iter = g_sigNameMapper.find(sig);
     return iter != g_sigNameMapper.end() ? iter->second : "NULL";

@@ -21,7 +21,7 @@ const std::string MainTicketUrl       = "https://kyfw.12306.cn";
 const std::string TicketQueryInitUrl  = "https://kyfw.12306.cn/otn/lcxxcx/init";
 const std::string TicketQueryDeviceID = "https://kyfw.12306.cn/otn/HttpZF/logdevice";
 const std::string TicketInitUrl       = "https://kyfw.12306.cn/otn/leftTicket/"
-                                        "init?linktypeid=dc&fs=%,%&ts=%,%&date=%&flag=%,%,%";
+                                  "init?linktypeid=dc&fs=%,%&ts=%,%&date=%&flag=%,%,%";
 
 const std::string queryCookie =
     "_uab_collina=166515664743421659295045; JSESSIONID=3BE2203D333EC5823D12EC28C93E0E05; "
@@ -115,7 +115,7 @@ void TicketQueryMgr::LoadStationDetail(std::ifstream &fin) {
     logger.info("json parse err:%s", err.empty() ? "NO ERR" : err);
     if (arr.is_array()) {
         auto &arrays = arr.array_items();
-        std::for_each(arrays.begin(), arrays.end(), [ this ](const json::Json &obj) {
+        std::for_each(arrays.begin(), arrays.end(), [this](const json::Json &obj) {
             auto          dict = obj.object_items();
             StationDetail detail;
             detail.m_nStationNumber   = dict[ "stNo" ].int_value();
@@ -132,7 +132,7 @@ void TicketQueryMgr::LoadStationDetail(std::ifstream &fin) {
 
 void TicketQueryMgr::saveStationDetail(const std::string &strStationPath) {
     json::Json allVec(json::Json::ARRAY);
-    std::for_each(m_mStationDetailVec.begin(), m_mStationDetailVec.end(), [ &allVec ](const StationDetail &detail) {
+    std::for_each(m_mStationDetailVec.begin(), m_mStationDetailVec.end(), [&allVec](const StationDetail &detail) {
         json::Json dict(json::Json::OBJECT);
 
         dict[ "stNo" ]     = detail.m_nStationNumber;

@@ -13,7 +13,7 @@ class Acceptor : base::nonecopyable {
 public:
     typedef std::function<void(int, const InetAddress &, void *)> NewConnectionCallback;
 
-    Acceptor(EventLoop *loop, const InetAddress &listenAddress, bool reUsePort, bool useSSL = false);
+    Acceptor(EventLoop *loop, const InetAddress &listenAddress, bool reUsePort);
 
     ~Acceptor();
 
@@ -25,10 +25,12 @@ public:
 
     void closeSocket();
 
+    void InitSslPemKey(const std::string &certPath, const std::string &pemPath);
+
 private:
     void handleRead();
 
-    EventLoop            *m_pLoop{nullptr};
+    EventLoop *           m_pLoop{nullptr};
     Socket                m_nAcceptSocket;
     Channel               m_cAcceptChannel;
     NewConnectionCallback newConnectionCallback;

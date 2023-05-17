@@ -18,9 +18,9 @@ public:
         : m_strErrorMsg(what) {}
 
     [[nodiscard]] const char *what() const noexcept override { return m_strErrorMsg.c_str(); }
-    friend std::ostream      &operator<<(std::ostream &out, Exception &e) {
-             out << e.what();
-             return out;
+    friend std::ostream &     operator<<(std::ostream &out, Exception &e) {
+        out << e.what();
+        return out;
     }
 
 private:

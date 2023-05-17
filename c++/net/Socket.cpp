@@ -214,7 +214,7 @@ int32_t Socket::read(Buffer &buf) {
 
         buf.append(buffer, nRead);
         nTotal += nRead;
-#if 0
+#ifdef DEBUG
         printf("\n Read ======> %d\n", nRead);
         for (auto idx = 0; idx < nRead; idx++) {
             printf("%02x ", buffer[ idx ] & 0xFF);

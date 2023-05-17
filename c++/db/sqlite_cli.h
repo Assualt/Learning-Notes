@@ -15,7 +15,7 @@ public:
     bool openDb(const std::string &dbpath, int option = DefaultMode);
 
     template <int N> std::vector<std::vector<std::string>> query(SqlPrepareStatement &stmt) {
-        sqlite3_stmt                         *st = nullptr;
+        sqlite3_stmt *                        st = nullptr;
         int                                   ret;
         std::vector<std::vector<std::string>> result;
         if ((ret = sqlite3_prepare_v2(m_sqlHandle, stmt.getFullExecuteSql().c_str(), -1, &st, nullptr)) != SQLITE_OK) {
@@ -41,7 +41,7 @@ public:
 
 protected:
     std::string m_strDBFilePath;
-    sqlite3    *m_sqlHandle{nullptr};
+    sqlite3 *   m_sqlHandle{nullptr};
 };
 
 } // namespace db

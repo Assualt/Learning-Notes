@@ -30,7 +30,7 @@ public:
     void PreInit() {
         decltype(m_objMap) pool;
         bool               failed = false;
-        std::for_each(m_creators.begin(), m_creators.end(), [ &failed, &pool ](auto item) {
+        std::for_each(m_creators.begin(), m_creators.end(), [&failed, &pool](auto item) {
             if (failed) {
                 return;
             }
@@ -53,7 +53,7 @@ public:
         std::vector<ConstructorStage> stages = {INIT_SELF, INIT_OTHER, INIT_FINISH};
         for (auto stage : stages) {
             auto result = std::all_of(m_objMap.begin(), m_objMap.end(),
-                                      [ &stage ](auto &item) { return item.second->AutoInit(stage); });
+                                      [&stage](auto &item) { return item.second->AutoInit(stage); });
             LOG_IF(result != true).info("auto init func failed in stage:%d result:%d", static_cast<int>(stage), result);
         }
     }

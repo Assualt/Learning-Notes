@@ -1,8 +1,8 @@
 //
 // Created by xhou on 2022/10/30.
 //
-#include "LogHandle.h"
 #include "Format.h"
+#include "LogHandle.h"
 #include "System.h"
 #include "Timestamp.h"
 #include <iostream>

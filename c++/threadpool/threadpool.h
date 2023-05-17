@@ -33,8 +33,7 @@ class threadpool {
 
 public:
     threadpool()
-        : stoped(false) {
-    }
+        : stoped(false) {}
 
     threadpool(short size)
         : stoped{false} {
@@ -47,9 +46,11 @@ public:
             pool.emplace_back([this] {             // 工作线程函数
                 while (!this->stoped) {
                     std::function<void()> task;
-                    {                                                                                             // 获取一个待执行的 task
-                        std::unique_lock<std::mutex> lock{this->m_lock};                                          // unique_lock 相比 lock_guard 的好处是：可以随时 unlock() 和 lock()
-                        this->cv_task.wait(lock, [this] { return this->stoped.load() || !this->tasks.empty(); }); // wait 直到有 task
+                    { // 获取一个待执行的 task
+                        std::unique_lock<std::mutex> lock{
+                            this->m_lock}; // unique_lock 相比 lock_guard 的好处是：可以随时 unlock() 和 lock()
+                        this->cv_task.wait(
+                            lock, [this] { return this->stoped.load() || !this->tasks.empty(); }); // wait 直到有 task
                         if (this->stoped && this->tasks.empty())
                             return;
                         task = std::move(this->tasks.front()); // 取一个 task
@@ -84,11 +85,13 @@ public:
         if (stoped.load()) // stop == true ??
             throw std::runtime_error("commit on ThreadPool is stopped.");
 
-        using RetType               = decltype(f(args...)); // typename std::result_of<F(Args...)>::type, 函数 f 的返回值类型
-        auto                 task   = std::make_shared<std::packaged_task<RetType()>>(std::bind(std::forward<F>(f), std::forward<Args>(args)...)); // wtf !
+        using RetType = decltype(f(args...)); // typename std::result_of<F(Args...)>::type, 函数 f 的返回值类型
+        auto task     = std::make_shared<std::packaged_task<RetType()>>(
+            std::bind(std::forward<F>(f), std::forward<Args>(args)...)); // wtf !
         std::future<RetType> future = task->get_future();
         {                                             // 添加任务到队列
-            std::lock_guard<std::mutex> lock{m_lock}; //对当前块的语句加锁  lock_guard 是 mutex 的 stack 封装类，构造的时候 lock()，析构的时候 unlock()
+            std::lock_guard<std::mutex> lock{m_lock}; //对当前块的语句加锁  lock_guard 是 mutex 的 stack
+                                                      //封装类，构造的时候 lock()，析构的时候 unlock()
             tasks.emplace([task]() {                  // push(Task{...})
                 (*task)();
             });
@@ -99,9 +102,7 @@ public:
     }
 
     //空闲线程数量
-    int idlCount() {
-        return idlThrNum;
-    }
+    int idlCount() { return idlThrNum; }
 };
 
 } // namespace std

@@ -72,7 +72,7 @@ protected:
     void sendInLoop(const void *data, size_t len);
 
 protected:
-    EventLoop               *m_pLoop{nullptr};
+    EventLoop *              m_pLoop{nullptr};
     const InetAddress        m_locAddr;
     const InetAddress        m_peerAddr;
     TcpState                 m_state;

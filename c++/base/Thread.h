@@ -18,7 +18,7 @@ struct ThreadContext {
 public:
     ThreadFunc  m_func{nullptr};
     std::string m_strThreadName;
-    pid_t      *m_nPid{nullptr};
+    pid_t *     m_nPid{nullptr};
 
 public:
     ThreadContext(ThreadFunc func, const std::string &name, pid_t *pid);

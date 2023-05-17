@@ -7,9 +7,9 @@
 
 #include <algorithm>
 #include <cstring>
+#include <sstream>
 #include <string>
 #include <string_view>
-#include <sstream>
 #include <vector>
 
 namespace muduo::base::util {
@@ -88,7 +88,7 @@ template <class typeString> static typeString trim(const typeString &strVal, con
 }
 
 static int count(const std::string &strVal, char ch) {
-    return std::count_if(strVal.begin(), strVal.end(), [ ch ](char c) { return ch == c; });
+    return std::count_if(strVal.begin(), strVal.end(), [ch](char c) { return ch == c; });
 }
 
 template <typename Target, typename Source, bool Same> class lexical_cast_t {

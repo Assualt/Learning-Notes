@@ -13,20 +13,35 @@
 SigHandleMap  HttpServer::m_signalCallBack;
 RequestMapper HttpServer::m_mapper;
 
-HttpServer::HttpServer(EventLoop *loop, const InetAddress &address, const std::string &cfgPath, bool useHttps)
+HttpServer::HttpServer(EventLoop *loop, const InetAddress &address, bool useHttps)
     : m_pLoop(loop)
-    , m_pServer(new TcpServer(loop, address, "tcpServer", useHttps)) {
+    , m_pServer(new TcpServer(loop, address, "tcpServer")) {
+    Init(loop, useHttps);
+}
+
+HttpServer::HttpServer(EventLoop *loop, const std::string &cfgPath)
+    : m_pLoop(loop) {
+    m_config.Init(cfgPath);
+    m_pServer = std::make_shared<TcpServer>(loop, InetAddress(m_config.getServerPort()), m_config.getServerName());
+    Init(loop, m_config.getSupportSSL());
+}
+
+void HttpServer::Init(EventLoop *loop, bool useSSl) {
     auto &accessLogger = Logger::getLogger("AccessLogger");
     accessLogger.BasicConfig(LogLevel::Debug, "%(message)", "access.log", "");
     m_httpLog.reset(new HttpLog(accessLogger));
-    m_pServer->SetConnectionCallback([ this ](const TcpConnectionPtr& conn) { onConnect(conn); });
+    m_pServer->SetConnectionCallback([this](const TcpConnectionPtr &conn) { onConnect(conn); });
     m_pServer->SetMessageCallback(
-        [ this ](const TcpConnectionPtr& conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
+        [this](const TcpConnectionPtr &conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
+    m_pServer->SetMsgTimeoutCallback(0, nullptr);
     m_httpLog->Init();
-    m_config.Init(cfgPath);
-
     if (m_config.getSupportWebSocket()) {
-        m_pWsServer = std::make_shared<WsServer>(loop, InetAddress(m_config.getWebSocketPort()), m_config, useHttps);
+        m_pWsServer = std::make_shared<WsServer>(loop, InetAddress(m_config.getWebSocketPort()), m_config,
+                                                 m_config.getSupportSSL());
+    }
+
+    if (useSSl) {
+        m_pServer->InitSslConfig(m_config.getSSLCertPath(), m_config.getSSLPrivateKeyPath());
     }
 }
 
@@ -52,6 +67,7 @@ void HttpServer::onMessage(const TcpConnectionPtr &conn, Buffer *buf, Timestamp 
         conn->send("HTTP/1.1 400 Bad Request\r\n\r\n", 29);
         conn->shutdown();
     }
+
     if (context.gotAll() || context.gotEnd()) {
         onRequest(conn, context.request());
         context.reset();
@@ -65,7 +81,7 @@ void HttpServer::onRequest(const TcpConnectionPtr &conn, HttpRequest &request) {
     }
 
     HttpResponse response(close);
-    std::string basicRequestPath = m_config.getServerRoot();
+    std::string  basicRequestPath = m_config.getServerRoot();
     if (basicRequestPath.back() != '/') {
         basicRequestPath += "/";
     }
@@ -136,7 +152,7 @@ void HttpServer::RegSignalCallback(int sig, uintptr_t param, SignalCallback cb) 
     }
 
     m_signalCallBack[ sig ] = {cb, param};
-    struct sigaction sa{};
+    struct sigaction sa {};
     sa.sa_handler = HttpServer::SignalHandler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;

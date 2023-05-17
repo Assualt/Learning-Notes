@@ -32,14 +32,11 @@ public:
         return true;
     }
 
-    virtual uint32_t configure(FsmConfig &cfg) {
-        return 0;
-    }
+    virtual uint32_t configure(FsmConfig &cfg) { return 0; }
 
-    void initRootState(StateEnum state) {
-    }
+    void initRootState(StateEnum state) {}
 };
 
-#define FSM_REGISTER_STATE(name) \
+#define FSM_REGISTER_STATE(name)                                                                                       \
     static __attribute((constructor)) void __fsmConfig##name() { printf("before main\n"); }
 } // namespace fsm

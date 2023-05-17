@@ -16,7 +16,7 @@ Timer::Timer(uint32_t total, double eachDelay, TimerCallback cb, uintptr_t para1
 }
 
 void Timer::Start() {
-    auto predFunc = [ this ]() {
+    auto predFunc = [this]() {
         auto begin = Timestamp::now();
         while (!exit_) {
             cb_(userParam_.para1, userParam_.para2);

@@ -1,5 +1,5 @@
-#include "InetAddress.h"
 #include "Endian.h"
+#include "InetAddress.h"
 #include "SocketsOp.h"
 #include "base/Format.h"
 #include <netinet/in.h>

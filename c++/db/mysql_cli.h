@@ -74,7 +74,7 @@ private:
     std::string m_strDefaultCharSet{"UTF-8"};
     std::string m_strDatabaseName;
 
-    MYSQL      *driver_{nullptr};
+    MYSQL *     driver_{nullptr};
     std::string m_strErrMsg;
     bool        m_bIsConnected{false};
 };

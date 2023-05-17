@@ -41,10 +41,10 @@ public:
         : CheckSumBase()
         , sum_(UINT32_MAX) {}
 
-    size_t write(const void *lpBuf, size_t nSize) override;
-    size_t flush() override;
-    uint32_t       getChecksum() const;
-    void           reset();
+    size_t                       write(const void *lpBuf, size_t nSize) override;
+    size_t                       flush() override;
+    uint32_t                     getChecksum() const;
+    void                         reset();
     [[nodiscard]] virtual size_t getResultSize() const;
 
 private:
@@ -62,7 +62,7 @@ public:
 
     virtual size_t getResultSize() const;
 
-    const char  *getMD5String() const;
+    const char * getMD5String() const;
     const tbyte *getMD5Digest() const;
 
 protected:

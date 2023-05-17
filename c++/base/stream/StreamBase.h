@@ -112,8 +112,8 @@ public:
         typedef tbyte                     value_type;
         typedef size_t                    difference_type;
         typedef size_t                    distance_type; // retained
-        typedef tbyte                    *pointer;
-        typedef const tbyte              &reference;
+        typedef tbyte *                   pointer;
+        typedef const tbyte &             reference;
 
         explicit iterator(ReadStreamBuffer &iBuffer)
             : m_pBuffer(&iBuffer) {}
@@ -126,7 +126,7 @@ public:
 
         ~iterator() = default;
 
-        const tbyte     &operator*() const { return *m_pBuffer->getBegin(); }
+        const tbyte &    operator*() const { return *m_pBuffer->getBegin(); }
         inline iterator &operator++() {
             if (m_pBuffer->moveNext() == 0 && m_pBuffer->getNext() == 0)
                 m_pBuffer = nullptr;
@@ -216,7 +216,7 @@ public:
     void release();
 
 protected:
-    ReadStream  *m_pParent;
+    ReadStream * m_pParent;
     size_t       m_nCacheSize;
     const tbyte *m_lpReadBegin;
     const tbyte *m_lpReadEnd;
@@ -232,12 +232,12 @@ public:
     public:
         typedef std::forward_iterator_tag iterator_category;
         typedef tbyte                     value_type;
-        typedef tbyte                    *pointer;
-        typedef const tbyte              &reference;
+        typedef tbyte *                   pointer;
+        typedef const tbyte &             reference;
 
-        explicit write_iterator(WriteStreamBuffer &iBuffer)
+        explicit write_iterator(WriteStreamBuffer & iBuffer)
             : m_pBuffer(&iBuffer) {}
-        explicit write_iterator(WriteStreamBuffer *pBuffer)
+        explicit write_iterator(WriteStreamBuffer * pBuffer)
             : m_pBuffer(pBuffer) {}
         write_iterator(const write_iterator &it)
             : m_pBuffer(it.m_pBuffer) {}
@@ -332,9 +332,9 @@ public:
 
 protected:
     WriteStream *m_pParent;
-    tbyte       *m_lpWriteBegin;
-    tbyte       *m_lpWriteEnd;
-    tbyte       *m_lpBufferBegin;
+    tbyte *      m_lpWriteBegin;
+    tbyte *      m_lpWriteEnd;
+    tbyte *      m_lpBufferBegin;
     friend class WriteStream;
 };
 

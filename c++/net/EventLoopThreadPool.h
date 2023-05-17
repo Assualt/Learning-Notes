@@ -24,10 +24,10 @@ public:
 
     std::vector<EventLoop *> getAllLoops();
     bool                     isStart();
-    const std::string       &name() const;
+    const std::string &      name() const;
 
 private:
-    EventLoop                                    *m_pBaseLoop;
+    EventLoop *                                   m_pBaseLoop;
     std::string                                   m_strName;
     bool                                          m_bIsStarted;
     int                                           m_nThreadNum;

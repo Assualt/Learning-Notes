@@ -51,7 +51,7 @@ protected:
     std::string           m_strAuthPass;
     bool                  m_bAuthPassed = false;
     static TIgnoreCaseSet m_SupportMethods;
-    MailContext          &m_mailContext;
+    MailContext &         m_mailContext;
     bool                  m_bDataRecving{false};
 };
 

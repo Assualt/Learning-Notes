@@ -285,7 +285,7 @@ size_t StreamBase::copyStreamToStream(ReadStream *pSrc, WriteStream *pTar, size_
     auto                     tmpSize    = std::min(nInputCacheSize, nCopyData);
     size_t                   nCacheSize = std::min(g_nMaxCacheSize, std::max(g_nMinCacheSize, tmpSize));
     std::shared_ptr<tbyte[]> auBuf(new tbyte[ nCacheSize ]);
-    tbyte                   *tp    = auBuf.get();
+    tbyte *                  tp    = auBuf.get();
     size_t                   nSave = nCopyData;
 
     while (nCopyData) {

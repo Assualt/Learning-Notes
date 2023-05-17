@@ -37,8 +37,8 @@ TEST(File, test_file_read) {
 
     File file("/tmp/a.txt");
 
-    char temp[256] = {0};
-    auto size = file.ReadBytes(temp, sizeof(temp));
+    char temp[ 256 ] = {0};
+    auto size        = file.ReadBytes(temp, sizeof(temp));
 
     EXPECT_EQ(size, 17);
     EXPECT_TRUE(strncmp(temp, "HelloWorld\nHello\n", 17) == 0);

@@ -88,12 +88,12 @@ void Logger::getKeyVal(const std::string &key, std::stringstream &ss, const std:
         {"(levelname)", [](auto &ss, auto &, auto level) { ss << getLevelName(level); }},
         {"(asctime)", [](auto &ss, auto &msg, auto) { ss << getCurrentHourTime(); }},
         {"(ctime)", [](auto &ss, auto &msg, auto) { ss << Timestamp::now().toFmtString(); }},
-        {"(lineno)", [ this ](auto &ss, auto &msg, auto) { ss << std::dec << m_FileAttribute.lineNo; }},
-        {"(filename)", [ this ](auto &ss, auto &msg, auto) { ss << stripFileName(m_FileAttribute.fileName); }},
-        {"(funcname)", [ this ](auto &ss, auto &msg, auto) { ss << m_FileAttribute.funcName; }},
+        {"(lineno)", [this](auto &ss, auto &msg, auto) { ss << std::dec << m_FileAttribute.lineNo; }},
+        {"(filename)", [this](auto &ss, auto &msg, auto) { ss << stripFileName(m_FileAttribute.fileName); }},
+        {"(funcname)", [this](auto &ss, auto &msg, auto) { ss << m_FileAttribute.funcName; }},
         {"(threadName)", [](auto &ss, auto &msg, auto) { ss << System::GetCurrentThreadName(); }},
         {"(appname)",
-         [ this ](auto &ss, auto &msg, auto) {
+         [this](auto &ss, auto &msg, auto) {
              ss << (m_strAppName.empty() ? g_defaultAppName : m_strAppName);
              m_strAppName.clear();
          }},

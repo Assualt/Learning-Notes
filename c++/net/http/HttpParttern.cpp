@@ -95,7 +95,7 @@ void RequestMapper::addRequestObject(const Key &key, uintptr_t object) {
 
 void RequestMapper::removeRequestObject(const std::string &pattern) {
     auto iter = std::find_if(m_vRequestsMapper.begin(), m_vRequestsMapper.end(),
-                             [ &pattern ](auto &item) { return item.first.pattern_ == pattern; });
+                             [&pattern](auto &item) { return item.first.pattern_ == pattern; });
     if (iter != m_vRequestsMapper.end()) {
         AutoLock lock(lock_);
         logger.debug("success delete key:%s object:%d", pattern, iter->second);
@@ -124,9 +124,9 @@ std::optional<uintptr_t> RequestMapper::findHandle(const std::string &reqPath, c
 int RequestMapper::Key::transferMethod(const std::string &method) {
     std::string                            reqType = utils::toLower(method);
     static std::map<std::string, REQ_TYPE> reqMap  = {
-         {"get", REQ_TYPE::TYPE_GET},
-         {"post", REQ_TYPE::TYPE_POST},
-         {"put", REQ_TYPE::TYPE_PUT},
+        {"get", REQ_TYPE::TYPE_GET},
+        {"post", REQ_TYPE::TYPE_POST},
+        {"put", REQ_TYPE::TYPE_PUT},
     };
 
     auto itr = reqMap.find(reqType);

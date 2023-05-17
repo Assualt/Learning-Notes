@@ -151,8 +151,13 @@ private:
     std::shared_ptr<ConfigureManager> mgr_{nullptr};
 
 public:
+    PARAM_SETTER_GETTER(SSLCertPath, std::string);
+    PARAM_SETTER_GETTER(SSLPrivateKeyPath, std::string);
+    PARAM_SETTER_GETTER(SupportSSL, bool);
+    PARAM_SETTER_GETTER(ServerName, std::string);
     PARAM_SETTER_GETTER(AuthName, std::string);
     PARAM_SETTER_GETTER(ServerRoot, std::string);
+    PARAM_SETTER_GETTER(ServerPort, int32_t);
     PARAM_SETTER_GETTER(DirentTmplateHtml, std::string);
     PARAM_SETTER_GETTER(RecoredLog, bool);
     PARAM_SETTER_GETTER(SupportWebSocket, bool);

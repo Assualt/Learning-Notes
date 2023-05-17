@@ -103,6 +103,5 @@ int main(int, char **) {
     result = client.lrange("key_5");
     std::for_each(result.begin(), result.end(), [](auto item) { logger.info("item => %s", item); });
 
-
     return 0;
 }

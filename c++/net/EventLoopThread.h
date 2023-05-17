@@ -25,7 +25,7 @@ private:
     void threadFunc();
 
 private:
-    EventLoop                 *m_pLoop;
+    EventLoop *                m_pLoop;
     bool                       m_bExited;
     Thread                     m_thread;
     ThreadInitCallback         m_callback;

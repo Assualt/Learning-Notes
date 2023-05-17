@@ -20,6 +20,6 @@ public:
 
 private:
     pthread_cond_t m_cond{};
-    MutexLock     &m_lock;
+    MutexLock &    m_lock;
 };
-} // namespace muduo
+} // namespace muduo::base

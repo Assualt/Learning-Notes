@@ -47,7 +47,7 @@ public:
     const char *findCRLF() const;
     const char *findCRLF(const char *start) const;
     const char *beginWrite() const;
-    char       *beginWrite();
+    char *      beginWrite();
 
     const char *findEOL() const;
     const char *findEOL(const char *start) const;
@@ -105,7 +105,7 @@ public:
 
 private:
     const char *begin() const;
-    char       *begin();
+    char *      begin();
     void        makeSpace(size_t len);
 };
 

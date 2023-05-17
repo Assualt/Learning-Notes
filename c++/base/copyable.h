@@ -5,4 +5,4 @@ protected:
     copyable()  = default;
     ~copyable() = default;
 };
-} // namespace muduo
+} // namespace muduo::base

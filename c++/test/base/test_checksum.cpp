@@ -35,7 +35,9 @@ TEST(SimpleCheckSum, test_crc32) {
     CRC32 crc32;
     crc32.write("HelloWorld", 10);
     crc32.flush();
-    auto result = Trim(GetSystemResult("echo -n HelloWorld | gzip -1 | tail -c 8 | head -c 4 | hexdump -e '1/4 \"%08x\" \"\n\"'"), '\n');
+    auto result =
+        Trim(GetSystemResult("echo -n HelloWorld | gzip -1 | tail -c 8 | head -c 4 | hexdump -e '1/4 \"%08x\" \"\n\"'"),
+             '\n');
     EXPECT_EQ(result, ToHexString(crc32.getChecksum()));
 }
 

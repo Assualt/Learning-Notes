@@ -32,7 +32,7 @@ public:
     bool Reload(ConfigureManager &config);
 
 public:
-    static MailEnv   &getInstance();
+    static MailEnv &getInstance();
 
 public:
     std::string getServerIP() const { return m_strServerIP; }

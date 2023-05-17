@@ -2,8 +2,8 @@
 // Created by xhou on 2022/10/7.
 //
 
-#include "StringUtil.h"
 #include "Ascii.h"
+#include "StringUtil.h"
 
 using namespace muduo::base;
 
@@ -34,14 +34,14 @@ bool util::EndsWithIgnoreCase(std::string_view text, std::string_view suffix) no
 
 std::string util::TrimLeft(const std::string &src, char ch) {
     std::string           temp = src;
-    std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [ &ch ](char c) { return 32 != c; });
+    std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [&ch](char c) { return 32 != c; });
     temp.erase(temp.begin(), p);
     return temp;
 }
 
 std::string util::TrimRight(const std::string &src, char ch) {
     std::string                   temp = src;
-    std::string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [ &ch ](char c) { return ch != c; });
+    std::string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [&ch](char c) { return ch != c; });
     temp.erase(p.base(), temp.end());
     return temp;
 }

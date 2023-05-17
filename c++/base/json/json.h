@@ -178,12 +178,12 @@ protected:
     virtual double              number_value() const;
     virtual int                 int_value() const;
     virtual bool                bool_value() const;
-    virtual const std::string  &string_value() const;
-    virtual const Json::array  &array_items() const;
-    virtual const Json         &operator[](size_t i) const;
+    virtual const std::string & string_value() const;
+    virtual const Json::array & array_items() const;
+    virtual const Json &        operator[](size_t i) const;
     virtual const Json::object &object_items() const;
-    virtual const Json         &operator[](const std::string &key) const;
-    virtual Json               &operator[](const std::string &key);
+    virtual const Json &        operator[](const std::string &key) const;
+    virtual Json &              operator[](const std::string &key);
     virtual void                push_back(const Json &val);
     virtual time_t              datetime_value() const;
     virtual ~JsonValue() = default;

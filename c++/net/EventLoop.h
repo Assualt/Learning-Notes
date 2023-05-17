@@ -69,7 +69,7 @@ protected:
     int m_nWakeUpFD;
 
     ChannelList              m_vActiveChannels;
-    Channel                 *m_pCurrentChannel;
+    Channel *                m_pCurrentChannel;
     Timestamp                m_tRecvTimeStamp;
     std::unique_ptr<Poller>  m_Poller{nullptr};
     std::vector<Functor>     m_vPendingFunctors;

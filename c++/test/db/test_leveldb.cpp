@@ -5,7 +5,9 @@
 using namespace muduo::base;
 int main(int argc, char const *argv[]) {
     auto &log = Logger::getLogger();
-    log.BasicConfig(LogLevel::Debug, "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(funcname):%(lineno)] %(message)", "", "");
+    log.BasicConfig(LogLevel::Debug,
+                    "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(funcname):%(lineno)] %(message)", "",
+                    "");
     log.setAppName("app");
     log.addLogHandle(std::make_shared<StdOutLogHandle>().get());
     db::LevelDBClient client;

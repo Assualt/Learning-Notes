@@ -1,8 +1,6 @@
 #include "gtest/gtest.h"
 #include <regex>
-TEST(SuiteName, TestName1) {
-    EXPECT_EQ(1, 1);
-}
+TEST(SuiteName, TestName1) { EXPECT_EQ(1, 1); }
 
 TEST(SuitName, TestRegex) {
     std::regex  strReg("/my*\\d+/ok");

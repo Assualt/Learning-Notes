@@ -15,9 +15,11 @@ public:
 
     bool Delete(const std::string &key, const leveldb::WriteOptions &option = leveldb::WriteOptions());
 
-    bool Put(const std::string &key, const std::string &val, const leveldb::WriteOptions &option = leveldb::WriteOptions());
+    bool Put(const std::string &key, const std::string &val,
+             const leveldb::WriteOptions &option = leveldb::WriteOptions());
 
-    bool Write(const std::map<std::string, std::string> &KeyMap, const leveldb::WriteOptions &option = leveldb::WriteOptions());
+    bool Write(const std::map<std::string, std::string> &KeyMap,
+               const leveldb::WriteOptions &             option = leveldb::WriteOptions());
 
     std::string getDBStatus() const;
 

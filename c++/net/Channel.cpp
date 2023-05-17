@@ -16,29 +16,17 @@ Channel::Channel(EventLoop *loop, int fd)
     , m_nEvents(0)
     , m_nrecv_events(0)
     , m_bUseLock(false)
-    , m_nIndex(-1) {
-}
+    , m_nIndex(-1) {}
 
-Channel::~Channel() {
-}
+Channel::~Channel() {}
 
-EventLoop *Channel::ownerLoop() {
-    return m_pLoop;
-}
-int Channel::fd() const {
-    return m_nFD;
-}
+EventLoop *Channel::ownerLoop() { return m_pLoop; }
+int        Channel::fd() const { return m_nFD; }
 
-int Channel::events() const {
-    return m_nEvents;
-}
-void Channel::update() {
-    m_pLoop->updateChannel(this);
-}
+int  Channel::events() const { return m_nEvents; }
+void Channel::update() { m_pLoop->updateChannel(this); }
 
-void Channel::remove() {
-    m_pLoop->removeChannel(this);
-}
+void Channel::remove() { m_pLoop->removeChannel(this); }
 
 void Channel::doReadTimeOutFunc() {
     if (m_ReadTimeoutCallback) {
@@ -78,13 +66,9 @@ void Channel::handleEventWithGuard(const base::Timestamp &recvTime) {
     }
 }
 
-std::string Channel::reventsToString() const {
-    return eventsToString(m_nFD, m_nrecv_events);
-}
+std::string Channel::reventsToString() const { return eventsToString(m_nFD, m_nrecv_events); }
 
-std::string Channel::eventToString() const {
-    return eventsToString(m_nFD, m_nEvents);
-}
+std::string Channel::eventToString() const { return eventsToString(m_nFD, m_nEvents); }
 
 std::string Channel::eventsToString(int fd, int ev) const {
     std::stringstream oss;

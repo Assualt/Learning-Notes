@@ -7,12 +7,12 @@
 #include "net/TcpConnection.h"
 
 WsServer::WsServer(EventLoop *loop, const InetAddress &address, const HttpConfig &cfg, bool useHttps)
-    : server_(new TcpServer(loop, address, "WsServer", useHttps)) {
+    : server_(new TcpServer(loop, address, "WsServer")) {
 
     server_->SetThreadNum(cfg.getWebSocketThreadNum());
-    server_->SetConnectionCallback([ this ](TcpConnectionPtr conn) { onConnect(conn); });
+    server_->SetConnectionCallback([this](const TcpConnectionPtr &conn) { onConnect(conn); });
     server_->SetMessageCallback(
-        [ this ](const TcpConnectionPtr conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
+        [this](const TcpConnectionPtr &conn, Buffer *buffer, Timestamp stamp) { onMessage(conn, buffer, stamp); });
 }
 
 void WsServer::start() {

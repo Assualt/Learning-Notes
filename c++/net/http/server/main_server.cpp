@@ -7,7 +7,8 @@ using namespace muduo;
 
 void RegisterSignalHandle(HttpServer &server) {
     auto handle = [](int sig, uintptr_t param) {
-        if ((sig == SIGSEGV) || (sig == SIGABRT) || (sig == SIGINT) || (sig == SIGHUP) || (sig == SIGTERM)) {
+        if ((sig == SIGSEGV) || (sig == SIGABRT) || (sig == SIGINT) || (sig == SIGHUP) || (sig == SIGTERM) ||
+            (sig == SIGBUS)) {
             auto callstack = GetBackCallStack();
             logger.info("callstack is:\n%s", callstack);
             auto server = reinterpret_cast<HttpServer *>(param);
@@ -21,6 +22,7 @@ void RegisterSignalHandle(HttpServer &server) {
     server.RegSignalCallback(SIGABRT, reinterpret_cast<uintptr_t>(&server), handle);
     server.RegSignalCallback(SIGPIPE, reinterpret_cast<uintptr_t>(&server), handle);
     server.RegSignalCallback(SIGTERM, reinterpret_cast<uintptr_t>(&server), handle);
+    server.RegSignalCallback(SIGBUS, reinterpret_cast<uintptr_t>(&server), handle);
 }
 
 void InitObjPool() {
@@ -28,8 +30,7 @@ void InitObjPool() {
     ObjPool::Instance().PostInit();
 }
 
-void PrintFigLet()
-{
+void PrintFigLet() {
     const char *fig = ""
                       ""
                       " _   _ _   _           ____                           \n"
@@ -77,7 +78,7 @@ int main(int argc, char const *argv[]) {
     InitObjPool();
 
     EventLoop  loop;
-    HttpServer server(&loop, InetAddress(9000), strConfigPath, false);
+    HttpServer server(&loop, strConfigPath);
     RegisterSignalHandle(server);
     server.SetThreadNum(threadNum);
     server.Start();

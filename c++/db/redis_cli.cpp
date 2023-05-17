@@ -2,9 +2,9 @@
 // Created by xhou on 2022/10/5.
 //
 
-#include "redis_cli.h"
 #include "net/Endian.h"
 #include "net/InetAddress.h"
+#include "redis_cli.h"
 #include <memory>
 using namespace muduo::net;
 

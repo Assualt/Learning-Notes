@@ -39,23 +39,23 @@ public:
     Logger &BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix,
                         const char *fileFormat, const char *fileMode = "a+");
 
-    template <class... Args> void debug(const char *fmt, Args &&...arg) { this->LogMessage(Debug, fmt, arg...); }
+    template <class... Args> void debug(const char *fmt, Args &&... arg) { this->LogMessage(Debug, fmt, arg...); }
 
-    template <class... Args> void info(const char *fmt, Args &&...arg) { this->LogMessage(Info, fmt, arg...); }
+    template <class... Args> void info(const char *fmt, Args &&... arg) { this->LogMessage(Info, fmt, arg...); }
 
-    template <class... Args> void warning(const char *fmt, Args &&...arg) { this->LogMessage(Warn, fmt, arg...); }
+    template <class... Args> void warning(const char *fmt, Args &&... arg) { this->LogMessage(Warn, fmt, arg...); }
 
-    template <class... Args> void error(const char *fmt, Args &&...arg) { this->LogMessage(Error, fmt, arg...); }
+    template <class... Args> void error(const char *fmt, Args &&... arg) { this->LogMessage(Error, fmt, arg...); }
 
-    template <class... Args> void fatal(const char *fmt, Args &&...arg) { this->LogMessage(Fatal, fmt, arg...); }
+    template <class... Args> void fatal(const char *fmt, Args &&... arg) { this->LogMessage(Fatal, fmt, arg...); }
 
-    template <class... Args> void alert(const char *fmt, Args &&...arg) { this->LogMessage(Alert, fmt, arg...); }
+    template <class... Args> void alert(const char *fmt, Args &&... arg) { this->LogMessage(Alert, fmt, arg...); }
 
-    template <class... Args> void emergency(const char *fmt, Args &&...arg) {
+    template <class... Args> void emergency(const char *fmt, Args &&... arg) {
         this->LogMessage(Emergency, fmt, arg...);
     }
 
-    template <class... Args> void exception(const char *fmt, Args &&...arg) {
+    template <class... Args> void exception(const char *fmt, Args &&... arg) {
         this->LogMessage(Except, fmt, arg...);
         auto callstack = GetBackCallStack();
         this->LogMessage(Except, "%s%s", "\n", callstack);
@@ -80,7 +80,7 @@ protected:
 
     std::string MessageFormat(const std::string &FormattedLogMessage, LogLevel nLevel);
 
-    template <class... Args> void LogMessage(LogLevel nLevel, const char *fmt, Args &&...arg) {
+    template <class... Args> void LogMessage(LogLevel nLevel, const char *fmt, Args &&... arg) {
         if (nLevel < m_nLevel)
             return;
         std::string logMessage = fmt;
@@ -96,7 +96,7 @@ protected:
         }
     }
 
-    template <class T, class... Args> void formatString(std::string &result, T &val, Args &&...arg) {
+    template <class T, class... Args> void formatString(std::string &result, T &val, Args &&... arg) {
         size_t      index    = 0;
         bool        finished = false;
         std::string keyPrefix;

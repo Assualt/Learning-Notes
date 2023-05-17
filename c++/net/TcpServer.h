@@ -20,7 +20,7 @@ enum AddressOption { REUSE_PORT, NO_REUSE_PORT };
 class TcpServer : nonecopyable {
 public:
 public:
-    TcpServer(EventLoop *loop, const InetAddress &addr, const std::string &serverName, bool useSSL = false,
+    TcpServer(EventLoop *loop, const InetAddress &addr, const std::string &serverName,
               AddressOption option = REUSE_PORT);
     ~TcpServer();
 
@@ -51,6 +51,8 @@ public:
 
     void SetMsgTimeoutCallback(uint32_t timeout, MsgTimeOutCallback);
 
+    void InitSslConfig(const std::string &certPath, const std::string &pemPath);
+
 private:
     // 检查connect是否有数据通信，如果长时间没有数据，需要主动断开链接
     void TimeOutCheckThread();
@@ -64,7 +66,7 @@ private:
     ConnectionCallback                      connectionCallback;
     MessageCallback                         messageCallback;
     MsgTimeOutCallback                      msgTimeOutCallback{nullptr}; // 消息间隔超时处理函数
-    EventLoop                              *m_pLoop{nullptr};
+    EventLoop *                             m_pLoop{nullptr};
     std::shared_ptr<EventLoopThreadPool>    m_threadPool;
     int                                     m_nNextConnId;
     InetAddress                             m_address;

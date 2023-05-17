@@ -12,7 +12,7 @@ using ControllerEntry = int (*)(std::string *, int *, bool *, bool *, uintptr_t 
 void ControllerScanner::init(const std::string &path) { libsPaths_ = path; }
 
 void ControllerScanner::startTask() {
-    auto func = [ this ]() { this->TaskCallback(); };
+    auto func = [this]() { this->TaskCallback(); };
     thread_   = std::make_shared<Thread>(func, "ScannerTask");
     if (thread_ != nullptr) {
         thread_->Start();
@@ -28,7 +28,7 @@ void ControllerScanner::stopTask() {
 
 bool ControllerScanner::needUpdate(const FileAttr &attr) {
     auto itr = std::find_if(dllVectors_.begin(), dllVectors_.end(),
-                            [ &attr ](auto info) { return info.fullPath_ == attr.GetFullName(); });
+                            [&attr](auto info) { return info.fullPath_ == attr.GetFullName(); });
 
     if (itr == dllVectors_.end()) {
         return true;
@@ -39,7 +39,7 @@ bool ControllerScanner::needUpdate(const FileAttr &attr) {
 
 void ControllerScanner::update(const FileAttr &attr) {
     auto itr = std::find_if(dllVectors_.begin(), dllVectors_.end(),
-                            [ &attr ](auto info) { return info.fullPath_ == attr.GetFullName(); });
+                            [&attr](auto info) { return info.fullPath_ == attr.GetFullName(); });
 
     if (itr != dllVectors_.end()) {
         unRegisterHandle(*itr);

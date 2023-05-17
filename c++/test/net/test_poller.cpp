@@ -11,7 +11,8 @@ using namespace muduo::base;
 
 void TestLoop() {
     auto &log = Logger::getLogger();
-    log.BasicConfig(Debug, "T:%(process)[%(asctime):%(levelname)][%(filename):%(lineno)-%(funcname)] %(message)", "", "");
+    log.BasicConfig(Debug, "T:%(process)[%(asctime):%(levelname)][%(filename):%(lineno)-%(funcname)] %(message)", "",
+                    "");
     std::shared_ptr<LogHandle> _au(new StdOutLogHandle);
     log.addLogHandle(_au.get());
 

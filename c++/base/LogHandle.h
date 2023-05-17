@@ -86,6 +86,6 @@ private:
     std::ofstream fout;
 };
 
-class [[maybe_unused]] AsyncHttpLogHandle : public StdOutLogHandle {};
+class [[maybe_unused]] AsyncHttpLogHandle : public StdOutLogHandle{};
 
 } // namespace muduo::base

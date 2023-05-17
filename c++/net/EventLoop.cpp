@@ -1,5 +1,5 @@
-#include "EventLoop.h"
 #include "CurrentThread.h"
+#include "EventLoop.h"
 #include "SocketsOp.h"
 #include "base/Logging.h"
 #include <algorithm>
@@ -32,7 +32,7 @@ EventLoop::EventLoop()
     , m_Poller(Poller::newDefaultPoller(this))
     , m_wakeupChannel(new Channel(this, m_nWakeUpFD)) {
 
-    m_wakeupChannel->setReadCallback([ this ](const base::Timestamp &) { handleRead(); });
+    m_wakeupChannel->setReadCallback([this](const base::Timestamp &) { handleRead(); });
     m_wakeupChannel->enableReading();
 }
 

@@ -27,7 +27,7 @@ template <typename Head, typename... Ts> struct LastElementImpl<Head, Ts...> {
     template <typename Last> static Last call(Ignored<Ts>..., Last &&last) { return std::forward<Last>(last); }
 };
 
-template <typename... Ts> auto getLastElement(const Ts &...ts) -> decltype(LastElementImpl<Ts...>::call(ts...)) {
+template <typename... Ts> auto getLastElement(const Ts &... ts) -> decltype(LastElementImpl<Ts...>::call(ts...)) {
     return LastElementImpl<Ts...>::call(ts...);
 }
 
@@ -45,7 +45,7 @@ typename std::enable_if<IsSomeString<Target>::value &&
                             (sizeof...(Ts) != 1 ||
                              !std::is_same<Target, typename LastElementImpl<const Ts &...>::type>::value),
                         Target>::type
-    to(const Ts &...vs) {
+    to(const Ts &... vs) {
     Target tgs;
     return tgs;
 }

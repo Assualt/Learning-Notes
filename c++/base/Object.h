@@ -34,4 +34,4 @@ public:
     virtual bool        equals(const Object &rhs) { return true; };
 };
 
-} // namespace muduo
+} // namespace muduo::base

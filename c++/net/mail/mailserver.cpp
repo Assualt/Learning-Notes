@@ -1,7 +1,7 @@
-#include "mailserver.h"
 #include "base/Logging.h"
 #include "mail_context.h"
 #include "mail_process.h"
+#include "mailserver.h"
 #include "net/TcpConnection.h"
 #include <memory>
 #include <string.h>
@@ -74,19 +74,19 @@ void MailServer::onCmdMessage(const TcpConnectionPtr &conn, Buffer *buf, Timesta
 }
 
 void MailServer::startServer(size_t nThreadCount) {
-    auto       &env = MailEnv::getInstance();
+    auto &      env = MailEnv::getInstance();
     InetAddress address(env.getServerPort());
     server_ = std::make_shared<TcpServer>(&loop_, address, "mail server");
-    server_->SetConnectionCallback([ this ](auto conn) { onConnection(conn); });
-    server_->SetMessageCallback([ this ](auto conn, auto buf, auto stamp) { onMessage(conn, buf, stamp); });
+    server_->SetConnectionCallback([this](auto conn) { onConnection(conn); });
+    server_->SetMessageCallback([this](auto conn, auto buf, auto stamp) { onMessage(conn, buf, stamp); });
     server_->SetThreadNum(nThreadCount);
     logger.info("mail server start at %s....", address.toIpPort());
     server_->Start();
 
     InetAddress cmdAddr(env.getCommandPort());
     cmdServer_ = std::make_shared<TcpServer>(&loop_, cmdAddr, "command Server");
-    cmdServer_->SetConnectionCallback([ this ](auto conn) { onCmdConnection(conn); });
-    cmdServer_->SetMessageCallback([ this ](auto conn, auto buf, auto stamp) { onCmdMessage(conn, buf, stamp); });
+    cmdServer_->SetConnectionCallback([this](auto conn) { onCmdConnection(conn); });
+    cmdServer_->SetMessageCallback([this](auto conn, auto buf, auto stamp) { onCmdMessage(conn, buf, stamp); });
 
     logger.info("mail cmd server start at %s...", cmdAddr.toIpPort());
     cmdServer_->Start();

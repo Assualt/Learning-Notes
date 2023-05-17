@@ -20,7 +20,7 @@ public:
     }
 
     static int count(const std::string &strVal, char ch) {
-        return std::count_if(strVal.begin(), strVal.end(), [ ch ](char c) { return ch == c; });
+        return std::count_if(strVal.begin(), strVal.end(), [ch](char c) { return ch == c; });
     }
 
     static std::vector<std::string> split(const std::string &src, char divider) {

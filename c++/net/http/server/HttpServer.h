@@ -24,7 +24,12 @@ using SigHandleMap   = std::map<int, std::pair<SignalCallback, uintptr_t>>;
 
 class HttpServer : nonecopyable {
 public:
-    HttpServer(EventLoop *loop, const InetAddress &address, const std::string &cfgPath, bool useHttps = false);
+    HttpServer(EventLoop *loop, const InetAddress &address, bool useHttps = false);
+
+    explicit HttpServer(EventLoop *loop, const std::string &cfgPath);
+
+private:
+    void Init(EventLoop *loop, bool useSSL);
 
 public:
     void SetRequestCallBack(CallBack cb);

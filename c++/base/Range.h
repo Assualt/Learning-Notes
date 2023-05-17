@@ -52,10 +52,10 @@ public:
     constexpr Range()
         : begin_()
         , end_() {}
-    constexpr Range(const Range &)     = default;
-    constexpr Range(Range &&)          = default;
+    constexpr Range(const Range &) = default;
+    constexpr Range(Range &&)      = default;
     Range &operator=(const Range &rhs) = default;
-    Range &operator=(Range &&rhs)      = default;
+    Range &operator=(Range &&rhs) = default;
     template <class Alloc, class T, typename detail::IsCharPointer<T>::const_type = 0>
     Range &operator=(mstring<Alloc> &&rhs) = delete;
     constexpr Range(Iter start, Iter end)

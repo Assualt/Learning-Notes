@@ -25,7 +25,7 @@ enum class CompEvent {
     COMP_EXIT,
 };
 
-#define ENTRY_WRAPPER(func) [ this ]() { return func(); }
+#define ENTRY_WRAPPER(func) [this]() { return func(); }
 
 class CompBase : fsm::StateMachine<CompState, CompEvent, FLogger>, fsm::Context<CompState, CompEvent, FLogger> {
 public:

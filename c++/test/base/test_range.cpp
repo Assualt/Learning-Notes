@@ -5,7 +5,8 @@ using namespace muduo::base;
 
 template <class T> struct IsSomeString : std::false_type {};
 
-template <typename Alloc> struct IsSomeString<std::basic_string<char, std::char_traits<char>, Alloc>> : std::true_type {};
+template <typename Alloc>
+struct IsSomeString<std::basic_string<char, std::char_traits<char>, Alloc>> : std::true_type {};
 
 TEST(Range, Test1) {
     std::string test = "Hello World";

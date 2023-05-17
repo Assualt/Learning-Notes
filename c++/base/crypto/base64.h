@@ -62,7 +62,7 @@ static void base64_init_decodestate(base64_decodestate *state_in) {
 static int base64_decode_block(const char *code_in, const int length_in, char *plaintext_out,
                                base64_decodestate *state_in) {
     const char *codechar  = code_in;
-    char       *plainchar = plaintext_out;
+    char *      plainchar = plaintext_out;
     char        fragment;
 
     *plainchar = state_in->plainchar;
@@ -118,9 +118,9 @@ static int base64_decode_block(const char *code_in, const int length_in, char *p
 }
 
 static int base64_encode_block(const char *plaintext_in, int length_in, char *code_out, base64_encodestate *state_in) {
-    const char       *plainchar    = plaintext_in;
+    const char *      plainchar    = plaintext_in;
     const char *const plaintextend = plaintext_in + length_in;
-    char             *codechar     = code_out;
+    char *            codechar     = code_out;
     char              result;
     char              fragment;
 
@@ -219,8 +219,8 @@ struct decoder {
     void decode(std::istream &istream_in, std::ostream &ostream_in) {
         detail::base64_init_decodestate(&_state);
         const int N         = _BUFFSIZE;
-        char     *code      = new char[ N ];
-        char     *plaintext = new char[ N ];
+        char *    code      = new char[ N ];
+        char *    plaintext = new char[ N ];
         int       codelength;
         int       plainlength;
 
@@ -271,8 +271,8 @@ struct encoder {
         detail::base64_init_encodestate(&_state);
         //
         const int N         = _BUFFSIZE;
-        char     *plaintext = new char[ N ];
-        char     *code      = new char[ 2 * N ];
+        char *    plaintext = new char[ N ];
+        char *    code      = new char[ 2 * N ];
         int       plainlength;
         int       codelength;
 

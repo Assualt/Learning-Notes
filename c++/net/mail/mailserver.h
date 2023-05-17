@@ -39,7 +39,7 @@ protected:
     std::shared_ptr<TcpServer>         server_{nullptr};
     std::shared_ptr<TcpServer>         cmdServer_{nullptr};
     std::shared_ptr<ConfigureManager>  cfgMgr_{nullptr};
-    EventLoop                         &loop_;
+    EventLoop &                        loop_;
     std::map<std::string, MailContext> mailCtx_;
 };
 

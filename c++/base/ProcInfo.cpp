@@ -1,8 +1,8 @@
-#include "ProcInfo.h"
 #include "Backtrace.h"
 #include "DirScanner.h"
 #include "Format.h"
 #include "Logging.h"
+#include "ProcInfo.h"
 #include "System.h"
 #include <semaphore.h>
 #include <signal.h>

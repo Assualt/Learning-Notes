@@ -8,8 +8,7 @@ using namespace db;
 using namespace muduo::base;
 
 LevelDBClient::LevelDBClient()
-    : m_DB(nullptr) {
-}
+    : m_DB(nullptr) {}
 
 bool LevelDBClient::open(const std::string &strDBPath, const leveldb::Options &options) {
     leveldb::Status status = leveldb::DB::Open(options, strDBPath, &m_DB);
@@ -69,7 +68,8 @@ bool LevelDBClient::Write(const std::map<std::string, std::string> &KeyMap, cons
         return false;
     }
     leveldb::WriteBatch batch;
-    std::for_each(KeyMap.begin(), KeyMap.end(), [ &batch ](std::pair<std::string, std::string> item) { batch.Put(item.first, item.second); });
+    std::for_each(KeyMap.begin(), KeyMap.end(),
+                  [&batch](std::pair<std::string, std::string> item) { batch.Put(item.first, item.second); });
     leveldb::Status status = m_DB->Write(option, &batch);
     if (!status.ok()) {
         logger.info("write batch kvmap size %d from leveldb failed. errmsg:%s", KeyMap.size(), status.ToString());
@@ -117,9 +117,7 @@ void LevelDBClient::Iterator(db::Func func, const leveldb::ReadOptions &option) 
     }
 }
 
-LevelDBClient::~LevelDBClient() {
-    close();
-}
+LevelDBClient::~LevelDBClient() { close(); }
 
 void LevelDBClient::close() {
     if (m_DB)

@@ -1,8 +1,8 @@
-#include "Thread.h"
 #include "Format.h"
 #include "Logging.h"
 #include "ProcInfo.h"
 #include "System.h"
+#include "Thread.h"
 
 using namespace muduo;
 using namespace muduo::base;
@@ -65,7 +65,7 @@ void Thread::Start() {
     if (m_isStarted) {
         throw Exception("thread is started! Run Failed");
     }
-    m_isStarted            = true;
+    m_isStarted = true;
 
     ThreadContext *context = new ThreadContext(m_threadFunc, m_strFunName, &m_nTid);
     auto           ret     = pthread_create(&m_nThreadId, nullptr, &Thread::StartThread, context);

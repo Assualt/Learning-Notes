@@ -38,13 +38,13 @@ struct utils {
 public:
     static std::string _ltrim(const std::string &src, char ch = ' ') {
         std::string           temp = src;
-        std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [ &ch ](char c) { return ch != c; });
+        std::string::iterator p    = std::find_if(temp.begin(), temp.end(), [&ch](char c) { return ch != c; });
         temp.erase(temp.begin(), p);
         return temp;
     }
     static std::string _rtrim(const std::string &src, char ch = ' ') {
         string                   temp = src;
-        string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [ &ch ](char c) { return ch != c; });
+        string::reverse_iterator p    = find_if(temp.rbegin(), temp.rend(), [&ch](char c) { return ch != c; });
         temp.erase(p.base(), temp.end());
         return temp;
     }

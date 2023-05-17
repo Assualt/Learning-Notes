@@ -1,27 +1,35 @@
 #include "Acceptor.h"
 #include "base/Logging.h"
+#include "base/System.h"
 #include "net/EventLoop.h"
 #include "net/InetAddress.h"
 #include "net/SocketsOp.h"
 #include <fcntl.h>
+
 using namespace muduo::base;
 using namespace muduo::net;
 
-Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddress, bool reUsePort, bool useSSL)
+Acceptor::Acceptor(EventLoop *loop, const InetAddress &listenAddress, bool reUsePort)
     : m_pLoop(loop)
     , m_nAcceptSocket(sockets::createNonblockingOrDie(listenAddress.family()))
     , m_cAcceptChannel(loop, m_nAcceptSocket.fd())
     , m_bListening(false) {
-    if (useSSL) {
-        m_nAcceptSocket.initSSLServer("cert.pem", "privkey.pem");
-    }
     m_nAcceptSocket.setReuseAddr(true);
     m_nAcceptSocket.setReusePort(reUsePort);
     m_nAcceptSocket.bindAddress(listenAddress);
-    m_cAcceptChannel.setReadCallback(std::bind(&Acceptor::handleRead, this));
+    m_cAcceptChannel.setReadCallback([this](auto) { handleRead(); });
 }
 
 Acceptor::~Acceptor() { closeSocket(); }
+
+void Acceptor::InitSslPemKey(const std::string &certPath, const std::string &pemPath) {
+    if (!System::Access(certPath, F_OK) || !System::Access(pemPath, F_OK)) {
+        logger.warning("cert:%s or pem:%s is not exist pwd:%s", certPath, pemPath, System::CurrentPwd());
+        return;
+    }
+    bool result = m_nAcceptSocket.initSSLServer(certPath, pemPath);
+    LOG_SYSTEM.info("cert:%s and pem:%s init ssl socket, ret:%b", certPath, pemPath, result);
+}
 
 void Acceptor::closeSocket() {
     m_cAcceptChannel.disableAll();

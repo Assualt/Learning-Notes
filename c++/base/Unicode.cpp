@@ -1,5 +1,5 @@
-#include "Unicode.h"
 #include "Format.h"
+#include "Unicode.h"
 
 using namespace muduo::base;
 
@@ -44,7 +44,7 @@ char32_t utf8ToCodePoint(const unsigned char *&p, const unsigned char *const e, 
      * 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
      */
 
-    const auto skip = [ & ] {
+    const auto skip = [&] {
         ++p;
         return U'\ufffd';
     };

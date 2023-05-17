@@ -88,7 +88,7 @@ private:
 
 #ifdef USE_SSL
     typedef struct {
-        SSL     *m_ptrHandle;
+        SSL *    m_ptrHandle;
         SSL_CTX *m_ptrContext;
     } SSL_Connection;
     std::unique_ptr<SSL_Connection> sslConn_{nullptr};

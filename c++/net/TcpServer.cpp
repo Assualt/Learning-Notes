@@ -1,10 +1,10 @@
-#include "TcpServer.h"
 #include "Acceptor.h"
 #include "Buffer.h"
 #include "EventLoop.h"
 #include "EventLoopThreadPool.h"
 #include "SocketsOp.h"
 #include "TcpConnection.h"
+#include "TcpServer.h"
 #include "base/Format.h"
 #include "base/Logging.h"
 #include <chrono>
@@ -25,18 +25,17 @@ void defaultMessageCallback(const TcpConnectionPtr &, Buffer *buf, Timestamp) {
 } // namespace
 void TcpServer::SetThreadNum(int threadNum) { m_threadPool->SetThreadNum(threadNum); }
 
-TcpServer::TcpServer(EventLoop *loop, const InetAddress &addr, const std::string &serverName, bool useSSL,
-                     AddressOption)
+TcpServer::TcpServer(EventLoop *loop, const InetAddress &addr, const std::string &serverName, AddressOption)
     : m_pLoop(loop)
     , m_strServerName(serverName)
-    , acceptor(new Acceptor(loop, addr, false, useSSL))
+    , acceptor(new Acceptor(loop, addr, false))
     , connectionCallback(defaultConnectionCallback)
     , messageCallback(defaultMessageCallback)
     , m_threadPool(new EventLoopThreadPool(loop, serverName))
     , m_nNextConnId(1)
     , m_address(addr) {
     acceptor->setNewConnectionCallback(
-        [ this ](auto &&arg1, auto &&arg2, auto &&arg3) { NewConnection(arg1, arg2, arg3); });
+        [this](auto &&arg1, auto &&arg2, auto &&arg3) { NewConnection(arg1, arg2, arg3); });
     TimeOutCheckThread();
 }
 
@@ -63,15 +62,15 @@ void TcpServer::NewConnection(int sockFd, const InetAddress &peerAddress, void *
     TcpConnectionPtr conn(new TcpConnection(ioLoop, connName, sockFd, locAddr, peerAddress, arg));
     conn->setConnectionCallBack(connectionCallback);
     conn->setMessageCallBack(messageCallback);
-    conn->setCloseCallBack([ this ](auto &&PH1) { RemoveConnection(std::forward<decltype(PH1)>(PH1)); });
-    ioLoop->runInLoop([ conn ] { conn->connectEstablished(); });
+    conn->setCloseCallBack([this](auto &&PH1) { RemoveConnection(std::forward<decltype(PH1)>(PH1)); });
+    ioLoop->runInLoop([conn] { conn->connectEstablished(); });
     m_lock.Lock();
     m_connectionMap[ connName ] = conn;
     m_lock.UnLock();
 }
 
 void TcpServer::RemoveConnection(const TcpConnectionPtr &conn) {
-    m_pLoop->runInLoop([ this, conn ] { RemoveConnectionInLoop(conn); });
+    m_pLoop->runInLoop([this, conn] { RemoveConnectionInLoop(conn); });
 }
 
 void TcpServer::RemoveConnectionInLoop(const TcpConnectionPtr &conn) {
@@ -81,7 +80,7 @@ void TcpServer::RemoveConnectionInLoop(const TcpConnectionPtr &conn) {
     size_t n = m_connectionMap.erase(conn->name());
     m_lock.UnLock();
     EventLoop *loop = conn->getLoop();
-    loop->queueInLoop([ conn ] { conn->connectDestroyed(); });
+    loop->queueInLoop([conn] { conn->connectDestroyed(); });
 }
 
 void TcpServer::SetConnectionCallback(const ConnectionCallback &callback) { connectionCallback = callback; }
@@ -92,7 +91,7 @@ void TcpServer::SetThreadInitCallback(const ThreadInitCallback &callback) { thre
 
 void TcpServer::Start() {
     m_threadPool->start(threadInitCallback);
-    m_pLoop->runInLoop([ capture0 = acceptor.get() ] { capture0->listen(); });
+    m_pLoop->runInLoop([capture0 = acceptor.get()] { capture0->listen(); });
     logger.info("All is ok........");
 }
 
@@ -105,8 +104,8 @@ void TcpServer::SetMsgTimeoutCallback(uint32_t timeout, MsgTimeOutCallback cb) {
 }
 
 void TcpServer::TimeOutCheckThread() {
-    auto threadFunc = [ this ]() {
-        while (!m_bNeedExit) {
+    auto threadFunc = [this]() {
+        while (!m_bNeedExit && (m_nMsgTimeout != 0)) {
             std::this_thread::sleep_for(std::chrono::microseconds(500));
             m_lock.Lock();
             auto                     now = Timestamp::now();
@@ -151,4 +150,8 @@ TcpServer::~TcpServer() {
         m_checkThread->Join();
     }
 }
-const std::string &TcpServer::Name() const { return m_strServerName; };
+const std::string &TcpServer::Name() const { return m_strServerName; }
+
+void TcpServer::InitSslConfig(const std::string &certPath, const std::string &pemPath) {
+    acceptor->InitSslPemKey(certPath, pemPath);
+}

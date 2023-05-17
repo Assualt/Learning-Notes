@@ -9,7 +9,7 @@ using namespace mail;
 static std::string defaultMsgFmt = "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(lineno)] %(message)";
 
 int main(int argc, char const *argv[]) {
-    auto           &log = Logger::getLogger();
+    auto &          log = Logger::getLogger();
     cmdline::parser cmd;
     cmd.add("version", 'v', "show this Simple Mailer Version and exit");
     cmd.add<int>("level", 'l', "set server mail logger level", false, Info);

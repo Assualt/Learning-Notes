@@ -10,7 +10,9 @@ using namespace db;
 int main(int, char **) {
     auto &log       = Logger::getLogger();
     auto  stdHandle = std::make_shared<StdOutLogHandle>();
-    log.BasicConfig(LogLevel::Debug, "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(funcname):%(lineno)] %(message)", "", "");
+    log.BasicConfig(LogLevel::Debug,
+                    "T:%(tid)(%(asctime))[%(appname):%(levelname)][%(filename):%(funcname):%(lineno)] %(message)", "",
+                    "");
     log.setAppName("app");
     log.addLogHandle(stdHandle.get());
 
@@ -47,8 +49,9 @@ int main(int, char **) {
 
     logger.info("-----test database insert--------");
     for (auto idx : {0, 1, 2, 3, 4}) {
-        std::string name    = "idx-" + std::to_string(idx);
-        auto        execRet = client.Execute("insert test_mysql(username,password,modifytime) values('" + name + "', '123', now())");
+        std::string name = "idx-" + std::to_string(idx);
+        auto        execRet =
+            client.Execute("insert test_mysql(username,password,modifytime) values('" + name + "', '123', now())");
         logger.info("exec result:%d, affect:%d errmsg:%s", execRet.first, execRet.second, client.getErrMsg());
         sleep(1);
     }

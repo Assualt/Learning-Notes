@@ -23,7 +23,7 @@ public:
 
     HttpResponse Head(const std::string &url, bool needRedirect = false, bool verbose = false);
 
-    template <class Val> [[maybe_unused]] void SetHeader(const std::string &key, const Val &val) {
+    template <class Val>[[maybe_unused]] void SetHeader(const std::string &key, const Val &val) {
         request_.setHeader(key, val);
     }
 

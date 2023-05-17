@@ -22,8 +22,8 @@ public:
     void onMessage(const TcpConnectionPtr &conn, Buffer *buffer, Timestamp recvTime);
 
 private:
-    EventLoop                 *m_pLoop{nullptr};
+    EventLoop *                m_pLoop{nullptr};
     std::unique_ptr<TcpServer> m_tcpServer{nullptr};
-    std::unique_ptr<Acceptor> acceptor; // avoid revealing Acceptor
+    std::unique_ptr<Acceptor>  acceptor; // avoid revealing Acceptor
 };
 } // namespace rpc

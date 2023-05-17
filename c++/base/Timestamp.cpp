@@ -1,5 +1,5 @@
-#include "Timestamp.h"
 #include "Format.h"
+#include "Timestamp.h"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -63,8 +63,8 @@ std::string getKeyFmt(char ch, const struct tm &t, int64_t ms = 0) {
         {'l', [](const tm &t) { return std::to_string(t.tm_hour % 12); }},
         {'F', [](const tm &t) { return getKeyFmt("Y-m-d", t); }},
         {'j', [](const tm &t) { return std::to_string(t.tm_yday + 1); }},
-        {'k', [ ms ](const tm &t) { return toFixedString(ms, 5, true, '0'); }},
-        {'K', [ ms ](const tm &t) { return toFixedString(ms, 5, true, '0'); }},
+        {'k', [ms](const tm &t) { return toFixedString(ms, 5, true, '0'); }},
+        {'K', [ms](const tm &t) { return toFixedString(ms, 5, true, '0'); }},
         {'m', [](const tm &t) { return toFixedString(t.tm_mon + 1, 2, false); }},
         {'M', [](const tm &t) { return toFixedString(t.tm_min, 2, false); }},
         {'n', [](const tm &t) { return "\n"; }},
@@ -101,7 +101,7 @@ std::string getKeyFmt(char ch, const struct tm &t, int64_t ms = 0) {
 
 std::string getKeyFmt(const std::string &str, const struct tm &t) {
     std::stringstream ss;
-    std::for_each(str.begin(), str.end(), [ &t, &ss ](auto ch) { ss << getKeyFmt(ch, t, 0); });
+    std::for_each(str.begin(), str.end(), [&t, &ss](auto ch) { ss << getKeyFmt(ch, t, 0); });
     return ss.str();
 }
 

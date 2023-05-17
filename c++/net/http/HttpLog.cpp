@@ -20,7 +20,7 @@ HttpLog::~HttpLog() {
 bool HttpLog::Init() {
     m_pLogger.addLogHandle(rollFileHdr.get());
     m_pLogger.SetAppendLF(false);
-    m_pThread = std::make_unique<Thread>([ this ] { LogTaskThread(); }, "AsyncTask");
+    m_pThread = std::make_unique<Thread>([this] { LogTaskThread(); }, "AsyncTask");
     m_pThread->Start();
     return true;
 }

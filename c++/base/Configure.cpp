@@ -40,7 +40,7 @@ void ConfigureManager::GetAllFiles(cstring path, cstring suffix) {
 }
 
 void ConfigureManager::Init() {
-    for (const auto& file : m_vAllConfFiles) {
+    for (const auto &file : m_vAllConfFiles) {
         InitFile(file);
     }
 }

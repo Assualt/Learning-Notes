@@ -7,9 +7,7 @@
 #include <thread>
 using namespace muduo::base;
 
-void print() {
-    printf("tid=print %s\n", System::GetCurrentThreadName().c_str());
-}
+void print() { printf("tid=print %s\n", System::GetCurrentThreadName().c_str()); }
 
 void printString(const std::string &str) {
     logger.info("==>Start threadName:%s str=%s", System::GetCurrentThreadName().c_str(), str.c_str());

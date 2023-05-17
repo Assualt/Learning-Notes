@@ -33,12 +33,12 @@ public:
 
     virtual bool onRequest(const HttpRequest &req, HttpResponse &res, const HttpConfig &cfg) {
         std::map<std::string, Func> methodFuncs = {
-            {"get", [ this ](const HttpRequest &req, HttpResponse &res,
-                             const HttpConfig &cfg) { return this->onGet(req, res, cfg); }},
-            {"post", [ this ](const HttpRequest &req, HttpResponse &res,
-                              const HttpConfig &cfg) { return this->onPost(req, res, cfg); }},
-            {"put", [ this ](const HttpRequest &req, HttpResponse &res,
-                             const HttpConfig &cfg) { return this->onPut(req, res, cfg); }},
+            {"get", [this](const HttpRequest &req, HttpResponse &res,
+                           const HttpConfig &cfg) { return this->onGet(req, res, cfg); }},
+            {"post", [this](const HttpRequest &req, HttpResponse &res,
+                            const HttpConfig &cfg) { return this->onPost(req, res, cfg); }},
+            {"put", [this](const HttpRequest &req, HttpResponse &res,
+                           const HttpConfig &cfg) { return this->onPut(req, res, cfg); }},
         };
 
         logger.info("request path:%s controller name:%s type:%s", req.getRequestPath(), name_, req.getRequestType());

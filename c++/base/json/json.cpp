@@ -213,7 +213,7 @@ public:
 
 class JsonArray final : public Value<Json::ARRAY, Json::array> {
     const Json::array &array_items() const override { return m_value; }
-    const Json        &operator[](size_t i) const override;
+    const Json &       operator[](size_t i) const override;
 
     void push_back(const Json &val) override;
 
@@ -240,7 +240,7 @@ public:
 
 class JsonObject final : public Value<Json::OBJECT, Json::object> {
     const Json::object &object_items() const override { return m_value; }
-    const Json         &operator[](const string &key) const override;
+    const Json &        operator[](const string &key) const override;
 
     Json &operator[](const string &key) override;
 
@@ -348,8 +348,8 @@ Json::Type               Json::type() const { return m_ptr->type(); }
 double                   Json::number_value() const { return m_ptr->number_value(); }
 int                      Json::int_value() const { return m_ptr->int_value(); }
 bool                     Json::bool_value() const { return m_ptr->bool_value(); }
-const string            &Json::string_value() const { return m_ptr->string_value(); }
-const vector<Json>      &Json::array_items() const { return m_ptr->array_items(); }
+const string &           Json::string_value() const { return m_ptr->string_value(); }
+const vector<Json> &     Json::array_items() const { return m_ptr->array_items(); }
 const map<string, Json> &Json::object_items() const { return m_ptr->object_items(); }
 const Json &Json::operator[](size_t i) const { return (*m_ptr)[ i ]; }
 const Json &Json::operator[](const string &key) const { return (*m_ptr)[ key ]; }
@@ -370,8 +370,8 @@ void JsonValue::push_back(const Json &val) {}
 
 int                      JsonValue::int_value() const { return 0; }
 bool                     JsonValue::bool_value() const { return false; }
-const string            &JsonValue::string_value() const { return statics().empty_string; }
-const vector<Json>      &JsonValue::array_items() const { return statics().empty_vector; }
+const string &           JsonValue::string_value() const { return statics().empty_string; }
+const vector<Json> &     JsonValue::array_items() const { return statics().empty_vector; }
 const map<string, Json> &JsonValue::object_items() const { return statics().empty_map; }
 const Json &JsonValue::operator[](size_t) const { return static_null(); }
 const Json &JsonValue::operator[](const string &) const { return static_null(); }
@@ -443,9 +443,9 @@ struct JsonParser final {
 
     /* State
      */
-    const string   &str;
+    const string &  str;
     size_t          i;
-    string         &err;
+    string &        err;
     bool            failed;
     const JsonParse strategy;
 

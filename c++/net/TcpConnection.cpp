@@ -1,8 +1,8 @@
-#include "TcpConnection.h"
 #include "Channel.h"
 #include "EventLoop.h"
 #include "Socket.h"
 #include "SocketsOp.h"
+#include "TcpConnection.h"
 #include "base/Logging.h"
 #include <functional>
 using namespace std;
@@ -19,11 +19,11 @@ TcpConnection::TcpConnection(EventLoop *loop, const std::string &name, int sockF
     , m_socket(new Socket(sockFd, ssl))
     , m_channel(new Channel(loop, sockFd)) {
 
-    m_channel->setReadCallback([ this ](const auto &time) { return handleRead(time); });
-    m_channel->setWriteCallback([ this ]() { return handleWrite(); });
-    m_channel->setCloseCallback([ this ]() { return handleClose(); });
-    m_channel->setErrorCallback([ this ]() { return handleError(); });
-    m_channel->setReadTimeOutCallback([ this ]() { return shutdown(); });
+    m_channel->setReadCallback([this](const auto &time) { return handleRead(time); });
+    m_channel->setWriteCallback([this]() { return handleWrite(); });
+    m_channel->setCloseCallback([this]() { return handleClose(); });
+    m_channel->setErrorCallback([this]() { return handleError(); });
+    m_channel->setReadTimeOutCallback([this]() { return shutdown(); });
     m_socket->setKeepAlive(false);
 }
 
@@ -121,7 +121,7 @@ void TcpConnection::shutdown() {
     }
     m_state = TcpState::DisConnecting;
     // FIXME: shared_from_this()?
-    m_pLoop->runInLoop([ this ] { shutdownInLoop(); });
+    m_pLoop->runInLoop([this] { shutdownInLoop(); });
 }
 
 void TcpConnection::shutdownInLoop() {

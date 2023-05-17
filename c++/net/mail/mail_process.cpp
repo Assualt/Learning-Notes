@@ -1,7 +1,7 @@
-#include "mail_process.h"
 #include "base/Logging.h"
 #include "base/crypto/base64.h"
 #include "mail_env.h"
+#include "mail_process.h"
 #include "mail_utils.h"
 #include <algorithm>
 #include <cstring>
@@ -63,18 +63,18 @@ std::pair<std::string, std::string> MailProcess::SplitMailAddress(const std::str
 MAIL_STATE MailProcess::process(MAIL_STATE state, const std::string &bufString, std::string &replyString) {
     using mailFunc                              = std::function<MAIL_STATE(const std::string &, std::string &)>;
     std::map<MAIL_STATE, mailFunc> stateFuncMap = {
-        {HELO, [ this ](const std::string &buf, std::string &reply) { return onHELO(buf, reply); }},
-        {EHLO, [ this ](const std::string &buf, std::string &reply) { return onEHLO(buf, reply); }},
-        {AUTH, [ this ](const std::string &buf, std::string &reply) { return onAuth(buf, reply); }},
-        {AUTHPASS, [ this ](const std::string &buf, std::string &reply) { return onAuthPass(buf, reply); }},
-        {AUTHEND, [ this ](const std::string &buf, std::string &reply) { return onAuthEND(buf, reply); }},
-        {MAILFROM, [ this ](const std::string &buf, std::string &reply) { return onMailFrom(buf, reply); }},
-        {RCPTTO, [ this ](const std::string &buf, std::string &reply) { return onRcptTo(buf, reply); }},
-        {DATA, [ this ](const std::string &buf, std::string &reply) { return onData(buf, reply); }},
-        {DATARECEIVE, [ this ](const std::string &buf, std::string &reply) { return onDataReceive(buf, reply); }},
-        {DATAFINISH, [ this ](const std::string &buf, std::string &reply) { return onDataFinish(buf, reply); }},
-        {QUIT, [ this ](const std::string &buf, std::string &reply) { return onQuit(buf, reply); }},
-        {REST, [ this ](const std::string &buf, std::string &reply) { return onRest(buf, reply); }},
+        {HELO, [this](const std::string &buf, std::string &reply) { return onHELO(buf, reply); }},
+        {EHLO, [this](const std::string &buf, std::string &reply) { return onEHLO(buf, reply); }},
+        {AUTH, [this](const std::string &buf, std::string &reply) { return onAuth(buf, reply); }},
+        {AUTHPASS, [this](const std::string &buf, std::string &reply) { return onAuthPass(buf, reply); }},
+        {AUTHEND, [this](const std::string &buf, std::string &reply) { return onAuthEND(buf, reply); }},
+        {MAILFROM, [this](const std::string &buf, std::string &reply) { return onMailFrom(buf, reply); }},
+        {RCPTTO, [this](const std::string &buf, std::string &reply) { return onRcptTo(buf, reply); }},
+        {DATA, [this](const std::string &buf, std::string &reply) { return onData(buf, reply); }},
+        {DATARECEIVE, [this](const std::string &buf, std::string &reply) { return onDataReceive(buf, reply); }},
+        {DATAFINISH, [this](const std::string &buf, std::string &reply) { return onDataFinish(buf, reply); }},
+        {QUIT, [this](const std::string &buf, std::string &reply) { return onQuit(buf, reply); }},
+        {REST, [this](const std::string &buf, std::string &reply) { return onRest(buf, reply); }},
     };
 
     auto itr = stateFuncMap.find(state);

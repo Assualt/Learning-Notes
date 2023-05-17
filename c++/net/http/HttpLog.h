@@ -32,7 +32,7 @@ private:
     void CheckLogBufferOverFlow();
 
 private:
-    Logger                 &m_pLogger;
+    Logger &                m_pLogger;
     std::stringstream       m_sCmdInStream;
     MutexLock               m_mutex;
     std::unique_ptr<Thread> m_pThread{nullptr};

@@ -33,7 +33,7 @@ private:
     std::unique_ptr<Thread>    thread_{nullptr};
 
     uint32_t total_{UINT32_MAX};
-    double eachDelay_; // ms
+    double   eachDelay_; // ms
 
     bool exit_{false};
 
@@ -44,4 +44,4 @@ private:
 
     Params userParam_;
 };
-} // namespace muduo
+} // namespace muduo::base
