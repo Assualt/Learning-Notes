@@ -1,0 +1,230 @@
+T:7503(21:01:31.127540)[system:Info][HttpConfig.cpp:24] init httpserver port:9000 SSL:true Ws:false ssl:[true:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem] pwd:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource
+T:7503(21:01:31.128362)[main:Info][TcpServer.cpp:103] set msg timeout:0s,and cb is not null:false
+T:7503(21:01:31.129930)[main:Info][Socket.cpp:299] switch to ssl server ok
+T:7503(21:01:38.132414)[system:Warning][Socket.cpp:451] SSL func[SSL_CTX_use_PrivateKey_file] result is 0, errCode:0x6065064 errStr:error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt
+T:7503(21:01:38.132760)[system:Info][Acceptor.cpp:31] cert:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem and pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem init ssl socket, ret:false
+T:7503(21:01:38.133035)[main:Info][HttpServer.cpp:127] HttpServer start ... at:0.0.0.0:9000
+T:7503(21:01:38.134491)[system:Info][Acceptor.cpp:47] begin to listen at fd:6
+T:7503(21:01:38.134785)[system:Info][TcpServer.cpp:95] All is ok........
+T:7503(21:01:44.969210)[system:Warning][HttpServer.cpp:168] begin to execute sig SIGINT handler..
+T:7503(21:01:44.969853)[main:Info][main_server.cpp:13] callstack is:
+#00 libmuduo_base.so muduo::GetBackCallStack[abi:cxx11]()+0x44 [0x7f8f2d4d25d3]
+#01 ../../../build/bin/httpserver() [0x436dcb]
+#02 ../../../build/bin/httpserver() [0x4381b3]
+#03 ../../../build/bin/httpserver() [0x42e9c8]
+#04 ../../../build/bin/httpserver() [0x42c20e]
+#05 /lib/x86_64-linux-gnu/libpthread.so.0(+0x12730) [0x7f8f2d6c2730]
+#06 /lib/x86_64-linux-gnu/libc.so.6(epoll_wait+0x4f) [0x7f8f2ccce92f]
+#07 libmuduo_net.so muduo::net::EPollPoller::poll(int, std::vector<muduo::net::Channel*, std::allocator<muduo::net::Channel*> >*)+0x7c [0x7f8f2d808466]
+#08 libmuduo_net.so muduo::net::EventLoop::loop()+0x96 [0x7f8f2d7b6c0e]
+#09 ../../../build/bin/httpserver() [0x437c42]
+#10 /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xeb) [0x7f8f2cbf909b]
+#11 ../../../build/bin/httpserver() [0x41bc6a]
+
+T:7503(21:01:44.970120)[main:Info][HttpServer.cpp:135] HttpServer stop ... at:0.0.0.0:9000
+T:7681(21:03:27.545985)[system:Info][HttpConfig.cpp:24] init httpserver port:9000 SSL:true Ws:false ssl:[true:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem] pwd:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource
+T:7681(21:03:27.546929)[main:Info][TcpServer.cpp:103] set msg timeout:0s,and cb is not null:false
+T:7681(21:03:27.548739)[main:Info][Socket.cpp:299] switch to ssl server ok
+T:7681(21:03:30.440095)[system:Info][Acceptor.cpp:31] cert:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem and pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem init ssl socket, ret:false
+T:7681(21:03:30.440412)[main:Info][HttpServer.cpp:127] HttpServer start ... at:0.0.0.0:9000
+T:7681(21:03:30.442373)[system:Info][Acceptor.cpp:47] begin to listen at fd:6
+T:7681(21:03:30.442617)[system:Info][TcpServer.cpp:95] All is ok........
+T:7743(21:04:09.306360)[system:Info][HttpConfig.cpp:24] init httpserver port:9000 SSL:true Ws:false ssl:[true:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem] pwd:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource
+T:7743(21:04:09.307020)[main:Info][TcpServer.cpp:103] set msg timeout:0s,and cb is not null:false
+T:7743(21:04:09.308647)[main:Info][Socket.cpp:299] switch to ssl server ok
+T:7743(21:04:13.563889)[system:Warning][Socket.cpp:451] SSL func[SSL_CTX_use_PrivateKey_file] result is 0, errCode:0x6065064 errStr:error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt
+T:7743(21:04:13.564233)[system:Info][Acceptor.cpp:31] cert:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem and pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem init ssl socket, ret:false
+T:7743(21:04:13.564549)[main:Info][HttpServer.cpp:127] HttpServer start ... at:0.0.0.0:9000
+T:7743(21:04:13.565963)[system:Info][Acceptor.cpp:47] begin to listen at fd:6
+T:7743(21:04:13.566208)[system:Info][TcpServer.cpp:95] All is ok........
+T:7743(21:04:16.515172)[system:Warning][HttpServer.cpp:168] begin to execute sig SIGINT handler..
+T:7743(21:04:16.515818)[main:Info][main_server.cpp:13] callstack is:
+#00 libmuduo_base.so muduo::GetBackCallStack[abi:cxx11]()+0x44 [0x7f7531a715d3]
+#01 ../../../build/bin/httpserver() [0x436dcb]
+#02 ../../../build/bin/httpserver() [0x4381b3]
+#03 ../../../build/bin/httpserver() [0x42e9c8]
+#04 ../../../build/bin/httpserver() [0x42c20e]
+#05 /lib/x86_64-linux-gnu/libpthread.so.0(+0x12730) [0x7f7531c61730]
+#06 /lib/x86_64-linux-gnu/libc.so.6(epoll_wait+0x4f) [0x7f753126d92f]
+#07 libmuduo_net.so muduo::net::EPollPoller::poll(int, std::vector<muduo::net::Channel*, std::allocator<muduo::net::Channel*> >*)+0x7c [0x7f7531da7466]
+#08 libmuduo_net.so muduo::net::EventLoop::loop()+0x96 [0x7f7531d55c0e]
+#09 ../../../build/bin/httpserver() [0x437c42]
+#10 /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xeb) [0x7f753119809b]
+#11 ../../../build/bin/httpserver() [0x41bc6a]
+
+T:7743(21:04:16.516076)[main:Info][HttpServer.cpp:135] HttpServer stop ... at:0.0.0.0:9000
+T:8044(21:06:38.400749)[system:Info][HttpConfig.cpp:24] init httpserver port:9000 SSL:true Ws:false ssl:[true:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem] pwd:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource
+T:8044(21:06:38.401890)[main:Info][TcpServer.cpp:103] set msg timeout:0s,and cb is not null:false
+T:8044(21:06:38.404178)[main:Info][Socket.cpp:299] switch to ssl server ok
+T:8044(21:06:50.663057)[system:Info][Acceptor.cpp:31] cert:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem and pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem init ssl socket, ret:false
+T:8044(21:06:50.663387)[main:Info][HttpServer.cpp:127] HttpServer start ... at:0.0.0.0:9000
+T:8044(21:06:50.664820)[system:Info][Acceptor.cpp:47] begin to listen at fd:6
+T:8044(21:06:50.665114)[system:Info][TcpServer.cpp:95] All is ok........
+T:8044(21:06:53.73961)[system:Warning][HttpServer.cpp:168] begin to execute sig SIGINT handler..
+T:8044(21:06:53.74778)[main:Info][main_server.cpp:13] callstack is:
+#00 libmuduo_base.so muduo::GetBackCallStack[abi:cxx11]()+0x44 [0x7f8e1da475d3]
+#01 ../../../build/bin/httpserver() [0x436dcb]
+#02 ../../../build/bin/httpserver() [0x4381b3]
+#03 ../../../build/bin/httpserver() [0x42e9c8]
+#04 ../../../build/bin/httpserver() [0x42c20e]
+#05 /lib/x86_64-linux-gnu/libpthread.so.0(+0x12730) [0x7f8e1dc37730]
+#06 /lib/x86_64-linux-gnu/libc.so.6(epoll_wait+0x4f) [0x7f8e1d24392f]
+#07 libmuduo_net.so muduo::net::EPollPoller::poll(int, std::vector<muduo::net::Channel*, std::allocator<muduo::net::Channel*> >*)+0x7c [0x7f8e1dd7d466]
+#08 libmuduo_net.so muduo::net::EventLoop::loop()+0x96 [0x7f8e1dd2bc0e]
+#09 ../../../build/bin/httpserver() [0x437c42]
+#10 /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xeb) [0x7f8e1d16e09b]
+#11 ../../../build/bin/httpserver() [0x41bc6a]
+
+T:8044(21:06:53.75161)[main:Info][HttpServer.cpp:135] HttpServer stop ... at:0.0.0.0:9000
+T:8409(21:12:07.619568)[system:Info][HttpConfig.cpp:24] init httpserver port:9000 SSL:true Ws:false ssl:[true:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem] pwd:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource
+T:8409(21:12:07.620588)[main:Info][TcpServer.cpp:103] set msg timeout:0s,and cb is not null:false
+T:8409(21:12:07.622321)[main:Info][Socket.cpp:299] switch to ssl server ok
+T:8409(21:12:12.262315)[system:Warning][Socket.cpp:451] SSL func[SSL_CTX_use_PrivateKey_file] result is 0, errCode:0x6065064 errStr:error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt
+T:8409(21:12:12.262674)[system:Info][Acceptor.cpp:31] cert:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem and pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem init ssl socket, ret:false
+T:8409(21:12:12.262982)[main:Info][HttpServer.cpp:127] HttpServer start ... at:0.0.0.0:9000
+T:8409(21:12:12.264692)[system:Info][Acceptor.cpp:47] begin to listen at fd:6
+T:8409(21:12:12.265003)[system:Info][TcpServer.cpp:95] All is ok........
+T:8409(21:12:14.105922)[system:Warning][HttpServer.cpp:168] begin to execute sig SIGINT handler..
+T:8409(21:12:14.106666)[main:Info][main_server.cpp:13] callstack is:
+#00 libmuduo_base.so muduo::GetBackCallStack[abi:cxx11]()+0x44 [0x7fb3f37425d3]
+#01 ../../../build/bin/httpserver() [0x436dcb]
+#02 ../../../build/bin/httpserver() [0x4381b3]
+#03 ../../../build/bin/httpserver() [0x42e9c8]
+#04 ../../../build/bin/httpserver() [0x42c20e]
+#05 /lib/x86_64-linux-gnu/libpthread.so.0(+0x12730) [0x7fb3f3932730]
+#06 /lib/x86_64-linux-gnu/libc.so.6(epoll_wait+0x4f) [0x7fb3f2f3e92f]
+#07 libmuduo_net.so muduo::net::EPollPoller::poll(int, std::vector<muduo::net::Channel*, std::allocator<muduo::net::Channel*> >*)+0x7c [0x7fb3f3a78466]
+#08 libmuduo_net.so muduo::net::EventLoop::loop()+0x96 [0x7fb3f3a26c0e]
+#09 ../../../build/bin/httpserver() [0x437c42]
+#10 /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xeb) [0x7fb3f2e6909b]
+#11 ../../../build/bin/httpserver() [0x41bc6a]
+
+T:8409(21:12:14.106941)[main:Info][HttpServer.cpp:135] HttpServer stop ... at:0.0.0.0:9000
+T:8439(21:12:15.476519)[system:Info][HttpConfig.cpp:24] init httpserver port:9000 SSL:true Ws:false ssl:[true:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem] pwd:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource
+T:8439(21:12:15.477577)[main:Info][TcpServer.cpp:103] set msg timeout:0s,and cb is not null:false
+T:8439(21:12:15.481202)[main:Info][Socket.cpp:299] switch to ssl server ok
+T:8439(21:12:21.447419)[system:Warning][Socket.cpp:451] SSL func[SSL_CTX_use_PrivateKey_file] result is 0, errCode:0x6065064 errStr:error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt
+T:8439(21:12:21.447762)[system:Info][Acceptor.cpp:31] cert:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem and pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem init ssl socket, ret:false
+T:8439(21:12:21.448011)[main:Info][HttpServer.cpp:127] HttpServer start ... at:0.0.0.0:9000
+T:8439(21:12:21.449138)[system:Info][Acceptor.cpp:47] begin to listen at fd:6
+T:8439(21:12:21.449407)[system:Info][TcpServer.cpp:95] All is ok........
+T:8439(21:12:31.169210)[system:Warning][HttpServer.cpp:168] begin to execute sig SIGINT handler..
+T:8439(21:12:31.169824)[main:Info][main_server.cpp:13] callstack is:
+#00 libmuduo_base.so muduo::GetBackCallStack[abi:cxx11]()+0x44 [0x7fadca55a5d3]
+#01 ../../../build/bin/httpserver() [0x436dcb]
+#02 ../../../build/bin/httpserver() [0x4381b3]
+#03 ../../../build/bin/httpserver() [0x42e9c8]
+#04 ../../../build/bin/httpserver() [0x42c20e]
+#05 /lib/x86_64-linux-gnu/libpthread.so.0(+0x12730) [0x7fadca74a730]
+#06 /lib/x86_64-linux-gnu/libc.so.6(epoll_wait+0x4f) [0x7fadc9d5692f]
+#07 libmuduo_net.so muduo::net::EPollPoller::poll(int, std::vector<muduo::net::Channel*, std::allocator<muduo::net::Channel*> >*)+0x7c [0x7fadca890466]
+#08 libmuduo_net.so muduo::net::EventLoop::loop()+0x96 [0x7fadca83ec0e]
+#09 ../../../build/bin/httpserver() [0x437c42]
+#10 /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xeb) [0x7fadc9c8109b]
+#11 ../../../build/bin/httpserver() [0x41bc6a]
+
+T:8439(21:12:31.170068)[main:Info][HttpServer.cpp:135] HttpServer stop ... at:0.0.0.0:9000
+T:8511(21:12:59.97195)[system:Info][HttpConfig.cpp:24] init httpserver port:9000 SSL:true Ws:false ssl:[true:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem] pwd:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource
+T:8511(21:12:59.99221)[main:Info][TcpServer.cpp:103] set msg timeout:0s,and cb is not null:false
+T:8511(21:12:59.105722)[main:Info][Socket.cpp:299] switch to ssl server ok
+T:8511(21:13:04.302493)[system:Warning][Socket.cpp:451] SSL func[SSL_CTX_use_PrivateKey_file] result is 0, errCode:0x6065064 errStr:error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt
+T:8511(21:13:04.302826)[system:Info][Acceptor.cpp:31] cert:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem and pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem init ssl socket, ret:false
+T:8511(21:13:04.303162)[main:Info][HttpServer.cpp:127] HttpServer start ... at:0.0.0.0:9000
+T:8511(21:13:04.304509)[system:Info][Acceptor.cpp:47] begin to listen at fd:6
+T:8511(21:13:04.304893)[system:Info][TcpServer.cpp:95] All is ok........
+T:8511(21:13:06.562182)[system:Warning][HttpServer.cpp:168] begin to execute sig SIGINT handler..
+T:8511(21:13:06.562823)[main:Info][main_server.cpp:13] callstack is:
+#00 libmuduo_base.so muduo::GetBackCallStack[abi:cxx11]()+0x44 [0x7f80734b65d3]
+#01 ../../../build/bin/httpserver() [0x436dcb]
+#02 ../../../build/bin/httpserver() [0x4381b3]
+#03 ../../../build/bin/httpserver() [0x42e9c8]
+#04 ../../../build/bin/httpserver() [0x42c20e]
+#05 /lib/x86_64-linux-gnu/libpthread.so.0(+0x12730) [0x7f80736a6730]
+#06 /lib/x86_64-linux-gnu/libc.so.6(epoll_wait+0x4f) [0x7f8072cb292f]
+#07 libmuduo_net.so muduo::net::EPollPoller::poll(int, std::vector<muduo::net::Channel*, std::allocator<muduo::net::Channel*> >*)+0x7c [0x7f80737ec466]
+#08 libmuduo_net.so muduo::net::EventLoop::loop()+0x96 [0x7f807379ac0e]
+#09 ../../../build/bin/httpserver() [0x437c42]
+#10 /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xeb) [0x7f8072bdd09b]
+#11 ../../../build/bin/httpserver() [0x41bc6a]
+
+T:8511(21:13:06.563086)[main:Info][HttpServer.cpp:135] HttpServer stop ... at:0.0.0.0:9000
+T:8875(21:14:31.603423)[system:Info][HttpConfig.cpp:24] init httpserver port:9000 SSL:true Ws:false ssl:[true:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem] pwd:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource
+T:8875(21:14:31.604464)[main:Info][TcpServer.cpp:103] set msg timeout:0s,and cb is not null:false
+T:8875(21:14:31.606358)[main:Info][Socket.cpp:299] switch to ssl server ok
+T:8875(21:14:36.312040)[system:Warning][Socket.cpp:451] SSL func[SSL_CTX_use_PrivateKey_file] result is 0, errCode:0x6065064 errStr:error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt
+T:8875(21:14:36.312378)[system:Info][Acceptor.cpp:31] cert:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem and pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem init ssl socket, ret:false
+T:8875(21:14:36.312661)[main:Info][HttpServer.cpp:127] HttpServer start ... at:0.0.0.0:9000
+T:8875(21:14:36.314719)[system:Info][Acceptor.cpp:47] begin to listen at fd:6
+T:8875(21:14:36.314988)[system:Info][TcpServer.cpp:95] All is ok........
+T:8909(21:14:48.64681)[system:Info][HttpConfig.cpp:24] init httpserver port:9000 SSL:true Ws:false ssl:[true:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem] pwd:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource
+T:8909(21:14:48.66115)[main:Info][TcpServer.cpp:103] set msg timeout:0s,and cb is not null:false
+T:8909(21:14:48.68525)[main:Info][Socket.cpp:299] switch to ssl server ok
+T:8909(21:14:55.502437)[system:Warning][Socket.cpp:451] SSL func[SSL_CTX_use_PrivateKey_file] result is 0, errCode:0x6065064 errStr:error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt
+T:8909(21:14:55.502811)[system:Info][Acceptor.cpp:31] cert:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem and pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem init ssl socket, ret:false
+T:8909(21:14:55.503113)[main:Info][HttpServer.cpp:127] HttpServer start ... at:0.0.0.0:9000
+T:8909(21:14:55.504442)[system:Info][Acceptor.cpp:47] begin to listen at fd:6
+T:8909(21:14:55.504725)[system:Info][TcpServer.cpp:95] All is ok........
+T:8909(21:14:57.424577)[system:Warning][HttpServer.cpp:168] begin to execute sig SIGINT handler..
+T:8909(21:14:57.425235)[main:Info][main_server.cpp:13] callstack is:
+#00 libmuduo_base.so muduo::GetBackCallStack[abi:cxx11]()+0x44 [0x7f928a1c95d3]
+#01 ../../../build/bin/httpserver() [0x436dcb]
+#02 ../../../build/bin/httpserver() [0x4381b3]
+#03 ../../../build/bin/httpserver() [0x42e9c8]
+#04 ../../../build/bin/httpserver() [0x42c20e]
+#05 /lib/x86_64-linux-gnu/libpthread.so.0(+0x12730) [0x7f928a3b9730]
+#06 /lib/x86_64-linux-gnu/libc.so.6(epoll_wait+0x4f) [0x7f92899c592f]
+#07 libmuduo_net.so muduo::net::EPollPoller::poll(int, std::vector<muduo::net::Channel*, std::allocator<muduo::net::Channel*> >*)+0x7c [0x7f928a4ff466]
+#08 libmuduo_net.so muduo::net::EventLoop::loop()+0x96 [0x7f928a4adc0e]
+#09 ../../../build/bin/httpserver() [0x437c42]
+#10 /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xeb) [0x7f92898f009b]
+#11 ../../../build/bin/httpserver() [0x41bc6a]
+
+T:8909(21:14:57.425504)[main:Info][HttpServer.cpp:135] HttpServer stop ... at:0.0.0.0:9000
+T:8939(21:15:16.224706)[system:Info][HttpConfig.cpp:24] init httpserver port:9000 SSL:true Ws:false ssl:[true:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem] pwd:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource
+T:8939(21:15:16.225433)[main:Info][TcpServer.cpp:103] set msg timeout:0s,and cb is not null:false
+T:8939(21:15:16.227147)[main:Info][Socket.cpp:299] switch to ssl server ok
+T:8939(21:15:20.226743)[system:Warning][Socket.cpp:451] SSL func[SSL_CTX_use_PrivateKey_file] result is 0, errCode:0x6065064 errStr:error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt
+T:8939(21:15:20.227057)[system:Info][Acceptor.cpp:31] cert:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem and pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem init ssl socket, ret:false
+T:8939(21:15:20.227322)[main:Info][HttpServer.cpp:127] HttpServer start ... at:0.0.0.0:9000
+T:8939(21:15:20.228728)[system:Info][Acceptor.cpp:47] begin to listen at fd:6
+T:8939(21:15:20.228969)[system:Info][TcpServer.cpp:95] All is ok........
+T:8939(21:15:21.800557)[system:Warning][HttpServer.cpp:168] begin to execute sig SIGINT handler..
+T:8939(21:15:21.801277)[main:Info][main_server.cpp:13] callstack is:
+#00 libmuduo_base.so muduo::GetBackCallStack[abi:cxx11]()+0x44 [0x7f9b366465d3]
+#01 ../../../build/bin/httpserver() [0x436dcb]
+#02 ../../../build/bin/httpserver() [0x4381b3]
+#03 ../../../build/bin/httpserver() [0x42e9c8]
+#04 ../../../build/bin/httpserver() [0x42c20e]
+#05 /lib/x86_64-linux-gnu/libpthread.so.0(+0x12730) [0x7f9b36836730]
+#06 /lib/x86_64-linux-gnu/libc.so.6(epoll_wait+0x4f) [0x7f9b35e4292f]
+#07 libmuduo_net.so muduo::net::EPollPoller::poll(int, std::vector<muduo::net::Channel*, std::allocator<muduo::net::Channel*> >*)+0x7c [0x7f9b3697c466]
+#08 libmuduo_net.so muduo::net::EventLoop::loop()+0x96 [0x7f9b3692ac0e]
+#09 ../../../build/bin/httpserver() [0x437c42]
+#10 /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xeb) [0x7f9b35d6d09b]
+#11 ../../../build/bin/httpserver() [0x41bc6a]
+
+T:8939(21:15:21.801653)[main:Info][HttpServer.cpp:135] HttpServer stop ... at:0.0.0.0:9000
+T:9040(21:15:59.642407)[system:Info][HttpConfig.cpp:24] init httpserver port:9000 SSL:true Ws:false ssl:[true:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem] pwd:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource
+T:9040(21:15:59.643132)[main:Info][TcpServer.cpp:103] set msg timeout:0s,and cb is not null:false
+T:9040(21:15:59.644706)[main:Info][Socket.cpp:299] switch to ssl server ok
+T:9040(21:16:00.273273)[system:Warning][Socket.cpp:451] SSL func[SSL_CTX_use_PrivateKey_file] result is 0, errCode:0x6065064 errStr:error:06065064:digital envelope routines:EVP_DecryptFinal_ex:bad decrypt
+T:9040(21:16:00.273906)[system:Info][Acceptor.cpp:31] cert:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/cert.pem and pem:/media/xhou/Data1/git/Learning-Notes/c++/net/http/resource/privkey.pem init ssl socket, ret:false
+T:9040(21:16:00.274376)[main:Info][HttpServer.cpp:127] HttpServer start ... at:0.0.0.0:9000
+T:9040(21:16:00.276274)[system:Info][Acceptor.cpp:47] begin to listen at fd:6
+T:9040(21:16:00.276626)[system:Info][TcpServer.cpp:95] All is ok........
+T:9040(21:16:01.781643)[system:Warning][HttpServer.cpp:168] begin to execute sig SIGINT handler..
+T:9040(21:16:01.782446)[main:Info][main_server.cpp:13] callstack is:
+#00 libmuduo_base.so muduo::GetBackCallStack[abi:cxx11]()+0x44 [0x7f3fe26245d3]
+#01 ../../../build/bin/httpserver() [0x436dcb]
+#02 ../../../build/bin/httpserver() [0x4381b3]
+#03 ../../../build/bin/httpserver() [0x42e9c8]
+#04 ../../../build/bin/httpserver() [0x42c20e]
+#05 /lib/x86_64-linux-gnu/libpthread.so.0(+0x12730) [0x7f3fe2814730]
+#06 /lib/x86_64-linux-gnu/libc.so.6(epoll_wait+0x4f) [0x7f3fe1e2092f]
+#07 libmuduo_net.so muduo::net::EPollPoller::poll(int, std::vector<muduo::net::Channel*, std::allocator<muduo::net::Channel*> >*)+0x7c [0x7f3fe295a466]
+#08 libmuduo_net.so muduo::net::EventLoop::loop()+0x96 [0x7f3fe2908c0e]
+#09 ../../../build/bin/httpserver() [0x437c42]
+#10 /lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0xeb) [0x7f3fe1d4b09b]
+#11 ../../../build/bin/httpserver() [0x41bc6a]
+
+T:9040(21:16:01.782836)[main:Info][HttpServer.cpp:135] HttpServer stop ... at:0.0.0.0:9000

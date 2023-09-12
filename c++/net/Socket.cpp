@@ -371,6 +371,10 @@ bool Socket::initSSLServer(const std::string &certPath, const std::string &keyPa
         return ret;
     }
 
+    if (passWd.empty()) {
+        return true;
+    }
+
     auto code = SSL_CTX_use_certificate_file(sslConn_->m_ptrContext, certPath.c_str(), SSL_FILETYPE_PEM);
     if (code != 1) {
         ERR_print_errors_fp(stderr);

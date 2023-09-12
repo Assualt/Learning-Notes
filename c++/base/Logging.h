@@ -22,18 +22,18 @@ namespace muduo::base {
 
 DECLARE_EXCEPTION(LogException, Exception)
 
+struct FileAttribute {
+    int         lineNo;
+    std::string funcName;
+    std::string fileName;
+};
+
 enum LogLevel { Debug, Info, Except, Warn, Error, Fatal, Alert, Emergency };
 class Logger {
 public:
     ~Logger() { m_vHandleList.clear(); }
 
 public:
-    struct FileAttribute {
-        int         lineNo;
-        std::string funcName;
-        std::string fileName;
-    };
-
     void SetAppendLF(bool val) { m_msgAppendCrlf = val; }
 
     Logger &BasicConfig(LogLevel defaultLevel, const char *messageFormat, const char *filePrefix,
@@ -107,40 +107,43 @@ protected:
         while (!finished) {
             index       = result.find('%', index);
             nBeginIndex = index;
-            if (index == std::string::npos)
+            if (index == std::string::npos) {
                 break;
-            if (result[ index + 1 ] == '%') {
+            } else if (result[ index + 1 ] == '%') {
                 index += 2;
                 continue;
-            } else {
-                bool bFindPointer = false;
-                bool FirstInteger = false;
-                for (size_t i = index + 1; i < result.size(); ++i) {
-                    if (result[ i ] == 's' || result[ i ] == 'd' || result[ i ] == 'f' || result[ i ] == 'c' ||
-                        result[ i ] == 'x' || result[ i ] == 'o' || result[ i ] == 'b') {
-                        keyPrefix.push_back(result[ i ]);
-                        finished = true;
-                    } else if ((result[ i ] >= '0' && result[ i ] <= '9') || result[ i ] == '.') {
-                        if (result[ i ] == '.')
-                            bFindPointer = true;
-                        else if (!bFindPointer)
-                            filledInteger = filledInteger * 10 + result[ i ] - '0';
-                        else
-                            filledPointer = filledPointer * 10 + result[ i ] - '0';
-                        if (!FirstInteger && result[ i ] == '0') {
-                            filledChar   = '0';
-                            FirstInteger = true;
-                        }
+            }
 
-                        keyPrefix.push_back(result[ i ]);
-                    } else if (!FirstInteger) {
-                        filledChar = result[ i ];
+            bool bFindPointer = false;
+            bool FirstInteger = false;
+            for (size_t i = index + 1; i < result.size(); ++i) {
+                if (result[ i ] == 's' || result[ i ] == 'd' || result[ i ] == 'f' || result[ i ] == 'c' ||
+                    result[ i ] == 'x' || result[ i ] == 'o' || result[ i ] == 'b') {
+                    keyPrefix.push_back(result[ i ]);
+                    finished = true;
+                } else if ((result[ i ] >= '0' && result[ i ] <= '9') || result[ i ] == '.') {
+                    if (result[ i ] == '.')
+                        bFindPointer = true;
+                    else if (!bFindPointer)
+                        filledInteger = filledInteger * 10 + result[ i ] - '0';
+                    else
+                        filledPointer = filledPointer * 10 + result[ i ] - '0';
+                    if (!FirstInteger && result[ i ] == '0') {
+                        filledChar   = '0';
+                        FirstInteger = true;
                     }
-                    index++;
-                    if (finished)
-                        break;
+
+                    keyPrefix.push_back(result[ i ]);
+                } else if (!FirstInteger) {
+                    filledChar = result[ i ];
+                }
+
+                index++;
+                if (finished) {
+                    break;
                 }
             }
+
         }
         if (nBeginIndex != -1) {
             std::stringstream ss;
@@ -173,7 +176,6 @@ protected:
     LogLevel                 m_nLevel;
     std::string              m_strMsgFmt;
     std::string              m_strAppName;
-    FileAttribute            m_FileAttribute;
     std::vector<LogHandle *> m_vHandleList;
     MutexLock                m_mutexLock;
     bool                     m_msgAppendCrlf{true};

@@ -11,7 +11,7 @@
 
 class SqlPrepareStatement {
 public:
-    SqlPrepareStatement(const std::string &sql)
+    explicit SqlPrepareStatement(const std::string &sql)
         : m_strRawSql(sql)
         , m_nPos(0)
         , m_nCurrentParamCnt(0) {

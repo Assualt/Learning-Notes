@@ -9,10 +9,9 @@ using namespace muduo::base;
 
 namespace {
 static const std::string g_defaultAppName = "main";
-
+__thread FileAttribute *g_fileAttr = nullptr;
 std::string getCurrentHourTime() {
     Timestamp now = Timestamp::now();
-
     return now.toFmtString("%H:%M:%S.%k");
 }
 
@@ -88,9 +87,9 @@ void Logger::getKeyVal(const std::string &key, std::stringstream &ss, const std:
         {"(levelname)", [](auto &ss, auto &, auto level) { ss << getLevelName(level); }},
         {"(asctime)", [](auto &ss, auto &msg, auto) { ss << getCurrentHourTime(); }},
         {"(ctime)", [](auto &ss, auto &msg, auto) { ss << Timestamp::now().toFmtString(); }},
-        {"(lineno)", [this](auto &ss, auto &msg, auto) { ss << std::dec << m_FileAttribute.lineNo; }},
-        {"(filename)", [this](auto &ss, auto &msg, auto) { ss << stripFileName(m_FileAttribute.fileName); }},
-        {"(funcname)", [this](auto &ss, auto &msg, auto) { ss << m_FileAttribute.funcName; }},
+        {"(lineno)", [](auto &ss, auto &msg, auto) { ss << std::dec << g_fileAttr->lineNo; }},
+        {"(filename)", [](auto &ss, auto &msg, auto) { ss << stripFileName(g_fileAttr->fileName); }},
+        {"(funcname)", [](auto &ss, auto &msg, auto) { ss << g_fileAttr->funcName; }},
         {"(threadName)", [](auto &ss, auto &msg, auto) { ss << System::GetCurrentThreadName(); }},
         {"(appname)",
          [this](auto &ss, auto &msg, auto) {
@@ -107,9 +106,12 @@ void Logger::getKeyVal(const std::string &key, std::stringstream &ss, const std:
 }
 
 Logger &Logger::setFileAttr(const std::string &fileName, const std::string &funcName, int lineNo) {
-    m_FileAttribute.fileName = fileName;
-    m_FileAttribute.funcName = funcName;
-    m_FileAttribute.lineNo   = lineNo;
+    if (g_fileAttr == nullptr) {
+        g_fileAttr = new FileAttribute;
+    }
+    g_fileAttr->fileName = fileName;
+    g_fileAttr->funcName = funcName;
+    g_fileAttr->lineNo   = lineNo;
     return *this;
 }
 

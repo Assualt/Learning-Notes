@@ -95,6 +95,7 @@ void MysqlClient::close() {
     if (driver_ != nullptr) {
         mysql_close(driver_);
     }
+    driver_ = nullptr;
 }
 
 MysqlClient::~MysqlClient() { close(); }
