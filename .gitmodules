@@ -7,3 +7,6 @@
 [submodule "c++/httpclient/liburlparse"]
 	path = c++/httpclient/liburlparse
 	url = https://github.com/Assualt/liburlparse.git
+[submodule "c++/third_party/liburlparse"]
+	path = c++/third_party/liburlparse
+	url = https://gitee.com/shydo/liburlparse.git
