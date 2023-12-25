@@ -10,3 +10,6 @@
 [submodule "c++/third_party/liburlparse"]
 	path = c++/third_party/liburlparse
 	url = https://gitee.com/shydo/liburlparse.git
+[submodule "ssp/third_party/googletest"]
+	path = ssp/third_party/googletest
+	url = https://gitee.com/shydo/googletest.git
