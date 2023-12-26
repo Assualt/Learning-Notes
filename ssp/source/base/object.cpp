@@ -57,11 +57,5 @@ long Object::Hashcode() const
 
 bool Object::Equals(const Object &rhs)
 {
-    if (&rhs == this) {
-        return true;
-    } else if (rhs.Hashcode() == Hashcode()) {
-        return true;
-    }
-
-    return false;
+    return rhs.Hashcode() == Hashcode();
 }

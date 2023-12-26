@@ -5,7 +5,7 @@
 #ifndef SSP_TOOLS_OBJECT_H
 #define SSP_TOOLS_OBJECT_H
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace ssp::base {
 
@@ -29,9 +29,9 @@ public:
 
     virtual bool InitFinish();
 
-    virtual long Hashcode() const;
+    [[nodiscard]] virtual long Hashcode() const;
 
-    virtual const char *GetObjectName() const;
+    [[nodiscard]] virtual const char *GetObjectName() const;
 
 public:
     [[nodiscard]] virtual const char *ToString() const;

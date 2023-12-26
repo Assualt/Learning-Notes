@@ -1,5 +1,8 @@
 set(test_base_files
     test_object.cpp
+    test_logging.cpp
+    test_system.cpp
+    test_timestamp.cpp
 )
 
 add_executable(test_ssp_base ${test_base_files})
