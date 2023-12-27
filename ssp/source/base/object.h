@@ -6,6 +6,7 @@
 #define SSP_TOOLS_OBJECT_H
 
 #include <cstdint>
+#include <iostream>
 
 namespace ssp::base {
 
@@ -28,6 +29,8 @@ public:
     virtual bool InitOther();
 
     virtual bool InitFinish();
+
+    virtual void Dump(std::ostream &os);
 
     [[nodiscard]] virtual long Hashcode() const;
 

@@ -14,11 +14,6 @@ ObjectPool &ObjectPool::Instance()
     return pool;
 }
 
-const char *ObjectPool::GetObjectName() const
-{
-    return "ObjPool";
-}
-
 void ObjectPool::Register(size_t hash, const std::string &name, const Creator &creator)
 {
     creators_.emplace(hash, creator);
@@ -53,7 +48,7 @@ void ObjectPool::PostInit()
     for (auto stage : stages) {
         auto result = std::all_of(objMap_.begin(), objMap_.end(),
                                   [&stage](auto &item) { return item.second->AutoInit(stage); });
-        if (result) {
+        if (!result) {
             return;
         }
     }
@@ -62,4 +57,19 @@ void ObjectPool::PostInit()
 uint32_t ObjectPool::Size() const
 {
     return objMap_.size();
+}
+
+void ObjectPool::Dump(std::ostream &os)
+{
+    os << "Dump objects: " << std::endl;
+    uint32_t idx = 1;
+    for (auto&[code, obj] : objMap_) {
+        if (obj == nullptr) {
+            continue;
+        }
+
+        os << "No." << idx++ << std::endl
+           << objNameMap_[code] << "(0x" << std::hex << code << ")" << std::endl;
+        obj->Dump(os);
+    }
 }

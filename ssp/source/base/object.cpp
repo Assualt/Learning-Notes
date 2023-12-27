@@ -59,3 +59,8 @@ bool Object::Equals(const Object &rhs)
 {
     return rhs.Hashcode() == Hashcode();
 }
+
+void Object::Dump(std::ostream &os)
+{
+    os << ToString() << std::endl;
+}

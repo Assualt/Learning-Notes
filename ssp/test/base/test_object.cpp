@@ -44,5 +44,5 @@ TEST(pool, test)
 
     ASSERT_EQ(ObjectPool::Instance().Size(), 1);
 
-    std::cout << obj->ToString() << std::endl;
+    ObjectPool::Instance().Dump(std::cout);
 }

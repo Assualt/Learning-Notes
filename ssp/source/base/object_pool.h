@@ -13,10 +13,10 @@
 namespace ssp::base {
 using Creator = std::function<Object*()>;
 
-class ObjectPool final : public Object {
+class ObjectPool final {
 private:
     ObjectPool() = default;
-    ~ObjectPool() override = default;
+    ~ObjectPool() = default;
 
 public:
     static ObjectPool& Instance();
@@ -26,6 +26,8 @@ public:
     void PreInit();
 
     void PostInit();
+
+    void Dump(std::ostream &os);
 
     template<class T> void PushObj(T *val)
     {
@@ -51,9 +53,6 @@ public:
     {
         return std::invoke(func, arg...);
     }
-
-public:
-    [[nodiscard]] const char * GetObjectName() const override;
 
 private:
     std::map<size_t, Creator> creators_;

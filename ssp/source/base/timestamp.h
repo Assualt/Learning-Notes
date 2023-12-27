@@ -12,6 +12,10 @@
 
 namespace ssp::base {
 DECLARE_EXCEPTION(TimeStampException, Exception)
+
+#define INLINE_OPERATOR(ops, type, val)                                                                                \
+    inline bool operator ops(const type &lhs, const type &rhs) { return lhs.val ops rhs.val; }
+
 class TimeStamp : public  Object{
 public:
     TimeStamp();
@@ -35,9 +39,29 @@ public:
 public:
     static TimeStamp Now();
 
+    static TimeStamp Invalid();
+
+    static TimeStamp FromUnixTime(time_t t);
+
+    static TimeStamp FromUnixTime(time_t t, int32_t microSecond);
+
+    static TimeStamp FromTimeStr(const std::string &str, const std::string &fmt = "%Y-%m-%d %H:%M:%S");
+
+    friend TimeStamp operator-(const TimeStamp& lhs, const TimeStamp &rhs)
+    {
+        return TimeStamp(lhs.MicroSeconds() - rhs.MicroSeconds());
+    }
+
 private:
     uint64_t msSeconds_{0};
 };
+
+INLINE_OPERATOR(==, TimeStamp, MicroSeconds())
+INLINE_OPERATOR(<, TimeStamp, MicroSeconds())
+INLINE_OPERATOR(<=, TimeStamp, MicroSeconds())
+INLINE_OPERATOR(>, TimeStamp, MicroSeconds())
+INLINE_OPERATOR(>=, TimeStamp, MicroSeconds())
+
 }
 
 #endif //SSP_TOOLS_TIMESTAMP_H

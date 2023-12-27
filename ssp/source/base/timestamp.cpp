@@ -159,3 +159,30 @@ uint64_t TimeStamp::MSeconds() const
 {
     return msSeconds_ % kMicroSecondsPerSecond;
 }
+
+TimeStamp TimeStamp::Invalid()
+{
+    return {};
+}
+
+TimeStamp TimeStamp::FromUnixTime(time_t t)
+{
+    return TimeStamp::FromUnixTime(t, 0);
+}
+
+TimeStamp TimeStamp::FromUnixTime(time_t t, int32_t microSeconds)
+{
+    return TimeStamp(static_cast<int64_t>(t) * kMicroSecondsPerSecond + microSeconds);
+}
+
+TimeStamp TimeStamp::FromTimeStr(const std::string &str, const std::string &fmt)
+{
+    struct tm t {};
+    std::stringstream ss(str);
+    ss >> std::get_time(&t, fmt.c_str());
+    if (ss.fail()) {
+        return TimeStamp::Invalid();
+    }
+    return TimeStamp::FromUnixTime(mktime(&t));
+}
+
