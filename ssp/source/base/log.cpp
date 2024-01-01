@@ -13,7 +13,7 @@ using namespace ssp::base;
 using KeyFormatFunc = std::function<void(std::stringstream &, const std::string &, LogLevel)>;
 
 namespace {
-thread_local FileAttr g_fileAttr;
+thread_local LogFileAttr g_fileAttr;
 std::map<std::string, Logger> g_loggerMap;
 std::string g_strDefaultAppName = "APP";
 }

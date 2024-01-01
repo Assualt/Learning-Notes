@@ -98,10 +98,20 @@ inline const char *GetSigName(int sig) {
     return iter != g_sigNameMapper.end() ? iter->second : "NULL";
 }
 
-const char *GetUname()
+inline const char *GetUname()
 {
     return getpwuid(getuid())->pw_name;
 }
+
+inline const char *BaseName(const char *path)
+{
+#ifdef LINUX
+    return basename(path);
+#else
+    return "";
+#endif
+}
+
 
 }
 

@@ -9,8 +9,8 @@ namespace ssp::base::util {
 
 int memCaseCmp(const char *s1, const char *s2, size_t len)
 {
-    const unsigned char *us1 = reinterpret_cast<const unsigned char *>(s1);
-    const unsigned char *us2 = reinterpret_cast<const unsigned char *>(s2);
+    const auto *us1 = reinterpret_cast<const unsigned char *>(s1);
+    const auto *us2 = reinterpret_cast<const unsigned char *>(s2);
 
     for (size_t i = 0; i < len; i++) {
         const int diff = int{static_cast<unsigned char>(ascii_tolower(us1[i]))} -
@@ -73,10 +73,7 @@ std::vector<std::string> SplitToVector(const std::string &strVal, char ch)
         }
     }
     temp = trim(temp);
-    if (!temp.empty())
-        result.push_back(temp);
-    else if (temp.empty())
-        result.push_back(temp);
+    result.push_back(temp);
     return result;
 }
 }

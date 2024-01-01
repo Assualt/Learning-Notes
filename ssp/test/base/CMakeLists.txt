@@ -4,6 +4,13 @@ set(test_base_files
     test_system.cpp
     test_timestamp.cpp
     test_string_utils.cpp
+    test_file.cpp
+    test_dll.cpp
+    test_dirscanner.cpp
+    test_conf.cpp
+    test_format.cpp
+    test_thread.cpp
+    test_threadpool.cpp
 )
 
 add_executable(test_ssp_base ${test_base_files})

@@ -20,7 +20,7 @@ enum class LogLevel {
     Debug, Info, Except, Warn, Error, Fatal, Alert, Emergency
 };
 
-struct FileAttr {
+struct LogFileAttr {
     uint32_t    lineNo;
     std::string funcName;
     std::string fileName;
@@ -63,7 +63,7 @@ private:
 
     template <class T, class... Args> void FormatString(std::string &result, T &val, Args &&... arg);
 
-    void FormatString(std::string &result);
+    void FormatString(std::string &result) {}
 
     std::string MessageFormat(const std::string &fmtLogMsg, LogLevel level);
 
@@ -95,10 +95,6 @@ template<class... Args> void Logger::LogMessage(LogLevel level, const char *fmt,
     for (auto &handle : logImplList_) {
         handle->WriteData(message.c_str(), message.size());
     }
-}
-
-void Logger::FormatString(std::string &)
-{
 }
 
 template <class T, class... Args> void Logger::FormatString(std::string &result, T &val, Args &&... arg)
@@ -177,5 +173,7 @@ template <class T, class... Args> void Logger::FormatString(std::string &result,
     ssp::base::Logger::GetLogger(appName).SetAppName(appName)
 
 #define logger LOG("APP")
+
+#define log_sys LOG("System")
 
 #endif //SSP_TOOLS_LOG_H

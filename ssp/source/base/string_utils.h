@@ -14,18 +14,21 @@ namespace util {
 // StrContains()
 //
 // Returns whether a given string `haystack` contains the substring `needle`.
-inline bool StrContains(std::string_view haystack, std::string_view needle) noexcept {
+inline bool StrContains(std::string_view haystack, std::string_view needle) noexcept
+{
     return haystack.find(needle, 0) != std::string_view::npos;
 }
 
-inline bool StrContains(std::string_view haystack, char needle) noexcept {
+inline bool StrContains(std::string_view haystack, char needle) noexcept
+{
     return haystack.find(needle) != std::string_view::npos;
 }
 
 // StartsWith()
 //
 // Returns whether a given string `text` begins with `prefix`.
-inline bool StartsWith(std::string_view text, std::string_view prefix) noexcept {
+inline bool StartsWith(std::string_view text, std::string_view prefix) noexcept
+{
     return prefix.empty() ||
            (text.size() >= prefix.size() && memcmp(text.data(), prefix.data(), prefix.size()) == 0);
 }
@@ -33,7 +36,8 @@ inline bool StartsWith(std::string_view text, std::string_view prefix) noexcept 
 // EndsWith()
 //
 // Returns whether a given string `text` ends with `suffix`.
-inline bool EndsWith(std::string_view text, std::string_view suffix) noexcept {
+inline bool EndsWith(std::string_view text, std::string_view suffix) noexcept
+{
     return suffix.empty() || (text.size() >= suffix.size() &&
                               memcmp(text.data() + (text.size() - suffix.size()), suffix.data(),
                                      suffix.size()) ==
@@ -100,7 +104,8 @@ inline long Count(const std::string &strVal, char ch)
 template<typename Target, typename Source, bool Same>
 class lexical_cast_t {
 public:
-    static Target cast(const Source &arg) {
+    static Target cast(const Source &arg)
+    {
         Target ret;
         std::stringstream ss;
         if (!(ss << arg && ss >> ret && ss.eof()))
@@ -119,7 +124,8 @@ public:
 template<typename Source>
 class lexical_cast_t<std::string, Source, false> {
 public:
-    static std::string cast(const Source &arg) {
+    static std::string cast(const Source &arg)
+    {
         std::ostringstream ss;
         ss << arg;
         return ss.str();
@@ -129,7 +135,8 @@ public:
 template<typename Target>
 class lexical_cast_t<Target, std::string, false> {
 public:
-    [[maybe_unused]] static Target cast(const std::string &arg) {
+    [[maybe_unused]] static Target cast(const std::string &arg)
+    {
         Target ret;
         std::istringstream ss(arg);
         if (!(ss >> ret && ss.eof()))
@@ -149,7 +156,8 @@ struct is_same<T, T> {
 };
 
 template<typename Target, typename Source>
-Target lexical_cast(const Source &arg) {
+Target lexical_cast(const Source &arg)
+{
     return lexical_cast_t<Target, Source, is_same<Target, Source>::value>::cast(arg);
 }
 

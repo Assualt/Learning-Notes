@@ -32,6 +32,10 @@ public:
 
     void flushFormat()
     {
+        if (format_ == nullptr) {
+            return;
+        }
+
         if (*format_) {
             getSelf() << format_;
             format_ = &g_nEndFlags;
