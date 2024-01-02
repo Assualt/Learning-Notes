@@ -12,64 +12,29 @@
 
 namespace ssp::net {
 
-template<typename T>
-class SocketImpl {
+class Socket {
 public:
-    static SocketImpl CreateSocket(int32_t fd, void *args)
-    {
-        SocketImpl ins(fd, args);
-        return ins;
-    }
+    static Socket CreateSocket(void *args);
 
-    void SetKeepAlive(bool on)
-    {
-        int opt = on ? 1 : 0;
-        setsockopt(fd_, SOL_SOCKET, SO_KEEPALIVE, &opt, static_cast<socklen_t>(sizeof opt));
-    }
+    void SetKeepAlive(bool on);
 
-    void SetReuseAddr(bool on)
-    {
-        int opt = on ? 1 : 0;
-        ::setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &opt, static_cast<socklen_t>(sizeof opt));
-    }
+    void SetReuseAddr(bool on);
 
-    void SetReusePort(bool on)
-    {
-#ifdef SO_REUSEPORT
-        int opt = on ? 1 : 0;
-        int ret = ::setsockopt(fd_, SOL_SOCKET, SO_REUSEPORT, &opt, static_cast<socklen_t>(sizeof opt));
-        if (ret < 0 && on) {
-            logger.Error("set SO_REUSE PORT failed.");
-        }
-#endif
-    }
+    void SetReusePort(bool on);
+
+    void Close();
 
 private:
-    explicit SocketImpl(int32_t fd, void *args = nullptr)
-    {
-        fd_ = fd;
-        val.Init(fd, args);
-    }
+    Socket(int32_t fd, void *args);
 
-    ~SocketImpl()
-    {
-        Close();
-    }
+    ~Socket();
 
-    void Close()
-    {
-        val.Close();
-    }
+    void Init(void *args);
 
 private:
-    T val;
     int32_t fd_ { -1 };
+    std::unique_ptr<NormalSocket> normalSocket_{nullptr};
 };
-
-
-using Socket = SocketImpl<NormalSocket>;
-using SslSocket = SocketImpl<SocketSsl>;
-
 }
 
 

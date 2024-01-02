@@ -6,44 +6,42 @@
 #define SSP_TOOLS_SOCKET_TYPEDEF_H
 
 #include <cstdint>
+#include <memory>
+#include <string>
+
+#if SUPPORT_OPENSSL
+#include <openssl/err.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+#endif
 
 namespace ssp::net {
 
 struct NormalSocket {
 public:
-    virtual bool Close()
-    {
-        return true;
-    }
+    void Close();
 
-    virtual void Init(int32_t fd, void *args)
-    {
-        fd_ = fd;
-    }
+    void Init(int32_t fd, void *args);
+
+    void SwitchSSL(bool isClient, const std::string& host = "");
+
+    bool Connect();
 
 private:
+    static bool InitSSL();
+
+private:
+#if SUPPORT_OPENSSL
+    struct SSL_Connection{
+        SSL *    handle_{nullptr};
+        SSL_CTX *context_{nullptr};
+    };
+#else
+    struct SSL_Connection {};
+#endif
+    std::unique_ptr<SSL_Connection> sslConn_{nullptr};
     int32_t fd_{-1};
-};
-
-struct SocketSsl : public NormalSocket {
-public:
-    bool Close() override
-    {
-        NormalSocket::Close();
-        return true;
-    }
-
-    void Init(int32_t fd, void *args) override
-    {
-        NormalSocket::Init(fd, args);
-        InitSslOptions(fd, args);
-    }
-
-private:
-    void InitSslOptions(int32_t fd, void *args)
-    {
-
-    }
 };
 
 }

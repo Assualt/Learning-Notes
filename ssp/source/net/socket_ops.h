@@ -9,6 +9,8 @@
 
 namespace ssp::net::sockets {
 
+int CreateSocket(int32_t domain = AF_INET, int32_t type = SOCK_STREAM, int32_t protocol = 0);
+
 int Connect(int sockFd, const struct sockaddr *addr);
 
 void Bind(int sockFd, const struct sockaddr *addr);

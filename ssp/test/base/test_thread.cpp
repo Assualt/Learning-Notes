@@ -20,7 +20,7 @@ TEST(thread, start_thread)
 {
     System::SetThreadName("main");
     ThreadContext::SetThreadStateChangeHook([](auto old, auto newState) {
-       logger.Info("state change:%d --> %d", old, newState);
+        logger.Info("state change:%d --> %d", old, newState);
     });
 
     std::shared_ptr<LogImpl> _au(new StdoutLog);

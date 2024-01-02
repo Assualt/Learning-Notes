@@ -7,3 +7,4 @@ PRIVATE
 
 add_test(NAME main COMMAND main)
 add_subdirectory(base)
+add_subdirectory(net)

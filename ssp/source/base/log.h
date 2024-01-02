@@ -12,6 +12,7 @@
 #include <vector>
 #include "exception.h"
 #include "log_impl.h"
+#include "mutex.h"
 
 namespace ssp::base {
 DECLARE_EXCEPTION(LogException, Exception)
@@ -76,6 +77,7 @@ private:
     std::string msgFmt_;
     std::string appName_;
     std::vector<LogImpl *> logImplList_;
+    MutexLock lock_;
 };
 
 
@@ -93,7 +95,9 @@ template<class... Args> void Logger::LogMessage(LogLevel level, const char *fmt,
     std::string message = MessageFormat(result, level);
     message.append("\r\n");
     for (auto &handle : logImplList_) {
+        lock_.Lock();
         handle->WriteData(message.c_str(), message.size());
+        lock_.UnLock();
     }
 }
 

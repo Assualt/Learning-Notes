@@ -150,3 +150,8 @@ void sockets::ShutdownWrite(int sockFd)
         logger.Error("shut down sockFd error :%d, ret:%d errno:%d", sockFd, ret, errno);
     }
 }
+
+int sockets::CreateSocket(int32_t domain, int32_t type, int32_t protocol)
+{
+    return socket(domain, type, protocol);
+}

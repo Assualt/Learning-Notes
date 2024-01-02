@@ -3,7 +3,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 add_definitions("-g")
 set(BUILD_ASAN OFF)
-set(CMAKE_CXX_FLAGS "-DUSE_SSL")
 
 if (BUILD_ASAN)
   add_definitions("-fsanitize=address -fno-omit-frame-pointer -lasan")
@@ -20,3 +19,7 @@ else ()
   message(STATUS "define apple")
 endif ()
 message(STATUS "cmake _system_name ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM}")
+
+add_compile_definitions(
+    SUPPORT_OPENSSL=1
+)

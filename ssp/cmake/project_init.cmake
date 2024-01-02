@@ -3,3 +3,10 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 message(STATUS "OUTPUT PATH: ${EXECUTABLE_OUTPUT_PATH}")
 message(STATUS "ARCHIVE OUTPUT PATH: ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
+
+find_package(OpenSSL)
+if (OPENSSL_FOUND)
+    message(STATUS "open ssl is found ${OPENSSL_INCLUDE_DIR}")
+else()
+    message(STATUS "open ssl is not found ${OPENSSL_INCLUDE_DIR}")
+endif ()

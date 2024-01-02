@@ -13,3 +13,6 @@
 [submodule "ssp/third_party/googletest"]
 	path = ssp/third_party/googletest
 	url = https://gitee.com/shydo/googletest.git
+[submodule "ssp/third_party/openssl"]
+	path = ssp/third_party/openssl
+	url = https://gitee.com/mirrors/openssl.git

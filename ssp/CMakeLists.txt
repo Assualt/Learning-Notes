@@ -18,12 +18,7 @@ if(BUILD_TESTS)
   add_subdirectory(test)
 endif()
 
-add_library(ssp_base_interface INTERFACE
-    source/net/socket.cpp
-    source/net/socket.h
-    source/net/socket_ops.cpp
-    source/net/socket_ops.h
-    source/net/socket_typedef.h)
+add_library(ssp_base_interface INTERFACE)
 target_sources(ssp_base_interface PUBLIC
 FILE_SET HEADERS
 BASE_DIRS
