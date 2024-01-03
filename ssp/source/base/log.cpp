@@ -11,6 +11,7 @@
 
 using namespace ssp::base;
 using KeyFormatFunc = std::function<void(std::stringstream &, const std::string &, LogLevel)>;
+std::stringstream Logger::cacheStream_;
 
 namespace {
 thread_local LogFileAttr g_fileAttr;
@@ -35,9 +36,9 @@ Logger & Logger::BasicConfig(LogLevel level, const char *msgFmt, const char *pre
 std::string Logger::GetLevelName(LogLevel level)
 {
     static std::map<LogLevel, std::string> levelMap = {
-        {LogLevel::Debug, "Debug"}, {LogLevel::Info, "Info"}, {LogLevel::Warn, "Warning"},
+        {LogLevel::Debug, "Debug"}, {LogLevel::Info, "Info"}, {LogLevel::Warn, "Warn"},
         {LogLevel::Error, "Error"}, {LogLevel::Alert, "Alert"}, {LogLevel::Fatal, "Fatal"},
-        {LogLevel::Emergency, "Emergency"}, {LogLevel::Except, "Exception"}};
+        {LogLevel::Emergency, "Emergency"}, {LogLevel::Except, "Expect"}};
 
     if (levelMap.count(level)) {
         return levelMap[ level ];
@@ -137,5 +138,12 @@ Logger &Logger::SetAppName(const std::string &appName)
 
 void Logger::AddLogHandle(LogImpl *au)
 {
-    logImplList_.push_back(au);
+    logImplList_.emplace_back(au);
+}
+
+Logger::~Logger()
+{
+    if (!cacheStream_.str().empty()) {
+//        LogMessage(defaultLevel_, "%s", cacheStream_.str());
+    }
 }

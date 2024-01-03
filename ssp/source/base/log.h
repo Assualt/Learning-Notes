@@ -48,7 +48,21 @@ public:
         LogMessage(LogLevel::Except, "%s%s", "\n", "");
     }
 
+    template<class E>
+    Logger &operator<<(E val)
+    {
+        static uint32_t size = 1024;
+        cacheStream_ << val;
+        if (cacheStream_.str().size() >= size) { // output
+            this->LogMessage(defaultLevel_, "%s", cacheStream_.str());
+            cacheStream_.str("");
+        }
+        return *this;
+    }
+
 public:
+    ~Logger();
+
     Logger & BasicConfig(LogLevel level, const char *msgFmt, const char *prefix, const char *fmt, const char *mode = "a+");
 
     void AddLogHandle(LogImpl *au);
@@ -78,6 +92,7 @@ private:
     std::string appName_;
     std::vector<LogImpl *> logImplList_;
     MutexLock lock_;
+    static std::stringstream cacheStream_;
 };
 
 
@@ -173,7 +188,7 @@ template <class T, class... Args> void Logger::FormatString(std::string &result,
 }
 
 #define LOG(appName) \
-    ssp::base::Logger::SetFileAttr(__FILE__, __func__, __LINE__); \
+    ssp::base::Logger::SetFileAttr(__FILE_NAME__, __func__, __LINE__); \
     ssp::base::Logger::GetLogger(appName).SetAppName(appName)
 
 #define logger LOG("APP")

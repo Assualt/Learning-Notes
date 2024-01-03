@@ -27,6 +27,7 @@ enum ThreadState : uint32_t {
 class ThreadContext {
 public:
     ThreadContext() = default;
+
     ~ThreadContext() = default;
 
     explicit ThreadContext(std::string name, ThreadFunc func, ThreadBeforeRunHook beforeFunc = nullptr, ThreadBeforeExitHook exitHook = nullptr);

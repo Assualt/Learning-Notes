@@ -20,7 +20,7 @@ ThreadState ThreadContext::GetState() const
 }
 
 ThreadContext::ThreadContext(std::string name,ThreadFunc func, ThreadBeforeRunHook runFunc, ThreadBeforeExitHook exitHook)
-    :threadName_(std::move(name)), func_(std::move(func)), runFunc_(std::move(runFunc)), exitFunc_(std::move(exitHook))
+    : func_(std::move(func)), runFunc_(std::move(runFunc)), exitFunc_(std::move(exitHook)), threadName_(std::move(name))
 {
 }
 

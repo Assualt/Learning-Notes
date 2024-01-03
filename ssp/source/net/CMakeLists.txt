@@ -1,8 +1,13 @@
 set(ssp_net_files
+    acceptor.cpp
     socket.cpp
     socket_ops.cpp
     socket_typedef.cpp
     net_address.cpp
+    uri.cpp
+    protocol/http_message.cpp
+    server/tcp_server.cpp
+    event_loop.cpp
 )
 
 add_library(ssp_net SHARED ${ssp_net_files})

@@ -11,11 +11,10 @@
 using namespace ssp::base;
 
 ThreadPool::ThreadPool(std::string name)
-    : threadPoolName_(std::move(name))
-    , isRunning_(false)
-    , maxQueueSize_(0)
-    , notEmptyCond_(std::make_unique<Condition>( mutex_))
+    : maxQueueSize_(0)
+    , threadPoolName_(std::move(name))
     , noFullCond_(std::make_unique<Condition>(mutex_))
+    , notEmptyCond_(std::make_unique<Condition>( mutex_))
 {
 }
 
@@ -24,6 +23,7 @@ ThreadPool::~ThreadPool()
     if (isRunning_) {
         Stop();
     }
+    isRunning_ = false;
 }
 
 const std::string &ThreadPool::GetThreadName() const
@@ -51,7 +51,7 @@ void ThreadPool::Start(int numThreads, const std::string &prefix)
         threadVecs_[ i ]->Start();
     }
     if (numThreads == 0 && threadInitFunc_) {
-        threadInitFunc_();
+        threadInitFunc_(0);
     }
 }
 
@@ -61,7 +61,6 @@ void ThreadPool::Stop()
         WaitQueueForever();
         AutoLock myLock(mutex_);
         isRunning_ = false;
-        logger.Info("task to notify all");
         notEmptyCond_->NotifyAll();
         noFullCond_->NotifyAll();
     }
@@ -81,7 +80,7 @@ size_t ThreadPool::QueueSize() const
 void ThreadPool::Run(Task func)
 {
     if (threadVecs_.empty()) {
-        func();
+        func(0);
         return;
     }
 
@@ -137,16 +136,16 @@ bool ThreadPool::IsFull()
     return maxQueueSize_ > 0 && taskQueue_.size() >= maxQueueSize_;
 }
 
-void ThreadPool::RunInThread(uintptr_t)
+void ThreadPool::RunInThread(uintptr_t val)
 {
     try {
         if (threadInitFunc_) {
-            threadInitFunc_();
+            threadInitFunc_(val);
         }
         while (isRunning_) {
             Task task(Take());
             if (task) {
-                task();
+                task(0);
             }
         }
         logger.Warning("thread exit ...");

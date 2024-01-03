@@ -1,5 +1,6 @@
 set(test_net_objects
     test_socket.cpp
+    test_uri.cpp
 )
 add_executable(test_ssp_net ${test_net_objects})
 

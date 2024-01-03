@@ -9,7 +9,7 @@
 
 using namespace ssp::base;
 
-void thread_pool_callback()
+void thread_pool_callback(uintptr_t)
 {
     for (size_t idx = 0; idx < 100; ++idx) {
         logger.Info("%d run thread init call back..... ", idx);
@@ -30,7 +30,7 @@ TEST(ThreadPool, push_mission_with_wait_task_exit)
     myPool.Start(2);
 
     for (size_t idx = 0; idx < 100; ++idx) {
-        myPool.Run([]() {
+        myPool.Run([](auto) {
             usleep(10 * 1000);
         });
     }

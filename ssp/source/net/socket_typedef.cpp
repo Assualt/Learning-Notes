@@ -4,6 +4,8 @@
 
 #include "socket_typedef.h"
 #include "base/log.h"
+#include "socket_ops.h"
+#include <sys/fcntl.h>
 
 using namespace ssp::base;
 using namespace ssp::net;
@@ -20,7 +22,7 @@ void NormalSocket::Init(int32_t fd, void *args)
 {
     fd_ = fd;
 #if SUPPORT_OPENSSL
-    sslConn_ = std::move(std::make_unique<SSL_Connection>());
+    sslConn_ = std::make_unique<SSL_Connection>();
     if (args != nullptr) {
         sslConn_->handle_ = reinterpret_cast<SSL *>(args);
     }
@@ -118,7 +120,73 @@ bool NormalSocket::InitSSL()
     return true;
 }
 
-bool NormalSocket::Connect()
+bool NormalSocket::Connect(const InetAddress &address, bool useSsl, std::chrono::seconds timeout)
 {
-    return false;
+    if (timeout.count() == 0) {
+        return sockets::Connect(fd_, address.GetSockAddr());
+    }
+
+    return ConnectWithNonBlock(address, useSsl, timeout);
 }
+
+bool NormalSocket::ConnectWithNonBlock(const InetAddress &address, bool useSsl, std::chrono::seconds timeout)
+{
+    int oldFlag = fcntl(fd_, F_GETFL, 0);
+    (void)fcntl(fd_, F_SETFL, oldFlag | O_NONBLOCK);
+
+    auto ret = sockets::Connect(fd_, address.GetSockAddr());
+    if (ret == 0) {
+        (void)fcntl(fd_, F_SETFL, oldFlag);
+        return true;
+    } else if (errno != EINPROGRESS) {
+        logger.Error("connect address [%s] error ... timeout:%d", address.ToIpPort(), timeout.count());
+        return false;
+    }
+
+    if (!SelectConnecting(address, timeout)) {
+        return false;
+    }
+
+    logger.Info("connection ready after select with the socket:%d", fd_);
+    (void)fcntl(fd_, F_SETFL, oldFlag);
+    if (useSsl) {
+        SwitchSSL(true, address.Host());
+    }
+    return true;
+}
+
+bool NormalSocket::SelectConnecting(const InetAddress &address, std::chrono::seconds timeout) const
+{
+    struct timeval tm = {.tv_sec = timeout.count()};
+    fd_set writeSet;
+    FD_ZERO(&writeSet);
+    FD_SET(fd_, &writeSet);
+    auto ret = select(fd_ + 1, nullptr, &writeSet, nullptr, &tm);
+    if (ret < 0) {
+        log_sys.Error("connect address [%s] error ...", address.ToIpPort());
+        return false;
+    } else if (ret == 0) {
+        log_sys.Error("connect address [%s] timeout ...", address.ToIpPort());
+        return false;
+    }
+
+    if (!FD_ISSET(fd_, &writeSet)) {
+        log_sys.Error("no event on address [%s] timeout ...", address.ToIpPort());
+        return false;
+    }
+
+    int error = -1;
+    socklen_t len   = sizeof(int);
+    if (getsockopt(fd_, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+        logger.Warning("get socket option failed");
+        return false;
+    }
+
+    if (error != 0) {
+        logger.Warning("connection failed after select with the error:%d", error);
+        return false;
+    }
+
+    return true;
+}
+

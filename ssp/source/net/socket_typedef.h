@@ -8,6 +8,8 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <chrono>
+#include "net_address.h"
 
 #if SUPPORT_OPENSSL
 #include <openssl/err.h>
@@ -26,10 +28,14 @@ public:
 
     void SwitchSSL(bool isClient, const std::string& host = "");
 
-    bool Connect();
+    bool Connect(const InetAddress &address, bool useSsl, std::chrono::seconds timeout);
 
 private:
     static bool InitSSL();
+
+    bool ConnectWithNonBlock(const InetAddress &address, bool useSsl, std::chrono::seconds timeout);
+
+    [[nodiscard]] bool SelectConnecting(const InetAddress &address, std::chrono::seconds timeout) const;
 
 private:
 #if SUPPORT_OPENSSL

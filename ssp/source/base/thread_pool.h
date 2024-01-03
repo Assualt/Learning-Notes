@@ -15,7 +15,7 @@ namespace ssp::base {
 class ThreadPool : Object {
 public:
 public:
-    using Task = std::function<void()>;
+    using Task = std::function<void(uintptr_t)>;
 
 public:
     ThreadPool() = default;
@@ -52,7 +52,7 @@ private:
 
 private:
     std::deque<Task>                     taskQueue_;
-    bool                                 isRunning_{};
+    bool                                 isRunning_{false};
     size_t                               maxQueueSize_{};
     std::vector<std::unique_ptr<Thread>> threadVecs_;
     Task                                 threadInitFunc_;

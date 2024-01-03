@@ -24,4 +24,6 @@ TEST(Logging, TestSuite) {
     logger.Fatal("Hello World [%2.1f] [%s] OK %08s %x", 123.421, "test Fallow", 123.123, 16);
     logger.Emergency("Hello World [%2.1f] [%s] OK %08s %x", 123.421, "test Fallow", 123.123, 16);
     logger.Exception("Hello World [%2.1f] [%s] OK %08s %x", 123.421, "test Fallow", 123.123, 16);
+
+    logger << "Hello World";
 }
