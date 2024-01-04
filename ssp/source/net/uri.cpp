@@ -4,7 +4,6 @@
 
 #include "uri.h"
 #include "base/format.h"
-#include "base/range.h"
 #include "base/likely.h"
 #include <algorithm>
 #include <cctype>
@@ -39,9 +38,9 @@ Uri::Uri(std::string_view str)
     scheme_ = submatch(match, 1);
     std::transform(scheme_.begin(), scheme_.end(), scheme_.begin(), ::tolower);
 
-    StringPiece authorityAndPath(match[ 2 ].first, match[ 2 ].second);
+    std::string_view authorityAndPath(match[2].first, match[2].second - match[2].first);
     std::cmatch authorityAndPathMatch;
-    if (!std::regex_match(authorityAndPath.cbegin(), authorityAndPath.cend(), authorityAndPathMatch,
+    if (!std::regex_match(authorityAndPath.begin(), authorityAndPath.end(), authorityAndPathMatch,
                           authorityAndPathRegex)) {
         // Does not start with //, doesn't have authority
         hasAuthority_ = false;

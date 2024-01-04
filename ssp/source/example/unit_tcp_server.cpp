@@ -19,7 +19,5 @@ int main(int argc, char **argv)
     TcpServer server("tcp_server", InetAddress(8000));
     server.Init(ConfigureManager("./tmp"));
     server.Start();
-
-
     return 0;
 }
