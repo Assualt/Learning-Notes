@@ -17,6 +17,10 @@ public:
     virtual bool Start() = 0;
 
     virtual bool UnInit() = 0;
+
+    CommService() = default;
+
+    virtual ~CommService() = default;
 };
 }
 

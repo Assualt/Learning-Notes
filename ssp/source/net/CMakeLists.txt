@@ -8,6 +8,10 @@ set(ssp_net_files
     protocol/http_message.cpp
     server/tcp_server.cpp
     event_loop.cpp
+    poller/poll_poller.cpp
+    poller.cpp
+    channel.cpp
+    tcp_connection.cpp
 )
 
 add_library(ssp_net SHARED ${ssp_net_files})

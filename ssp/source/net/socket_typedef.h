@@ -30,6 +30,16 @@ public:
 
     bool Connect(const InetAddress &address, bool useSsl, std::chrono::seconds timeout);
 
+    [[nodiscard]] int32_t Fd() const { return fd_; }
+
+    [[nodiscard]] bool IsSupportSSL() const;
+
+    void* AcceptWithSSL(int32_t fd);
+
+    int32_t Read(void *buffer, int32_t len);
+
+    int32_t Write(const void *buffer, int32_t length);
+
 private:
     static bool InitSSL();
 

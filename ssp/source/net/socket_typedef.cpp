@@ -190,3 +190,82 @@ bool NormalSocket::SelectConnecting(const InetAddress &address, std::chrono::sec
     return true;
 }
 
+bool NormalSocket::IsSupportSSL() const
+{
+#if SUPPORT_OPENSSL
+    if (sslConn_->handle_ == nullptr) {
+        return false;
+    }
+
+    return true;
+#else
+    return false;
+#endif
+}
+
+void* NormalSocket::AcceptWithSSL(int32_t fd)
+{
+#if SUPPORT_OPENSSL
+    if (sslConn_ == nullptr) {
+        return nullptr;
+    }
+
+    SSL *ssl = SSL_new(sslConn_->context_);
+    if (SSL_set_fd(ssl, fd)) {
+        sockets::Close(fd_);
+        ERR_print_errors_cb(MyPrintSSLError, (void *) "SSL_set_fd");
+        return nullptr;
+    }
+
+    auto ret = SSL_accept(ssl);
+    if (ret != 1) {
+        sockets::Close(fd_);
+        ERR_print_errors_cb(MyPrintSSLError, (void *) "SSL_accept");
+        return nullptr;
+    }
+
+    return ssl;
+#endif
+}
+
+int32_t NormalSocket::Read(void *buffer, int32_t len)
+{
+    if (buffer == nullptr || len == 0) {
+        return -1;
+    }
+
+    if (sslConn_ == nullptr) {
+        return reinterpret_cast<int32_t>(sockets::Read(fd_, buffer, len));
+    }
+
+#if SUPPORT_OPENSSL
+    if (sslConn_ != nullptr && sslConn_->handle_ != nullptr) {
+        return SSL_read(sslConn_->handle_, buffer, len);
+    } else {
+        return reinterpret_cast<int32_t>(sockets::Read(fd_, buffer, len));
+    }
+
+#else
+    return reinterpret_cast<int32_t>(sockets::Read(fd_, buffer, len));
+#endif
+}
+
+int32_t NormalSocket::Write(const void *buffer, int32_t length)
+{
+    if (buffer == nullptr || length == 0) {
+        return -1;
+    }
+
+    if (sslConn_ == nullptr) {
+        return reinterpret_cast<int32_t>(sockets::Write(fd_, buffer, length));
+    }
+
+#if SUPPORT_OPENSSL
+    if (sslConn_ != nullptr && sslConn_->handle_ != nullptr) {
+        return SSL_write(sslConn_->handle_, buffer, length);
+    }
+    return reinterpret_cast<int32_t>(sockets::Write(fd_, buffer, length));
+#else
+    return reinterpret_cast<int32_t>(sockets::Write(fd_, buffer, length));
+#endif
+}

@@ -76,7 +76,7 @@ int sockets::Accept(int sockFd, struct sockaddr_in6 *addr)
     return connFd;
 }
 
-ssize_t sockets::Read(int sockFd, void *buf, size_t count)
+int sockets::Read(int sockFd, void *buf, size_t count)
 {
     return ::read(sockFd, buf, count);
 }
@@ -86,7 +86,7 @@ ssize_t sockets::ReadV(int sockFd, const struct iovec *iov, int iovCnt)
     return readv(sockFd, iov, iovCnt);
 }
 
-ssize_t sockets::Write(int sockFd, const void *buf, size_t nWrite)
+int sockets::Write(int sockFd, const void *buf, size_t nWrite)
 { 
     return ::write(sockFd, buf, nWrite); 
 }

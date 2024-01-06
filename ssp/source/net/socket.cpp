@@ -7,6 +7,10 @@
 
 using namespace ssp::net;
 
+namespace {
+constexpr uint32_t g_maxBufferLine = 8192;
+}
+
 Socket::Socket()
 {
     fd_ = sockets::CreateSocket();
@@ -105,4 +109,83 @@ bool Socket::Connect(const InetAddress &addr, bool useSsl, std::chrono::seconds 
 void Socket::BindAddress(const InetAddress &address) const
 {
     sockets::BindOrDie(fd_, address.GetSockAddr());
+}
+
+void Socket::Listen() const
+{
+    sockets::ListenOrDie(fd_);
+}
+
+std::pair<int32_t, void *> Socket::Accept(InetAddress &address)
+{
+    struct sockaddr_in6 addr{};
+    bzero(&addr, sizeof addr);
+    auto fd = sockets::Accept(fd_, &addr);
+    if (fd < 0) {
+        return {-1, nullptr};
+    }
+
+    address.SetSockAddrInet6(addr);
+
+    if (!normalSocket_->IsSupportSSL()) {
+        return {fd, nullptr};
+    }
+
+#if SUPPORT_OPENSSL
+    auto val = normalSocket_->AcceptWithSSL(fd);
+    return {fd, val};
+#else
+    return {fd, nullptr};
+#endif
+}
+
+int32_t Socket::Read(std::stringbuf &buffer)
+{
+    if (fd_ == -1) {
+        return -1;
+    }
+
+    auto temp = std::make_unique<uint8_t[]>(g_maxBufferLine);
+    if (temp == nullptr) {
+        return -1;
+    }
+
+    int32_t total = 0;
+    int32_t perRead = 0;
+
+    while (true) {
+        memset(temp.get(), 0, g_maxBufferLine);
+        perRead = normalSocket_->Read(temp.get(), g_maxBufferLine);
+
+        if (perRead < 0) {
+            break;
+        }
+
+        buffer.sputn(reinterpret_cast<const char *>(temp.get()), perRead);
+        total += perRead;
+
+        if (perRead < g_maxBufferLine) {
+            break;
+        }
+    }
+
+    return total;
+}
+
+int32_t Socket::Write(const void *buffer, int32_t length)
+{
+    if (buffer == nullptr || length <= 0) {
+        return -1;
+    }
+
+    if (fd_ == -1) {
+        return -1;
+    }
+
+    return normalSocket_->Write(buffer, length);
+}
+
+void Socket::ShutdownWrite()
+{
+    sockets::ShutdownWrite(fd_);
 }

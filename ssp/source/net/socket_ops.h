@@ -19,11 +19,11 @@ void Listen(int sockFd);
 
 int Accept(int sockFd, struct sockaddr_in6 *addr);
 
-ssize_t Read(int sockFd, void *buf, size_t count);
+int Read(int sockFd, void *buf, size_t count);
 
 ssize_t ReadV(int sockFd, const struct iovec *iov, int iovCnt);
 
-ssize_t Write(int sockFd, const void *buf, size_t nWrite);
+int Write(int sockFd, const void *buf, size_t nWrite);
 
 void Close(int sockFd);
 

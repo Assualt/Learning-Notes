@@ -18,6 +18,8 @@ class Socket {
 public:
     Socket();
 
+    explicit Socket(int32_t fd, void *args);
+
     static Socket CreateSocket(void *args);
 
     void SetKeepAlive(bool on) const;
@@ -40,9 +42,19 @@ public:
 
     bool SwitchToSSL(bool isClient, const std::string &host);
 
-private:
-    explicit Socket(int32_t fd, void *args);
+    int32_t Fd() const { return normalSocket_->Fd(); };
 
+    void Listen() const;
+
+    std::pair<int32_t, void *> Accept(InetAddress &address);
+
+    int32_t Read(std::stringbuf& buffer);
+
+    int32_t Write(const void *buffer, int32_t length);
+
+    void ShutdownWrite();
+
+private:
     void Init(void *args);
 
 private:
