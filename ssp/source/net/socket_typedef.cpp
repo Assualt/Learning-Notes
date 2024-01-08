@@ -123,7 +123,12 @@ bool NormalSocket::InitSSL()
 bool NormalSocket::Connect(const InetAddress &address, bool useSsl, std::chrono::seconds timeout)
 {
     if (timeout.count() == 0) {
-        return sockets::Connect(fd_, address.GetSockAddr());
+        auto ret = sockets::Connect(fd_, address.GetSockAddr());
+        if (ret == 0 && useSsl) {
+            SwitchSSL(true, "");
+        }
+
+        return ret;
     }
 
     return ConnectWithNonBlock(address, useSsl, timeout);
@@ -250,7 +255,7 @@ int32_t NormalSocket::Read(void *buffer, int32_t len)
 #endif
 }
 
-int32_t NormalSocket::Write(const void *buffer, int32_t length)
+int32_t NormalSocket::Write(const void *buffer, uint32_t length)
 {
     if (buffer == nullptr || length == 0) {
         return -1;
@@ -262,7 +267,7 @@ int32_t NormalSocket::Write(const void *buffer, int32_t length)
 
 #if SUPPORT_OPENSSL
     if (sslConn_ != nullptr && sslConn_->handle_ != nullptr) {
-        return SSL_write(sslConn_->handle_, buffer, length);
+        return SSL_write(sslConn_->handle_, buffer, static_cast<int32_t>(length));
     }
     return reinterpret_cast<int32_t>(sockets::Write(fd_, buffer, length));
 #else

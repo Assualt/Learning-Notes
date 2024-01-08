@@ -14,6 +14,7 @@ void EventLoop::Loop()
 {
     ChannelList eventList{};
     state_ = APPLIED;
+    quit_ = false;
     while (!quit_) {
         eventList.clear();
         auto stamp = poller_->Poll(std::chrono::seconds(1), eventList);

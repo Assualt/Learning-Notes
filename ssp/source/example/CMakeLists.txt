@@ -5,3 +5,6 @@ add_executable(gui_window unit_gtk_window.cpp)
 target_link_libraries(gui_window PUBLIC ${GTKMM_LIBRARIES})
 
 add_subdirectory(tick_query)
+
+add_executable(tcp_client unit_tcp_client.cpp)
+target_link_libraries(tcp_client PUBLIC ssp_base ssp_net)

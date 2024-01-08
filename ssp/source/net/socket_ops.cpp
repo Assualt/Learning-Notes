@@ -18,7 +18,7 @@ DECLARE_EXCEPTION(SocketException, Exception)
 
 int sockets::Connect(int sockFd, const struct sockaddr *addr)
 {
-    return ::connect(sockFd, addr, static_cast<socklen_t>(sizeof(struct sockaddr_in6)));
+    return connect(sockFd, addr, static_cast<socklen_t>(sizeof(struct sockaddr)));
 }
 
 void sockets::Bind(int sockFd, const struct sockaddr *addr)

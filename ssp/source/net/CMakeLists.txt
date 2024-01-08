@@ -12,6 +12,7 @@ set(ssp_net_files
     poller.cpp
     channel.cpp
     tcp_connection.cpp
+    client/tcp_client.cpp
 )
 
 add_library(ssp_net SHARED ${ssp_net_files})

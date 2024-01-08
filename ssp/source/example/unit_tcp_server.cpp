@@ -19,8 +19,7 @@ void TcpMsgCallback(const TcpConnectionPtr& conn, std::stringbuf &buffer, const 
         return;
     }
 
-    std::string sendBuffer = "Send " + util::TrimRight(buffer.str(), std::string("\r\n"))
-            + stamp.ToFmtString()
+    std::string sendBuffer = stamp.ToFmtString() + " " + util::TrimRight(buffer.str(), std::string("\r\n"))
             + "\r\n";
     conn->Send(sendBuffer.c_str(), static_cast<int32_t>(sendBuffer.size()));
 }

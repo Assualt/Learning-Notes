@@ -172,7 +172,7 @@ int32_t Socket::Read(std::stringbuf &buffer)
     return total;
 }
 
-int32_t Socket::Write(const void *buffer, int32_t length)
+int32_t Socket::Write(const void *buffer, uint32_t length)
 {
     if (buffer == nullptr || length <= 0) {
         return -1;

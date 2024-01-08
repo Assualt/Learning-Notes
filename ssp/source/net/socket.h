@@ -50,7 +50,7 @@ public:
 
     int32_t Read(std::stringbuf& buffer);
 
-    int32_t Write(const void *buffer, int32_t length);
+    int32_t Write(const void *buffer, uint32_t length);
 
     void ShutdownWrite();
 
