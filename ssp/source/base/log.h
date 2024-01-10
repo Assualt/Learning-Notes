@@ -13,6 +13,7 @@
 #include "exception.h"
 #include "log_impl.h"
 #include "mutex.h"
+#include "backtrace.h"
 
 namespace ssp::base {
 DECLARE_EXCEPTION(LogException, Exception)
@@ -45,7 +46,7 @@ public:
 
     template <class... Args> void Exception(const char *fmt, Args &&... arg) {
         LogMessage(LogLevel::Except, fmt, arg...);
-        LogMessage(LogLevel::Except, "%s%s", "\n", "");
+        LogMessage(LogLevel::Except, "\n%s", GetBackCallStack());
     }
 
     template<class E>
@@ -71,14 +72,14 @@ public:
 
     static Logger &GetLogger(const std::string &name = "");
 
-    Logger &SetAppName(const std::string &appName);
+    Logger &SetAppName(const std::string &appName, bool flag = true);
 
 private:
     template <class... Args> void LogMessage(LogLevel level, const char *fmt, Args &&... arg);
 
     template <class T, class... Args> void FormatString(std::string &result, T &val, Args &&... arg);
 
-    void FormatString(std::string &result) {}
+    void FormatString(std::string &) {}
 
     std::string MessageFormat(const std::string &fmtLogMsg, LogLevel level);
 
@@ -92,6 +93,7 @@ private:
     std::string appName_;
     std::vector<LogImpl *> logImplList_;
     MutexLock lock_;
+    bool ctrlFlag_{true};
     static std::stringstream cacheStream_;
 };
 
@@ -108,7 +110,9 @@ template<class... Args> void Logger::LogMessage(LogLevel level, const char *fmt,
     std::string result = fmt;
     FormatString(result, arg...);
     std::string message = MessageFormat(result, level);
-    message.append("\r\n");
+    if (ctrlFlag_) {
+        message.append("\r\n");
+    }
     for (auto &handle : logImplList_) {
         lock_.Lock();
         handle->WriteData(message.c_str(), message.size());
@@ -187,12 +191,14 @@ template <class T, class... Args> void Logger::FormatString(std::string &result,
 }
 }
 
-#define LOG(appName) \
-    ssp::base::Logger::SetFileAttr(__FILE_NAME__, __func__, __LINE__); \
-    ssp::base::Logger::GetLogger(appName).SetAppName(appName)
+#define LOG(appName, name, flag) \
+    ssp::base::Logger::SetFileAttr(__FILE_NAME__, __FUNCTION__, __LINE__); \
+    ssp::base::Logger::GetLogger(appName).SetAppName(name, flag)
 
-#define logger LOG("APP")
+#define logger LOG("APP", "APP", true)
 
-#define log_sys LOG("System")
+#define log_sys LOG("APP", "System", true)
+
+#define log_line LOG("APP", "APP", false)
 
 #endif //SSP_TOOLS_LOG_H

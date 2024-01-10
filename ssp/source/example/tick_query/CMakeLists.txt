@@ -1,6 +1,7 @@
 
 add_executable(tickQuery
     query_widget.cpp
+    examplewindow.cpp
     main.cpp
 )
 

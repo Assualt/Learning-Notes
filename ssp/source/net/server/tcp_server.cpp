@@ -78,7 +78,7 @@ void TcpServer::HandleNewConnection(int32_t fd, const ssp::net::InetAddress &add
     connectionMapper_[connName] = ptr;
     ptr->SetMessageCallback(msgCb_);
     ptr->SetCloseCallback([this, connName]() {
-        logger.Info("TcpServer::newConnection [%s] - released.", "TcpServer", connName);
+        logger.Info("connection [%s] - released.", connName);
         connectionMapper_.erase(connName);
     });
     pool_->Run([loop, ptr](uintptr_t val) {

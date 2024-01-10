@@ -1,6 +1,7 @@
 set(ssp_base_files
     object.cpp
     object_pool.cpp
+    backtrace.cpp
     log.cpp
     log_impl.cpp
     timestamp.cpp
@@ -14,6 +15,8 @@ set(ssp_base_files
     thread.cpp
     thread_context.cpp
     thread_pool.cpp
+    ../net/buffer.cpp
+    ../net/buffer.h
 )
 
 add_library(ssp_base SHARED ${ssp_base_files})

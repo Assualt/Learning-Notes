@@ -36,7 +36,6 @@ void TcpConnection::HandleRead(const ssp::base::TimeStamp &stamp)
     std::stringbuf buffer;
     auto count = socket_->Read(buffer);
     if (count <= 0) { // read error
-        logger.Info("read error");
         HandleClose(TimeStamp::Now());
     } else {
         logger.Info("handle read. data count:%d", count);

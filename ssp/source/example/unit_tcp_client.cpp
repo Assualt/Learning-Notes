@@ -30,8 +30,8 @@ int main(int, char **)
 
     std::string line;
     while (true) {
-        logger.Info("[Client]>");
-        std::cin >> line;
+        log_line.Info("[Client]>");
+        std::getline(std::cin, line);
         if (util::StartsWithIgnoreCase(line, "quit")) {
             logger.Info("rcv quit message ... exit .");
             break;

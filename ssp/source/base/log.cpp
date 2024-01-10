@@ -130,9 +130,10 @@ Logger &Logger::GetLogger(const std::string &name)
     return g_loggerMap.at(prefix);
 }
 
-Logger &Logger::SetAppName(const std::string &appName)
+Logger &Logger::SetAppName(const std::string &appName, bool useCtrl)
 {
     appName_ = appName;
+    ctrlFlag_ = useCtrl;
     return *this;
 }
 
@@ -144,6 +145,6 @@ void Logger::AddLogHandle(LogImpl *au)
 Logger::~Logger()
 {
     if (!cacheStream_.str().empty()) {
-//        LogMessage(defaultLevel_, "%s", cacheStream_.str());
+        LogMessage(defaultLevel_, cacheStream_.str().c_str());
     }
 }

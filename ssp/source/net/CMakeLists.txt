@@ -1,11 +1,13 @@
 set(ssp_net_files
+    buffer.cpp
     acceptor.cpp
     socket.cpp
     socket_ops.cpp
     socket_typedef.cpp
     net_address.cpp
     uri.cpp
-    protocol/http_message.cpp
+    protocol/http_request.cpp
+    protocol/http_response.cpp
     server/tcp_server.cpp
     event_loop.cpp
     poller/poll_poller.cpp
@@ -13,6 +15,11 @@ set(ssp_net_files
     channel.cpp
     tcp_connection.cpp
     client/tcp_client.cpp
+    client/http_client.cpp
+    client/http_uri.h
+    client/http_uri.cpp
+    client/http_context.cpp
+    client/http_context.h
 )
 
 add_library(ssp_net SHARED ${ssp_net_files})

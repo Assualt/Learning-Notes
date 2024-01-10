@@ -7,17 +7,27 @@
 
 #include <gtkmm.h>
 
-class QueryWidget : public Gtk::Window {
+class ExampleApplication : public Gtk::Application
+{
+protected:
+    ExampleApplication();
+
 public:
-    QueryWidget();
-    ~QueryWidget() override;
+    static Glib::RefPtr<ExampleApplication> create();
+
+protected:
+    //Overrides of default signal handlers:
+    void on_startup() override;
+    void on_activate() override;
 
 private:
-    void Init();
+    void create_window();
 
-private:
-    Gtk::Button button_;
-    std::unique_ptr<Gtk::MessageDialog> diagMessageBox_ { nullptr };
+    void on_menu_file_new_generic();
+    void on_menu_file_quit();
+    void on_menu_help_about();
+
+    Glib::RefPtr<Gtk::Builder> m_refBuilder;
 };
 
 
