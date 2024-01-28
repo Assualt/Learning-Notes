@@ -9,6 +9,7 @@
 #include <string>
 #include "net/net_address.h"
 #include "net/socket.h"
+#include "net/buffer.h"
 
 namespace ssp::net {
 class TcpClient {
@@ -20,13 +21,15 @@ public:
 public:
     void SetTimeOut(int32_t connTimeout, int32_t sendTimeout, int32_t rcvTimeout);
 
-    bool Connect(const std::string& host, uint16_t port, bool switchSsl = false);
+    bool Connect(const std::string& host, uint16_t port, bool switchSsl = false, bool verbose = false);
 
-    bool Connect(const InetAddress &address);
+    bool Connect(const InetAddress &address, bool verbose = false);
 
     int32_t Send(const void *buffer, uint32_t length);
 
     int32_t Read(std::stringbuf &rcvBuf);
+
+    int32_t Read(Buffer &buffer);
 
     void Close();
 

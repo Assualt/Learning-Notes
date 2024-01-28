@@ -41,7 +41,7 @@ public:
      * or API that connects to that host/port; e.g. getaddrinfo() only understands
      * IPv6 host without square brackets
      */
-    std::string Hostname() const;
+    [[nodiscard]] std::string Hostname() const;
 
     uint16_t Port() const { return port_; }
 

@@ -77,10 +77,30 @@ void HttpUrl::Parse()
         port_ = 80;
     }
     path_  = url.Path();
+    if (path_.empty()) {
+        path_ = "/";
+    }
+
     query_ = url.Query();
     if (!query_.empty() && query_.front() == '?')
         query_ = query_.substr(1);
     fragment_ = url.Fragment();
 #endif
     netloc_ = host_ + ":" + std::to_string(port_);
+}
+
+bool HttpUrl::IsValid() const
+{
+    std::vector<std::function<bool()>> validChecks = {
+        [this]() {
+            return !host_.empty();
+        },
+        [this]() {
+            return !host_.empty();
+        }
+    };
+
+    return std::any_of(validChecks.begin(), validChecks.end(), [](auto func) {
+        return func();
+    });
 }

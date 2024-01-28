@@ -3,6 +3,7 @@
 //
 
 #include "http_context.h"
+#include "http_utils.h"
 #include "base/log.h"
 #include <algorithm>
 #include <string>
@@ -15,27 +16,25 @@ bool HttpContext::ProcessRequestLine(const char *begin, const char *end)
     bool        succeed = false;
     const char *start   = begin;
     const char *space   = std::find(start, end, ' ');
-    if (space != end && m_request.SetMethod(start, space)) {
+    if (space != end && response_.SetMethod({start, static_cast<size_t>(space - start)})) {
         start = space + 1;
         space = std::find(start, end, ' ');
         if (space != end) {
             const char *question = std::find(start, space, '?');
             if (question != space) {
-                m_request.SetPath(std::string(start, question));
-                m_request.SetQuery(std::string(question, space));
+                response_.SetPath(std::string(start, question));
+                response_.SetQuery(std::string(question, space));
             } else {
-                m_request.SetPath(std::string(start, space));
+                response_.SetPath(std::string(start, space));
             }
-//            m_request.SetRequestPath(UrlUtils::UrlDecode(std::string(start, space)));
-            m_request.SetRequestPath(std::string(start, space));
-            // m_request.setRequestPath(std::string(start, space));
+
             start   = space + 1;
             succeed = end - start == 8 && std::equal(start, end - 1, "HTTP/1.");
             if (succeed) {
                 if (*(end - 1) == '1') {
-                    m_request.SetHttpVersion("HTTP/1.1");
+                    response_.SetReqVersion("HTTP/1.1");
                 } else if (*(end - 1) == '0') {
-                    m_request.SetHttpVersion("HTTP/1.0");
+                    response_.SetReqVersion("HTTP/1.0");
                 } else {
                     succeed = false;
                 }
@@ -48,9 +47,9 @@ bool HttpContext::ProcessRequestLine(const char *begin, const char *end)
         try {
             int status_code = std::stoi(std::string(start, space));
             start           = space + 1;
-            m_request.SetStatusMessage(std::string(start, end));
-            m_request.SetStatusCode(status_code);
-            m_request.SetHttpVersion(str);
+            response_.SetReqStatusMsg(std::string(start, end));
+            response_.SetStatusCode(status_code);
+            response_.SetReqVersion(str);
             return true;
         } catch (...) {
             return succeed;
@@ -61,35 +60,35 @@ bool HttpContext::ProcessRequestLine(const char *begin, const char *end)
 }
 
 // return false if any error
-bool HttpContext::ParseRequest(Buffer *buf, TimeStamp receiveTime) {
+bool HttpContext::ParseRequest(Buffer *buf, const TimeStamp& receiveTime) {
     bool ok      = true;
     bool hasMore = true;
     while (hasMore) {
-        if (m_state == kExpectRequestLine) {
+        if (state_ == kExpectRequestLine) {
             const char *crlf = buf->findCRLF();
             if (crlf) {
                 ok = ProcessRequestLine(buf->peek(), crlf);
                 if (ok) {
-                    m_request.SetRecvTime(receiveTime);
+                    response_.SetRecvTime(receiveTime);
                     buf->retrieveUntil(crlf + 2);
-                    m_state = kExpectHeaders;
+                    state_ = kExpectHeaders;
                 } else {
                     hasMore = false;
                 }
             } else {
                 hasMore = false;
             }
-        } else if (m_state == kExpectHeaders) {
+        } else if (state_ == kExpectHeaders) {
             const char *crlf = buf->findCRLF();
             if (crlf) {
-                if (!m_lastBuffer.empty()) {
-                    std::string singleHeader = m_lastBuffer + std::string(buf->peek(), crlf);
+                if (!lastBuffer_.empty()) {
+                    std::string singleHeader = lastBuffer_ + std::string(buf->peek(), crlf);
                     auto        pos          = singleHeader.find_first_of(':');
                     if (pos != std::string::npos) {
-                        m_request.AddHeader(singleHeader.c_str(), singleHeader.c_str() + pos,
-                                            singleHeader.c_str() + singleHeader.size());
+                        response_.AddHeader({singleHeader.c_str(), pos},
+                                            {singleHeader.c_str(), singleHeader.size()});
                     }
-                    m_lastBuffer.clear();
+                    lastBuffer_.clear();
                     buf->retrieveUntil(crlf + 2);
                     continue;
                 }
@@ -97,28 +96,24 @@ bool HttpContext::ParseRequest(Buffer *buf, TimeStamp receiveTime) {
                 const char *colon = std::find(buf->peek(), crlf, ':');
                 if (colon != crlf) {
                     // Fixme
-                    m_request.AddHeader(buf->peek(), colon, crlf);
+                    response_.AddHeader({buf->peek(), static_cast<size_t>(colon - buf->peek())}, {colon + 1, static_cast<size_t>(crlf - colon - 1)});
                 } else {
                     // empty line, end of header
                     // FIXME:
                     SetContentLengthType();
-                    if ((m_lenType == kContentLength) && (m_contentLength == 0)) {
-                        m_state = kGotEnd;
+                    if ((lengthType_ == kContentLength) && (contentLength_ == 0)) {
+                        state_ = kGotEnd;
                         hasMore = false;
                     } else {
-                        m_state = kExpectBody;
+                        state_ = kExpectBody;
                     }
                 }
                 buf->retrieveUntil(crlf + 2);
             } else {
                 hasMore      = false;
-                m_lastBuffer = {buf->peek(), buf->readableBytes()};
+                lastBuffer_ = {buf->peek(), buf->readableBytes()};
             }
-        } else if (m_state == kExpectBody) {
-            // FIXME:
-            ParseBodyPart(buf);
-            hasMore = false;
-        } else if (m_state == kGotAll) {
+        } else if (state_ == kExpectBody || state_ == kGotAll) {
             ParseBodyPart(buf);
             hasMore = false;
         }
@@ -129,14 +124,14 @@ bool HttpContext::ParseRequest(Buffer *buf, TimeStamp receiveTime) {
 
 void HttpContext::SetContentLengthType()
 {
-    auto contentStr = m_request.Get(ContentLength);
+    auto contentStr = response_.Get(ContentLength);
     if (!contentStr.empty()) {
-        m_contentLength = std::strtol(contentStr.c_str(), nullptr, 10);
-        m_lenType       = kContentLength;
+        contentLength_ = std::strtol(contentStr.c_str(), nullptr, 10);
+        lengthType_       = kContentLength;
     }
-    contentStr = m_request.Get(TransferEncoding);
+    contentStr = response_.Get(TransferEncoding);
     if (strcasecmp(contentStr.c_str(), "chunked") == 0) {
-        m_lenType = kContentChunked;
+        lengthType_ = kContentChunked;
     }
 }
 
@@ -145,43 +140,44 @@ void HttpContext::ParseBodyPart(Buffer *buf)
     if (buf == nullptr) {
         return;
     }
-    if (m_lenType == kContentLength) {
+    if (lengthType_ == kContentLength) {
         ParseBodyByContentLength(buf);
-    } else if (m_lenType == kContentChunked) {
+    } else if (lengthType_ == kContentChunked) {
         logger.Debug("parse buffer with chunked");
         ParseBodyByChunkedBuffer(buf);
     }
 }
 
-void HttpContext::ParseBodyByContentLength(Buffer *buf) {
-    auto reqLen = atol(m_request.Get(ContentLength).c_str());
+void HttpContext::ParseBodyByContentLength(Buffer *buf) 
+{
+    auto reqLen = std::strtol(response_.Get(ContentLength).c_str(), nullptr, 10);
     if (reqLen == 0) {
-        m_state = kGotEnd;
+        state_ = kGotEnd;
         return;
     }
-    m_request.appendBodyBuffer(buf->peek(), buf->readableBytes());
-    auto recvLen = m_request.GetBodySize();
+    response_.AppendBody(buf->peek(), buf->readableBytes());
+    auto recvLen = response_.GetBodySize();
     if (recvLen >= reqLen) {
-        m_state = kGotEnd;
+        state_ = kGotEnd;
     }
 }
 
 void HttpContext::ParseBodyByChunkedBuffer(Buffer *buf)
 {
     while (true) {
-        if (m_chunkLeftSize != 0) {
-            if (m_chunkLeftSize < buf->readableBytes()) {
-                m_request.appendBodyBuffer(buf->peek(), m_chunkLeftSize);
-                buf->retrieveUntil(buf->peek() + m_chunkLeftSize + 2);
-                logger.Debug("recv left chunked size %d", m_chunkLeftSize);
-                m_chunkLeftSize = 0;
+        if (chunkLeftSize_ != 0) {
+            if (chunkLeftSize_ < buf->readableBytes()) {
+                response_.AppendBody(buf->peek(), chunkLeftSize_);
+                buf->retrieveUntil(buf->peek() + chunkLeftSize_ + 2);
+                logger.Debug("recv left chunked size %d", chunkLeftSize_);
+                chunkLeftSize_ = 0;
             } else {
                 uint32_t recvSize = buf->readableBytes();
-                m_request.appendBodyBuffer(buf->peek(), buf->readableBytes());
+                response_.AppendBody(buf->peek(), buf->readableBytes());
                 buf->retrieveUntil(buf->peek() + buf->readableBytes());
-                logger.Debug("should recv size:%d, real recv size:%d, left:%d", m_chunkLeftSize, recvSize,
-                             m_chunkLeftSize - recvSize);
-                m_chunkLeftSize -= recvSize;
+                logger.Debug("should recv size:%d, real recv size:%d, left:%d", chunkLeftSize_, recvSize,
+                             chunkLeftSize_ - recvSize);
+                chunkLeftSize_ -= recvSize;
                 break;
             }
         }
@@ -191,29 +187,34 @@ void HttpContext::ParseBodyByChunkedBuffer(Buffer *buf)
             break;
         }
 
-        long nBytes = utils::chunkSize(std::string(buf->peek(), crlf));
-        if (static_cast<int>(nBytes) == -1) {
+        auto size = HttpUtils::GetChunkSize(std::string(buf->peek(), crlf));
+        if (size == -1) {
             break;
         }
 
         buf->retrieveUntil(crlf + 2);
-        logger.Debug("recv chunked size:%d ", static_cast<int>(nBytes));
-        if (nBytes == 0) {
-            m_state = kGotEnd;
+        logger.Debug("recv chunked size:%d ", static_cast<int>(size));
+        if (size == 0) {
+            state_ = kGotEnd;
             break;
         }
 
-        // recv buf < nBytes.
-        if (buf->readableBytes() < static_cast<int>(nBytes)) {
-            m_chunkLeftSize = nBytes - buf->readableBytes();
-            m_request.appendBodyBuffer(buf->peek(), buf->readableBytes());
-            logger.Debug("==>success insert into %d bytes left size:%d", buf->readableBytes(), m_chunkLeftSize);
+        // recv buf < size.
+        if (buf->readableBytes() < static_cast<int>(size)) {
+            chunkLeftSize_ = size - buf->readableBytes();
+            response_.AppendBody(buf->peek(), buf->readableBytes());
+            logger.Debug("==>success insert into %d bytes left size:%d", buf->readableBytes(), chunkLeftSize_);
             buf->retrieveUntil(buf->peek() + buf->readableBytes());
             break;
         }
 
-        m_request.appendBodyBuffer(buf->peek(), nBytes);
-        logger.Debug("success insert into %d bytes", nBytes);
-        buf->retrieveUntil(buf->peek() + nBytes + 2);
+        response_.AppendBody(buf->peek(), size);
+        logger.Debug("success insert into %d bytes", size);
+        buf->retrieveUntil(buf->peek() + size + 2);
     }
+}
+
+void HttpContext::Reset() 
+{
+    state_ = kExpectRequestLine;
 }

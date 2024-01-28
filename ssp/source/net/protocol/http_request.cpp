@@ -37,7 +37,15 @@ uint32_t HttpRequest::ParseInput(const void *buf, uint32_t size)
 
 std::string HttpRequest::ToHeaderBuffer()
 {
-    return "";
+    std::stringstream ss;
+    ss << requestType_ << " " << requestPath_ << " " << httpVersion_ << CTRL;
+    ss << "Host:" << requestHost_ << CTRL;
+    for (auto &[key, val] : requestHeader_)
+        ss << key << ": " << val << CTRL;
+    if (!m_strRangeBytes.empty())
+        ss << "Range: " << m_strRangeBytes << CTRL;
+    ss << CTRL;
+    return ss.str();
 }
 
 std::string HttpRequest::ToStringHeader() const 
@@ -56,14 +64,14 @@ std::string HttpRequest::ToStringHeader() const
 }
 
 void HttpRequest::SetParams(const std::map<std::string, std::string> &headerMap) {
-    for (auto iter : headerMap) {
+    for (auto &iter : headerMap) {
         m_urlQueryMap.insert(iter);
     }
-    size_t nPos = requestPath_.find("?");
-    if (nPos != std::string::npos) {
+    size_t pos = requestPath_.find('?');
+    if (pos != std::string::npos) {
         std::string strKey, strVal;
         bool        bFindKey = false;
-        for (int i = nPos + 1; i < requestPath_.size(); ++i) {
+        for (uint32_t i = pos + 1; i < requestPath_.size(); ++i) {
             if (requestPath_[ i ] == '=')
                 bFindKey = true;
             else if (requestPath_[ i ] == '&') {
@@ -116,7 +124,7 @@ std::string HttpRequest::GetPostParams() const
 
 void HttpRequest::SetPostParams(const std::string &strPostParams)
 {
-    requestParams_.append(strPostParams);
+    bodyBuffer_.append(strPostParams.data(), strPostParams.size());
 }
 
 std::string HttpRequest::GetRequestPath() const
@@ -124,20 +132,22 @@ std::string HttpRequest::GetRequestPath() const
     return requestPath_;
 }
 
-void HttpRequest::SetRequestPath(const std::string &strRequestPath) {
-    requestPath_     = strRequestPath;
-    requestFilePath_ = strRequestPath;
-    if (strRequestPath.find('?') != std::string::npos)
+void HttpRequest::SetRequestPath(const std::string &requestPath) 
+{
+    requestPath_     = requestPath;
+    requestFilePath_ = requestPath;
+    if (requestPath.find('?') != std::string::npos) {
         requestFilePath_ = requestFilePath_.substr(0, requestFilePath_.find('?'));
+    }
 }
 std::string HttpRequest::GetRequestFilePath() const
 {
     return requestFilePath_;
 }
 
-void HttpRequest::SetRequestFilePath(const std::string &strRequestFilePath)
+void HttpRequest::SetRequestFilePath(const std::string &reqPath)
 {
-//    requestFilePath_ = UrlUtils::UrlDecode(strRequestFilePath);
+    requestFilePath_ = reqPath;
 }
 
 TimeStamp HttpRequest::GetRecvTime() const
@@ -175,11 +185,20 @@ std::string HttpRequest::GetStatusMessage() const
     return m_strStatusMessage;
 }
 
-void HttpRequest::SetStatusMessage(const std::string &message) { m_strStatusMessage = message; }
+void HttpRequest::SetStatusMessage(const std::string &message)
+{
+    m_strStatusMessage = message;
+}
 
-int HttpRequest::GetStatusCode() const { return m_statusCode; }
+int HttpRequest::GetStatusCode() const
+{
+    return m_statusCode;
+}
 
-void HttpRequest::SetStatusCode(int statusCode) { m_statusCode = statusCode; }
+void HttpRequest::SetStatusCode(int statusCode)
+{
+    m_statusCode = statusCode;
+}
 
 bool HttpRequest::SetMethod(const char *start, const char *end) {
     std::string m(start, end);

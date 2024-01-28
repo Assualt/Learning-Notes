@@ -11,9 +11,13 @@
 #include "base/log.h"
 #include "socket_typedef.h"
 #include "net_address.h"
+#include "buffer.h"
 
 using namespace std::chrono_literals;
 namespace ssp::net {
+
+using BufferFillFunc = std::function<bool(const char *buffer, uint32_t)>;
+
 class Socket {
 public:
     Socket();
@@ -34,7 +38,7 @@ public:
 
     void Close();
 
-    bool Connect(const InetAddress &address, bool useSsl = false, std::chrono::seconds timeout = 3s);
+    bool Connect(const InetAddress &address, bool verbose = false, bool useSsl = false, std::chrono::seconds timeout = 3s);
 
     void BindAddress(const InetAddress &address) const;
 
@@ -50,11 +54,15 @@ public:
 
     int32_t Read(std::stringbuf& buffer);
 
+    int32_t Read(Buffer &buffer);
+
     int32_t Write(const void *buffer, uint32_t length);
 
-    void ShutdownWrite();
+    void ShutdownWrite() const;
 
 private:
+    int32_t ReadImpl(const BufferFillFunc& func);
+
     void Init(void *args);
 
 private:

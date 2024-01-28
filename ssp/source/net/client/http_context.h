@@ -36,23 +36,19 @@ public:
     };
 
     HttpContext()
-            : m_state(kExpectRequestLine), m_lenType(kContentLength), m_encodingType(kEncodingRaw),
-              m_contentLength(-1) {}
+        : state_(kExpectRequestLine), lengthType_(kContentLength) //, m_encodingType(kEncodingRaw)
+        , contentLength_(-1) {}
 
     // return false if any error
-    bool ParseRequest(Buffer *buf, TimeStamp receiveTime);
+    bool ParseRequest(Buffer *buf, const TimeStamp& receiveTime);
 
-    bool GotAll() const { return m_state == kGotAll; }
+    [[nodiscard]] bool GotAll() const { return state_ == kGotAll; }
 
-    bool GotEnd() const { return m_state == kGotEnd; }
+    [[nodiscard]] bool GotEnd() const { return state_ == kGotEnd; }
 
-    void Reset() {
-        m_state = kExpectRequestLine;
-    }
+    void Reset();
 
-    [[nodiscard]] const HttpRequest &request() const { return m_request; }
-
-    HttpRequest &Request() { return m_request; }
+    HttpResponse GetResponse() const { return response_; }
 
 private:
     bool ProcessRequestLine(const char *begin, const char *end);
@@ -66,13 +62,12 @@ private:
     void ParseBodyByChunkedBuffer(Buffer *buf);
 
 private:
-    HttpRequestParseState m_state;
-    HttpRequestBodyLenType m_lenType;
-    HttpRequestBodyEncoding m_encodingType;
-    HttpRequest m_request{};
-    long m_contentLength;
-    long m_chunkLeftSize{0};
-    std::string m_lastBuffer;
+    HttpRequestParseState state_;
+    HttpRequestBodyLenType lengthType_;
+    HttpResponse response_{};
+    long contentLength_;
+    long chunkLeftSize_{0};
+    std::string lastBuffer_;
 };
 
 }

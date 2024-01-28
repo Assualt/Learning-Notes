@@ -101,9 +101,9 @@ bool Socket::SwitchToSSL(bool isClient, const std::string &host)
 }
 
 
-bool Socket::Connect(const InetAddress &addr, bool useSsl, std::chrono::seconds timeout)
+bool Socket::Connect(const InetAddress &addr, bool verbose, bool useSsl, std::chrono::seconds timeout)
 {
-    return normalSocket_->Connect(addr, useSsl, timeout);
+    return normalSocket_->Connect(addr, verbose, useSsl, timeout);
 }
 
 void Socket::BindAddress(const InetAddress &address) const
@@ -139,9 +139,9 @@ std::pair<int32_t, void *> Socket::Accept(InetAddress &address)
 #endif
 }
 
-int32_t Socket::Read(std::stringbuf &buffer)
+int32_t Socket::ReadImpl(const BufferFillFunc& func)
 {
-    if (fd_ == -1) {
+    if (func == nullptr || fd_ == -1) {
         return -1;
     }
 
@@ -161,7 +161,9 @@ int32_t Socket::Read(std::stringbuf &buffer)
             break;
         }
 
-        buffer.sputn(reinterpret_cast<const char *>(temp.get()), perRead);
+        if (!func(reinterpret_cast<const char *>(temp.get()), perRead)) {
+             break; // 写入failed
+        }
         total += perRead;
 
         if (perRead < g_maxBufferLine) {
@@ -170,6 +172,22 @@ int32_t Socket::Read(std::stringbuf &buffer)
     }
 
     return total;
+}
+
+int32_t Socket::Read(ssp::net::Buffer &buffer)
+{
+    return ReadImpl([&buffer](const char *data, uint32_t len) {
+        buffer.append(data, len);
+        return true;
+    });
+}
+
+int32_t Socket::Read(std::stringbuf &buffer)
+{
+    return ReadImpl([&buffer](const char *data, uint32_t len) {
+        buffer.sputn(data, len);
+        return true;
+    });
 }
 
 int32_t Socket::Write(const void *buffer, uint32_t length)
@@ -185,7 +203,7 @@ int32_t Socket::Write(const void *buffer, uint32_t length)
     return normalSocket_->Write(buffer, length);
 }
 
-void Socket::ShutdownWrite()
+void Socket::ShutdownWrite() const
 {
     sockets::ShutdownWrite(fd_);
 }

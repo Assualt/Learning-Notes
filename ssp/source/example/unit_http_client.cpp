@@ -10,17 +10,32 @@ using namespace ssp::net;
 
 int main(int argc, char **argv)
 {
+    if (argc < 2) {
+        return 0;
+    }
+
     System::SetThreadName("main");
 
     std::shared_ptr<LogImpl> _au(new StdoutLog);
     auto &mainLog = Logger::GetLogger();
     mainLog.BasicConfig(LogLevel::Info,
-                        "%(message)",
+                        "T:(%(appname)-%(threadName))[%(asctime):%(levelname)]%(message)",
                         "filename", "%Y-%m-%d");
     mainLog.AddLogHandle(_au.get());
 
     HttpClient client;
-    client.Get("https://www.baidu.com");
+    client.InitDefaultHeader();
+    auto response = client.Get(argv[1], false, true);
+    if (!response.IsOk()) {
+        std::cout << response.Error() << std::endl;
+        return 0;
+    }
+
+    if (response.IsTextHtml()) {
+        auto [code, msg] = response.GetStatusCode();
+        std::cout << "status:" << code << " " << msg << std::endl;
+        std::cout << "text:" << std::endl << response.Text() << std::endl;
+    }
 
     return 0;
 }

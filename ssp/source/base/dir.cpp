@@ -34,7 +34,7 @@ void DirScanner::StartSearch(const std::string &path)
     handle_ = opendir(path.c_str());
     rootPath_ = path;
     if (handle_ == nullptr) {
-        log_sys.Warning("open %s dir failed. errno:%u", path, errno);
+        log_sys.Warning("open %s dir failed. errno:%d", path, errno);
     }
 }
 

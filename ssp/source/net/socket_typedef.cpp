@@ -85,7 +85,7 @@ void NormalSocket::SwitchSSL(bool isClient, const std::string &host)
     // resolve problem sslv3 Alert Handshake Failure
     if (!host.empty()) {
         (void)SSL_set_tlsext_host_name(sslConn_->handle_, host.c_str());
-        logger.Debug("set tlsext host name is %s", host);
+        logger.Info("set tlsext host name is %s", host);
     }
 
     // Initiate SSL handshake
@@ -120,7 +120,7 @@ bool NormalSocket::InitSSL()
     return true;
 }
 
-bool NormalSocket::Connect(const InetAddress &address, bool useSsl, std::chrono::seconds timeout)
+bool NormalSocket::Connect(const InetAddress &address, bool verbose, bool useSsl, std::chrono::seconds timeout)
 {
     if (timeout.count() == 0) {
         auto ret = sockets::Connect(fd_, address.GetSockAddr());
@@ -128,13 +128,16 @@ bool NormalSocket::Connect(const InetAddress &address, bool useSsl, std::chrono:
             SwitchSSL(true, "");
         }
 
+        if (verbose && ret) {
+            ShowTlsInfo();
+        }
         return ret;
     }
 
-    return ConnectWithNonBlock(address, useSsl, timeout);
+    return ConnectWithNonBlock(address, verbose, useSsl, timeout);
 }
 
-bool NormalSocket::ConnectWithNonBlock(const InetAddress &address, bool useSsl, std::chrono::seconds timeout)
+bool NormalSocket::ConnectWithNonBlock(const InetAddress &address, bool verbose, bool useSsl, std::chrono::seconds timeout)
 {
     int oldFlag = fcntl(fd_, F_GETFL, 0);
     (void)fcntl(fd_, F_SETFL, oldFlag | O_NONBLOCK);
@@ -156,6 +159,9 @@ bool NormalSocket::ConnectWithNonBlock(const InetAddress &address, bool useSsl, 
     (void)fcntl(fd_, F_SETFL, oldFlag);
     if (useSsl) {
         SwitchSSL(true, address.Host());
+        if (verbose) {
+            ShowTlsInfo();
+        }
     }
     return true;
 }
@@ -272,5 +278,55 @@ int32_t NormalSocket::Write(const void *buffer, uint32_t length)
     return reinterpret_cast<int32_t>(sockets::Write(fd_, buffer, length));
 #else
     return reinterpret_cast<int32_t>(sockets::Write(fd_, buffer, length));
+#endif
+}
+
+void NormalSocket::ShowTlsInfo()
+{
+#ifdef SUPPORT_OPENSSL
+    if (sslConn_ == nullptr || sslConn_->handle_ == nullptr) {
+        return;
+    }
+
+    // 获取数字证书信息
+    auto cert = SSL_get_peer_certificate(sslConn_->handle_);
+    if (cert == nullptr) {
+        return;
+    }
+
+    static std::vector<std::pair<int, std::string>> entryMap = {
+        {NID_countryName, "countryName"},
+        {NID_stateOrProvinceName, "stateOrProvinceName"},
+        {NID_localityName, "localityName"},
+        {NID_organizationName, "organizationName"},
+        {NID_organizationalUnitName, "organizationalUnitName"},
+        {NID_commonName, "commonName"},
+        {NID_pkcs9_emailAddress, "emailAddress"},
+    };
+
+    constexpr uint32_t entryCount = 7;
+    int32_t            pos        = -1;
+    auto               xn         = X509_get_subject_name(cert);
+    for (auto idx = 0; idx < entryCount; ++idx) {
+        for (;;) {
+            pos = X509_NAME_get_index_by_NID(xn, entryMap[ idx ].first, pos);
+            if (pos == -1) {
+                break;
+            }
+            auto name = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(xn, pos));
+            logger.Info(R"(subject key:"%s" value:"%s" length:%d)", entryMap[ idx ].second, name->data, name->length);
+        }
+    }
+
+    std::string startTime = reinterpret_cast<const char *>(X509_get0_notBefore(cert)->data);
+    std::string endTime   = reinterpret_cast<const char *>(X509_get0_notAfter(cert)->data);
+
+    logger.Info("startTime:20%s endTime:20%s", startTime, endTime);
+
+    // issuer
+    auto issuer = X509_NAME_oneline(X509_get_issuer_name(cert), nullptr, 0);
+    logger.Info("issuer:%s", issuer);
+
+    X509_free(cert);
 #endif
 }

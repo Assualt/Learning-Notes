@@ -25,7 +25,7 @@ public:
     void RemoveChannel(Channel *channel) override;
 
 private:
-    void FillActiveChannel(int32_t numEvents, ChannelList &channels);
+    void FillActiveChannel(int32_t nums, ChannelList &channels);
 
 private:
     using PollFdList = std::vector<struct pollfd>;

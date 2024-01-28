@@ -10,4 +10,10 @@ add_executable(tcp_client unit_tcp_client.cpp)
 target_link_libraries(tcp_client PUBLIC ssp_base ssp_net)
 
 add_executable(http_client unit_http_client.cpp)
+target_include_directories(http_client
+PUBLIC
+    ${PROJECT_SOURCE_DIR}/source
+)
 target_link_libraries(http_client PUBLIC ssp_base ssp_net)
+
+add_subdirectory(tldextract)

@@ -8,6 +8,7 @@
 #include "tcp_client.h"
 #include "net/protocol/http_request.h"
 #include "net/protocol/http_response.h"
+#include "http_uri.h"
 
 namespace ssp::net {
 
@@ -30,11 +31,23 @@ public:
 
     HttpResponse Head(const std::string &url, bool needRedirect = false, bool verbose = false);
 
+    static void SaveToFile(const std::string &file, const HttpResponse &response);
+
+    void InitDefaultHeader();
+
+    template<class T>
+    void AddHeader(const std::string &key, const T&val)
+    {
+        request_.AddHeader(key, val);
+    }
+
 private:
     HttpResponse Request(HttpType type, const std::string &url, const std::stringbuf& buf, bool needRedirect,
                          bool verbose);
 
-    std::stringbuf GetRequestBuffer(const std::string &url);
+    std::string GetRequestBuffer(const HttpUrl &url);
+
+    HttpResponse TransBufferToResponse(Buffer &buffer);
 
 private:
     HttpRequest request_;

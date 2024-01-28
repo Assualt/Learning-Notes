@@ -33,6 +33,8 @@ public:
 
     [[maybe_unused]] [[nodiscard]] std::string GetHostUrl() const;
 
+    bool IsValid() const;
+
 private:
     void Parse();
 };

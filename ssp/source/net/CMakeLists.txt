@@ -16,10 +16,10 @@ set(ssp_net_files
     tcp_connection.cpp
     client/tcp_client.cpp
     client/http_client.cpp
-    client/http_uri.h
     client/http_uri.cpp
     client/http_context.cpp
-    client/http_context.h
+    client/http_utils.cpp
+    poller/kqueue_poller.cpp
 )
 
 add_library(ssp_net SHARED ${ssp_net_files})
