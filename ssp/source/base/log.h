@@ -192,7 +192,7 @@ template <class T, class... Args> void Logger::FormatString(std::string &result,
 }
 
 #define LOG(appName, name, flag) \
-    ssp::base::Logger::SetFileAttr(__FILE_NAME__, __FUNCTION__, __LINE__); \
+    ssp::base::Logger::SetFileAttr(__FILE__, __FUNCTION__, __LINE__); \
     ssp::base::Logger::GetLogger(appName).SetAppName(name, flag)
 
 #define logger LOG("APP", "APP", true)

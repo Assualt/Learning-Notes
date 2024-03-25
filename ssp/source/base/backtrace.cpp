@@ -51,8 +51,8 @@ std::string TransLateDemangle(const std::string &str)
 
 std::string GetBackCallStack()
 {
-    void *buffer[ 100 ] = {nullptr};
-    int   size          = backtrace(buffer, g_maxBackLayerSize);
+    void *buffer[ g_maxBackLayerSize ] = {nullptr};
+    int32_t  size = backtrace(buffer, g_maxBackLayerSize);
     auto trace = backtrace_symbols(buffer, size);
     if (trace == nullptr) {
         return "";

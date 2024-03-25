@@ -3,7 +3,7 @@
 //
 
 #include "http_uri.h"
-
+#include <functional>
 #include <utility>
 
 using namespace ssp::net;

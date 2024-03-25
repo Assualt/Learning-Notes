@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/stat.h>
+#include <unordered_map>
 #include <pwd.h>
 
 namespace ssp::base::System {

@@ -19,16 +19,14 @@ PollPoller::~PollPoller() = default;
 
 TimeStamp PollPoller::Poll(std::chrono::seconds timeout, ChannelList &channels)
 {
-    auto eventNums = poll(&*pollFdList_.begin(), pollFdList_.size(), static_cast<int>(timeout.count()));
+    auto eventNums = ::poll(&*pollFdList_.begin(), pollFdList_.size(), static_cast<int>(timeout.count()));
     if (eventNums == 0) {
-//        logger.Debug("nothing happened ...");
         return TimeStamp::Now();
     } else if (eventNums < 0) {
         log_sys.Warning("poll events with error. errno:%d", System::GetErrMsg(errno));
         return TimeStamp::Now();
     }
 
-//    logger.Debug("event num:[%d] happened", eventNums);
     FillActiveChannel(eventNums, channels);
     return TimeStamp::Now();
 }
@@ -74,14 +72,15 @@ void PollPoller::RemoveChannel(ssp::net::Channel *channel)
     channelMapper_.erase(channel->Fd());
     if (idx == pollFdList_.size() - 1) {
         pollFdList_.pop_back();
-    } else {
-        auto endFd = pollFdList_.end()->fd;
-        iter_swap(pollFdList_.begin() + idx, pollFdList_.end() - 1);
-        if (endFd < 0) {
-            endFd = -endFd - 1;
-        }
-
-        channelMapper_[endFd]->SetIndex(idx);
-        pollFdList_.pop_back();
+        return;
     }
+
+    auto endFd = pollFdList_.end()->fd;
+    iter_swap(pollFdList_.begin() + idx, pollFdList_.end() - 1);
+    if (endFd < 0) {
+        endFd = -endFd - 1;
+    }
+
+    channelMapper_[endFd]->SetIndex(idx);
+    pollFdList_.pop_back();
 }
