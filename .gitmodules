@@ -19,3 +19,6 @@
 [submodule "ssp/third_party/json-c"]
 	path = ssp/third_party/json-c
 	url = https://github.com/json-c/json-c.git
+[submodule "ssp/third_party/p7zip"]
+	path = ssp/third_party/p7zip
+	url = https://github.com/p7zip-project/p7zip.git
