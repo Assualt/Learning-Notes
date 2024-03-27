@@ -16,4 +16,7 @@ PUBLIC
 )
 target_link_libraries(http_client PUBLIC ssp_base ssp_net)
 
+add_executable(http_server unit_http_server.cpp)
+target_link_libraries(http_server PRIVATE ssp_base ssp_net)
+
 add_subdirectory(tldextract)

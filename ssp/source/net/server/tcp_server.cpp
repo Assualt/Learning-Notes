@@ -3,15 +3,15 @@
 //
 
 #include "tcp_server.h"
-#include "base/log.h"
 #include "base/format.h"
+#include "base/log.h"
 #include "net/socket_ops.h"
 
 using namespace ssp::net;
 using namespace ssp::base;
 
 TcpServer::TcpServer(EventLoop *loop, const std::string &srvName, const InetAddress &address, bool isSsl)
-    :acceptor_(std::make_unique<Acceptor>(loop, address, true))
+    : acceptor_(std::make_unique<Acceptor>(loop, address, true))
 {
     if (isSsl) {
         acceptor_->SwitchToSSL();
@@ -26,14 +26,14 @@ TcpServer::~TcpServer()
 bool TcpServer::Init(const ConfigureManager &configure)
 {
     poolSize_ = configure.GetInt(10, "/program/server/ThreadNum");
-    pool_ = std::make_unique<ThreadPool>("tcp_server");
+    pool_     = std::make_unique<ThreadPool>("tcp_server");
     if (pool_ == nullptr) {
         return false;
     }
 
     pool_->SetMaxQueueSize(configure.GetInt(10, "/program/server/QueueSize"));
     pool_->SetThreadInitCallBack(&TcpServer::TcpServerInitCallback);
-    acceptor_->SetConnectionCallback([this](auto p1, auto p2, auto p3) { HandleNewConnection(p1, p2, p3); });
+    acceptor_->SetConnectionCallback([ this ](auto p1, auto p2, auto p3) { HandleNewConnection(p1, p2, p3); });
     return false;
 }
 
@@ -61,6 +61,20 @@ void TcpServer::SetMessageCallback(MessageCallback fn)
     msgCb_ = std::move(fn);
 }
 
+void TcpServer::SetConnectionCallback(OnConnectionCallback fn)
+{
+    connCb_ = std::move(fn);
+}
+
+bool TcpServer::InvokeConnectionCallback(TcpConnectionPtr conn)
+{
+    if (connCb_ == nullptr) {
+        return true;
+    }
+
+    return connCb_(conn);
+}
+
 void TcpServer::HandleNewConnection(int32_t fd, const ssp::net::InetAddress &address, void *args)
 {
     logger.Info("new connection is already now...");
@@ -72,16 +86,21 @@ void TcpServer::HandleNewConnection(int32_t fd, const ssp::net::InetAddress &add
 
     InetAddress locAddr(sockets::GetLocalAddr(fd));
     std::string connName = FmtString("%-%#%").arg("tcpServer").arg(locAddr.ToIpPort()).arg(connIndex_++).str();
-    auto ptr = std::make_shared<TcpConnection>(loop, connName, fd, locAddr, address, args);
     logger.Info("TcpServer::newConnection [%s] - new connection [%s] from [%s]", "TcpServer", connName,
                 address.ToIpPort());
-    connectionMapper_[connName] = ptr;
+    auto ptr = std::make_shared<TcpConnection>(loop, connName, fd, locAddr, address, args);
+    if (!InvokeConnectionCallback(ptr)) {
+        logger.Info("TcpServer::newConnection [%s] - new connection [%s] from [%s] is Rejected!", "TcpServer", connName,
+                    address.ToIpPort());
+        return;
+    }
+    connectionMapper_[ connName ] = ptr;
     ptr->SetMessageCallback(msgCb_);
-    ptr->SetCloseCallback([this, connName]() {
+    ptr->SetCloseCallback([ this, connName ]() {
         logger.Info("connection [%s] - released.", connName);
         connectionMapper_.erase(connName);
     });
-    pool_->Run([loop, ptr](uintptr_t val) {
+    pool_->Run([ loop, ptr ](uintptr_t val) {
         ptr->Established();
         loop->Loop();
     });

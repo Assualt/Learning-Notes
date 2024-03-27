@@ -27,6 +27,7 @@ struct NetCallback {
 
 using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 using NewConnectionCallback = std::function<void(int32_t peerFd, const ssp::net::InetAddress, void *arg)>;
+using OnConnectionCallback = std::function<bool(TcpConnectionPtr conn)>;
 using MessageCallback = std::function<void(TcpConnectionPtr conn, std::stringbuf &, const TimeStamp&)>;
 using CloseCallback = std::function<void()>;
 }

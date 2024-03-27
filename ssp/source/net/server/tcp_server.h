@@ -29,10 +29,14 @@ public:
 
     void SetMessageCallback(MessageCallback fn);
 
+    void SetConnectionCallback(OnConnectionCallback fn);
+
 private:
     static void TcpServerInitCallback(uintptr_t);
 
     void HandleNewConnection(int32_t fd, const InetAddress &address, void *args);
+
+    bool InvokeConnectionCallback(TcpConnectionPtr conn);
 
 private:
     std::unique_ptr<Acceptor> acceptor_{nullptr};
@@ -41,6 +45,7 @@ private:
     std::map<std::string, TcpConnectionPtr> connectionMapper_;
     uint32_t connIndex_{1};
     MessageCallback msgCb_{nullptr};
+    OnConnectionCallback connCb_{nullptr};
 };
 
 }

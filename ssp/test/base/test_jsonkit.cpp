@@ -2,10 +2,10 @@
 // Created by 侯鑫 on 2024/3/25.
 //
 
-#include <gtest/gtest.h>
-#include <fstream>
-#include <set>
 #include "base/json_kit.h"
+#include <fstream>
+#include <gtest/gtest.h>
+#include <set>
 
 using namespace ssp::base;
 
@@ -36,25 +36,35 @@ std::string rawArrayTest = R"({
         1.1, 2.2, 3.3
     ], 
     "strKey" : 123,
-    "strKey1" : "hell world"
+    "strKey1" : "hell world",
+    "strKey2" : {
+        "key1" : 123,
+        "key2" : 234,
+        "key3" : "key3 is value",
+        "key4" : 234.456,
+    }
 })";
 
-TEST(JsonKit, read_file)
+TEST(Json, read_file)
 {
     std::ofstream fout("/tmp/1.json");
     fout << rawJson;
     fout.close();
-    JsonKit kit("/tmp/1.json");
+    Json kit("/tmp/1.json");
     EXPECT_EQ(kit.HasError(), false);
 
-    std::string val1;
-    bool val2;
-    int32_t val3;
-    double val4;
+    std::string          val1;
+    bool                 val2;
+    int32_t              val3;
+    double               val4;
     std::vector<int32_t> val5;
-    JsonKit val6;
-    kit.Get("key1", val1).Get("key2", val2).Get("key3", val3)
-       .Get("key4", val4).GetArray("key5", val5).Get("key6", val6);
+    Json              val6;
+    kit.Get("key1", val1)
+        .Get("key2", val2)
+        .Get("key3", val3)
+        .Get("key4", val4)
+        .GetArray("key5", val5)
+        .Get("key6", val6);
 
     EXPECT_EQ(val1, "this is a key string");
     EXPECT_EQ(val2, 1);
@@ -63,7 +73,7 @@ TEST(JsonKit, read_file)
     EXPECT_EQ(val5.size(), 6);
 
     for (uint32_t idx = 0; idx < val5.size(); ++idx) {
-        EXPECT_EQ(val5[idx], idx);
+        EXPECT_EQ(val5[ idx ], idx);
     }
 
     uint32_t tmpVal = 0;
@@ -76,46 +86,103 @@ TEST(JsonKit, read_file)
     val6.Get("world", tmpVal, true);
     EXPECT_EQ(tmpVal, 456);
 
-    std::set<std::string> myTestKeySet = { "hello", "world", "12312" };
-    auto keyList = val6.Keys();
+    std::set<std::string> myTestKeySet = {"hello", "world", "12312"};
+    auto                  keyList      = val6.Keys();
     for (auto key : keyList) {
         EXPECT_TRUE(myTestKeySet.count(key));
     }
 }
 
-TEST(JsonKit, operator_get)
+TEST(Json, operator_get)
 {
     std::ofstream fout("/tmp/2.json");
     fout << rawArrayTest;
     fout.close();
-    JsonKit kit("/tmp/2.json");
+    Json kit("/tmp/2.json");
 
     EXPECT_FALSE(kit.HasError());
     EXPECT_EQ(kit.HasError(), false);
 
-    JsonKit intKit;
+    Json intKit;
     kit.Get("int", intKit);
-    EXPECT_EQ(intKit[0], 1);
-    EXPECT_EQ(intKit[1], 2);
-    EXPECT_EQ(intKit[2], 3);
-    EXPECT_EQ(intKit[3], 4);
-    EXPECT_EQ(intKit[4], 5);
-    EXPECT_THROW(intKit[6], std::out_of_range);
+    EXPECT_EQ(intKit[ 0 ], 1);
+    EXPECT_EQ(intKit[ 1 ], 2);
+    EXPECT_EQ(intKit[ 2 ], 3);
+    EXPECT_EQ(intKit[ 3 ], 4);
+    EXPECT_EQ(intKit[ 4 ], 5);
 
-    JsonKit strKit;
+    EXPECT_GT(intKit[ 0 ], 0);
+    EXPECT_LT(intKit[ 0 ], 2);
+
+    EXPECT_THROW(intKit[ 6 ], std::out_of_range);
+
+    Json strKit;
     kit.Get("string", strKit);
-    EXPECT_EQ(strKit[0], "1");
-    EXPECT_EQ(strKit[1], "2");
-    EXPECT_EQ(strKit[2], "3");
-    EXPECT_THROW(strKit[6], std::out_of_range);
+    EXPECT_EQ(strKit[ 0 ], "1");
+    EXPECT_EQ(strKit[ 1 ], "2");
+    EXPECT_EQ(strKit[ 2 ], "3");
+    EXPECT_THROW(strKit[ 6 ], std::out_of_range);
 
-    JsonKit doubleKit;
+    Json doubleKit;
     kit.Get("double", doubleKit); // 隐式转换优先级 ？
-    // std::cout << (doubleKit[0] == 1.10000) << std::endl;
-    // EXPECT_EQ(doubleKit[1], 2.2);
-    // EXPECT_EQ(doubleKit[2], 3.30000);
-    // EXPECT_THROW(doubleKit[6], std::out_of_range);
+    EXPECT_EQ(doubleKit[ 0 ], 1.1);
+    EXPECT_EQ(doubleKit[ 1 ], 2.2);
+    EXPECT_EQ(doubleKit[ 2 ], 3.3);
 
-    EXPECT_EQ(kit["strKey"], 123);
-    EXPECT_EQ(kit["strKey1"], "hell world");
+    EXPECT_GT(doubleKit[ 0 ], 1.0);
+    EXPECT_LT(doubleKit[ 0 ], 1.2);
+
+    EXPECT_THROW(doubleKit[ 6 ], std::out_of_range);
+
+    EXPECT_EQ(kit[ "strKey" ], 123);
+    EXPECT_EQ(kit[ "strKey1" ], "hell world");
+
+    EXPECT_EQ(kit[ "strKey2" ][ "key1" ], 123);
+    EXPECT_EQ(kit[ "strKey2" ][ "key2" ], 234);
+
+    EXPECT_EQ(kit[ "strKey2" ][ "key3" ], "key3 is value");
+    EXPECT_EQ(kit[ "strKey2" ][ "key4" ], 234.456);
+}
+
+TEST(Json, make_json)
+{
+    Json myJson(JsonObject);
+    myJson.Add("key1", 123).Add("key2", 123.213).Add("key3", "Hello World");
+
+    Json otherKit(JsonObject);
+    otherKit.Add("key1", "Hello").Add("key2", true);
+
+    std::cout << "----otherKit ==>\n" << otherKit << std::endl << std::endl;
+
+    std::cout << "----myJson add before ==>\n" << myJson << std::endl << std::endl;
+    myJson.Add("key4", otherKit);
+
+    std::cout << "----myJson add object after ==>\n" << myJson << std::endl << std::endl;
+
+    Json arrayKit(JsonArray, JsonInt);
+    arrayKit.Push(123).Push(234).Push(345);
+
+    std::cout << "----arrayKit add after ==>\n" << arrayKit << std::endl << std::endl;
+
+    myJson.Add("array", arrayKit);
+    std::cout << "----myJson add array after ==>\n" << myJson << std::endl << std::endl;
+
+    arrayKit.Insert(456, 2);
+    std::cout << "----arrayKit add 456 at 2 ==>\n" << arrayKit << std::endl << std::endl;
+
+    arrayKit.Insert(567, 2);
+    std::cout << "----arrayKit add 567 at 2 ==>\n" << arrayKit << std::endl << std::endl;
+
+    arrayKit.DeleteAt(2, 1);
+    std::cout << "----arrayKit delete at pos 2 and count 1 ==>\n" << arrayKit << std::endl << std::endl;
+
+    std::cout << "----myJson add object after ==>\n" << myJson << std::endl << std::endl;
+
+    arrayKit.DeleteAt(2, 1);
+    std::cout << "----arrayKit delete at pos 2 and count 1 ==>\n" << arrayKit << std::endl << std::endl;
+
+    Json array2(JsonArray, JsonObject);
+
+    array2.Push(Json(JsonObject).Add("key1", "key1")).Push(Json(JsonObject).Add("key2", 234));
+    std::cout << "----array2  ==>\n" << array2 << std::endl << std::endl;
 }

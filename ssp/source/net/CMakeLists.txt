@@ -9,6 +9,7 @@ set(ssp_net_files
     protocol/http_request.cpp
     protocol/http_response.cpp
     server/tcp_server.cpp
+    server/http_server.cpp
     event_loop.cpp
     poller/poll_poller.cpp
     poller.cpp
