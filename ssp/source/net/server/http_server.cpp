@@ -5,7 +5,7 @@
 #include "http_server.h"
 #include "base/log.h"
 #include "base/string_utils.h"
-#include "net/http_context.h"
+#include "net/client/http_context.h"
 
 using namespace ssp::net;
 
