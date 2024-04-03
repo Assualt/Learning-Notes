@@ -26,11 +26,11 @@ set(ssp_net_files
 add_library(ssp_net SHARED ${ssp_net_files})
 target_include_directories(ssp_net
 PUBLIC
-    ${OPENSSL_INCLUDE_DIR}
+    ${OPENSSL_INCLUDE_DIRS}
 )
 
 target_link_libraries(ssp_net
 PUBLIC
-    ssp_base_interface ssp_base
+    ssp_base
     ${OPENSSL_LIBRARIES}
 )

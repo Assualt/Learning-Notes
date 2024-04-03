@@ -3,7 +3,7 @@
 //
 
 #include "query_widget.h"
-#include "examplewindow.h"
+#include "example_window.h"
 #include <iostream>
 
 ExampleApplication::ExampleApplication()

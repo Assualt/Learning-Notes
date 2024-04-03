@@ -22,10 +22,7 @@ add_library(ssp_base SHARED ${ssp_base_files})
 
 target_include_directories(ssp_base
 PUBLIC
-    ${Jsonc_INCLUDE_DIRS}
+    ${JSONC_INCLUDE_DIRS}
 )
 
-message(STATUS "Jsonc_LIBRARIES --> ${Jsonc_LIBRARIES}")
-message(STATUS "Jsonc_INCLUDE_DIRS --> ${Jsonc_INCLUDE_DIRS}")
-
-target_link_libraries(ssp_base PUBLIC ssp_base_interface ${Jsonc_LIBRARIES})
+target_link_libraries(ssp_base PUBLIC ssp-internal-interface ${JSONC_LIBRARIES})

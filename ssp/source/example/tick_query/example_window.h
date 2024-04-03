@@ -2,8 +2,8 @@
 // Created by 侯鑫 on 2024/1/10.
 //
 
-#ifndef SSP_TOOLS_EXAMPLEWINDOW_H
-#define SSP_TOOLS_EXAMPLEWINDOW_H
+#ifndef SSP_TOOLS_EXAMPLE_WINDOW_H
+#define SSP_TOOLS_EXAMPLE_WINDOW_H
 
 #include <gtkmm.h>
 
@@ -34,4 +34,4 @@ protected:
 };
 
 
-#endif //SSP_TOOLS_EXAMPLEWINDOW_H
+#endif //SSP_TOOLS_EXAMPLE_WINDOW_H

@@ -12,8 +12,10 @@ include_directories(${PROJECT_SOURCE_DIR})
 if (BUILD_GUI)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(GTKMM REQUIRED gtkmm-4.0)
-  include_directories(${GTKMM_INCLUDE_DIRS})
-  link_directories(${GTKMM_LIBRARY_DIRS})
+  add_library(ssp-gui-interface INTERFACE)
+  target_link_libraries(ssp-gui-interface INTERFACE ${GTKMM_LIBRARIES})
+  target_include_directories(ssp-gui-interface INTERFACE ${GTKMM_INCLUDE_DIRS})
+  target_link_directories(ssp-gui-interface INTERFACE ${GTKMM_LIBRARY_DIRS})
 endif()
 
 add_subdirectory(source)
@@ -26,10 +28,10 @@ if(BUILD_TESTS)
   add_subdirectory(test)
 endif()
 
-add_library(ssp_base_interface INTERFACE)
-target_sources(ssp_base_interface PUBLIC
-FILE_SET HEADERS
-BASE_DIRS
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_SOURCE_DIR}/source
+add_library(ssp-internal-interface INTERFACE)
+target_include_directories(ssp-internal-interface
+    INTERFACE
+      ${CMAKE_SOURCE_DIR}/include
+      ${CMAKE_SOURCE_DIR}/source
 )
+

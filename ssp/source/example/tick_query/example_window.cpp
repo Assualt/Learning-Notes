@@ -2,7 +2,7 @@
 // Created by 侯鑫 on 2024/1/10.
 //
 
-#include "examplewindow.h"
+#include "example_window.h"
 #include <iostream>
 
 ExampleWindow::ExampleWindow()
