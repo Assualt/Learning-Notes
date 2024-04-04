@@ -22,3 +22,7 @@
 [submodule "ssp/third_party/p7zip"]
 	path = ssp/third_party/p7zip
 	url = https://github.com/p7zip-project/p7zip.git
+[submodule "json-c"]
+	url = https://gitee.com/shydo/json-c.git
+[submodule "openssl"]
+	url = https://gitee.com/mirrors/openssl.git
