@@ -2,7 +2,7 @@
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(poll_objs)
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(poll_objs pollerkqueue_poller.cpp)
+    set(poll_objs poller/kqueue_poller.cpp)
 endif()
 
 set(ssp_net_files
