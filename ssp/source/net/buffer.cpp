@@ -8,6 +8,7 @@
 #include <string>
 #include <cassert>
 #include <sys/uio.h>
+#include <algorithm>
 #ifdef USE_SSL
 #include <openssl/ssl.h>
 #endif
@@ -65,9 +66,6 @@ char *Buffer::beginWrite()
     return begin() + m_nWriteIndex; 
 }
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wstring-plus-int"
-
 const char *Buffer::findCRLF() const 
 {
     const char *crlf = std::search(peek(), beginWrite(), g_ctrl, g_ctrl + 2);
@@ -81,8 +79,6 @@ const char *Buffer::findCRLF(const char *start) const {
     const char *crlf = std::search(start, beginWrite(), g_ctrl, g_ctrl + 2);
     return crlf == beginWrite() ? NULL : crlf;
 }
-
-#pragma clang diagnostic pop
 
 const char *Buffer::findEOL() const {
     const void *eol = memchr(peek(), '\n', readableBytes());

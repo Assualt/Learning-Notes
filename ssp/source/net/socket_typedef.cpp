@@ -307,7 +307,7 @@ void NormalSocket::ShowTlsInfo()
     constexpr uint32_t entryCount = 7;
     int32_t            pos        = -1;
     auto               xn         = X509_get_subject_name(cert);
-    for (auto idx = 0; idx < entryCount; ++idx) {
+    for (uint32_t idx = 0; idx < entryCount; ++idx) {
         for (;;) {
             pos = X509_NAME_get_index_by_NID(xn, entryMap[ idx ].first, pos);
             if (pos == -1) {

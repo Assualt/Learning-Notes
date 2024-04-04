@@ -25,4 +25,4 @@ PUBLIC
     ${JSONC_INCLUDE_DIRS}
 )
 
-target_link_libraries(ssp_base PUBLIC ssp-internal-interface ${JSONC_LIBRARIES})
+target_link_libraries(ssp_base PUBLIC ssp-internal-interface ${JSONC_LIBRARIES} dl)

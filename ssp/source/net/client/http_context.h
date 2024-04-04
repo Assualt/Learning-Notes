@@ -66,7 +66,7 @@ private:
     HttpRequestBodyLenType lengthType_;
     HttpResponse response_{};
     long contentLength_;
-    long chunkLeftSize_{0};
+    uint32_t chunkLeftSize_{0};
     std::string lastBuffer_;
 };
 

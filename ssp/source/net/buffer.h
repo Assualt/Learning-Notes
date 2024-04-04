@@ -6,6 +6,7 @@
 #define SSP_TOOLS_BUFFER_H
 
 #include <vector>
+#include <string>
 #include <cstdint>
 
 /// A buffer class modeled after org.jboss.netty.buffer.ChannelBuffer

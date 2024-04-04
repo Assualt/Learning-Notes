@@ -42,7 +42,7 @@ int main(int, char **)
         }
 
         auto size = client.Send(line.data(), line.size());
-        if (size != line.size()) {
+        if (size != static_cast<int32_t>(line.size())) {
             logger.Info("send error");
             break;
         }

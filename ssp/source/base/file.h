@@ -21,9 +21,11 @@ enum FileOpType : int32_t {
     RDWR    =       O_RDWR,
     CREATE  =       O_CREAT,
     TRUNC   =       O_TRUNC,
+#ifdef MAC_OS
     EXEC [[maybe_unused]] =       O_EXEC,
-    APPEND [[maybe_unused]] =       O_APPEND,
     SEARCH [[maybe_unused]] =       O_SEARCH,
+#endif
+    APPEND [[maybe_unused]] =       O_APPEND,  
 };
 
 enum FileType {

@@ -3,7 +3,7 @@ project(ssp_tools VERSION 1.0.0)
 
 option(BUILD_TESTS "Enable GoogleTesting " ON)
 option(BUILD_ASAN "Enable Asan memory detector" OFF)
-option(BUILD_GUI "Enable build gui window" ON)
+option(BUILD_GUI "Enable build gui window" OFF)
 
 include(cmake/project_init.cmake)
 include(cmake/cxx_compile_flags.cmake)

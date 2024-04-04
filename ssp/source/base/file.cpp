@@ -5,6 +5,7 @@
 #include "file.h"
 #include <unistd.h>
 #include <utility>
+#include <memory>
 #include "system.h"
 
 using namespace ssp::base;
@@ -160,9 +161,15 @@ FileAttr File::GetFileAttr()
         attr.fileType = FileType::UNKNOWN;
     }
 
+#ifdef LINUX
+    attr.modifyTime = TimeStamp::FromUnixTime(st.st_mtim.tv_sec);
+    attr.accessTime = TimeStamp::FromUnixTime(st.st_atim.tv_sec);
+    attr.createTime = TimeStamp::FromUnixTime(st.st_ctim.tv_sec);
+#else
     attr.modifyTime = TimeStamp::FromUnixTime(st.st_mtimespec.tv_sec);
     attr.accessTime = TimeStamp::FromUnixTime(st.st_atimespec.tv_sec);
     attr.createTime = TimeStamp::FromUnixTime(st.st_birthtimespec.tv_sec);
+#endif
     attr.uid = st.st_uid;
     attr.gid = st.st_gid;
     attr.size = st.st_size;

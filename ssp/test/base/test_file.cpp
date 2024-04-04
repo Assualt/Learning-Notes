@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include "base/file.h"
 
-namespace fs = std::filesystem;
 using namespace ssp::base;
 TEST(File, open_no_exist_file)
 {

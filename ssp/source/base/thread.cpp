@@ -50,7 +50,7 @@ void Thread::Join()
 
 void Thread::Detached()
 {
-    if (threadId_ == nullptr || context_->GetState() == ThreadState::DETACHED) {
+    if (context_->GetState() == ThreadState::DETACHED) {
         return;
     }
 

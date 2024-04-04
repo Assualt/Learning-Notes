@@ -50,7 +50,7 @@ bool DirScanner::Fetch(FileAttr &attr)
 
     File newFile(dp->d_name, FileOpType::READ);
     attr = newFile.GetFileAttr();
-    attr.name = std::string(dp->d_name, dp->d_namlen);
+    attr.name = std::string(dp->d_name, strlen(dp->d_name));
     attr.absPath = rootPath_ + "/" + attr.name;
     newFile.Close();
     return true;

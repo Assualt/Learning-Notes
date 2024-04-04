@@ -200,7 +200,7 @@ void HttpContext::ParseBodyByChunkedBuffer(Buffer *buf)
         }
 
         // recv buf < size.
-        if (buf->readableBytes() < static_cast<int>(size)) {
+        if (buf->readableBytes() < static_cast<uint32_t>(size)) {
             chunkLeftSize_ = size - buf->readableBytes();
             response_.AppendBody(buf->peek(), buf->readableBytes());
             logger.Debug("==>success insert into %d bytes left size:%d", buf->readableBytes(), chunkLeftSize_);

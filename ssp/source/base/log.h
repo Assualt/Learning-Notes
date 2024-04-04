@@ -168,7 +168,7 @@ template <class T, class... Args> void Logger::FormatString(std::string &result,
             if (finish) break;
         }
     }
-    if (beginIndex == -1) {
+    if (beginIndex == std::string::npos) { // -1
         return;
     }
 

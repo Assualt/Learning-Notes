@@ -1,3 +1,10 @@
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(poll_objs)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(poll_objs pollerkqueue_poller.cpp)
+endif()
+
 set(ssp_net_files
     buffer.cpp
     acceptor.cpp
@@ -20,7 +27,7 @@ set(ssp_net_files
     client/http_uri.cpp
     client/http_context.cpp
     client/http_utils.cpp
-    poller/kqueue_poller.cpp
+    ${poll_objs}
 )
 
 add_library(ssp_net SHARED ${ssp_net_files})

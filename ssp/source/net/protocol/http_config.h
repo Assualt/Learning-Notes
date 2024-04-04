@@ -44,4 +44,14 @@
 #define USER_AGENT_DEFAULT \
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.183 Safari/537.36"
 
+#define AcceptEncoding_Default "gzip, deflate"
+#define AcceptLanguage_Default "zh-CN,zh;q=0.9"
+#define Accept_Default "*/*"
+
+
+enum HttpVersion : uint32_t {
+    HTTP_1_0,
+    HTTP_1_1
+};
+
 #endif //SSP_TOOLS_HTTP_CONFIG_H

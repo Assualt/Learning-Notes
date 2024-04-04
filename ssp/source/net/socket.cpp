@@ -8,7 +8,7 @@
 using namespace ssp::net;
 
 namespace {
-constexpr uint32_t g_maxBufferLine = 8192;
+constexpr int32_t g_maxBufferLine = 8192;
 }
 
 Socket::Socket()

@@ -8,6 +8,7 @@
 #include <functional>
 #include <sstream>
 #include <map>
+#include <cmath>
 #include "format.h"
 
 using namespace ssp::base;

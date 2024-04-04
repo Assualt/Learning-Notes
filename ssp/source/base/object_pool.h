@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <functional>
 #include <map>
+#include <memory>
 
 namespace ssp::base {
 using Creator = std::function<Object*()>;

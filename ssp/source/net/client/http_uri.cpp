@@ -62,7 +62,7 @@ void HttpUrl::Parse()
         if (url.has_ref())
             fragment = url.ref();
 #else
-    Uri url({fullUrl_});
+    Uri url(fullUrl_);
     if (url.Host().empty()) {
         return;
     }

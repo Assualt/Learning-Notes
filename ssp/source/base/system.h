@@ -13,6 +13,17 @@
 #include <unordered_map>
 #include <pwd.h>
 
+#ifndef PATH_MAX
+#define PATH_MAX 256
+#endif
+
+#ifdef LINUX
+#include <sys/prctl.h>
+#include <sys/syscall.h>
+#include <csignal>
+#include <cstring>
+#endif
+
 namespace ssp::base::System {
 
 inline int MakeDir(const std::string &path, int mode)

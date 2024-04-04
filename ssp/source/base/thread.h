@@ -6,6 +6,8 @@
 #define SSP_TOOLS_THREAD_H
 
 #include "thread_context.h"
+#include <memory>
+#include <pthread.h>
 #include <string>
 
 namespace ssp::base {
@@ -34,7 +36,7 @@ private:
 
 private:
     std::unique_ptr<ThreadContext> context_ {nullptr};
-    pthread_t threadId_ {nullptr};
+    pthread_t threadId_;
     std::string name_;
 };
 

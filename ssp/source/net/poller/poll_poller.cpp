@@ -68,7 +68,7 @@ void PollPoller::UpdateChannel(Channel *channel)
 
 void PollPoller::RemoveChannel(ssp::net::Channel *channel)
 {
-    auto idx = channel->Index();
+    uint32_t idx = channel->Index();
     channelMapper_.erase(channel->Fd());
     if (idx == pollFdList_.size() - 1) {
         pollFdList_.pop_back();

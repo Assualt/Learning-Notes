@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include <iostream>
+#include <vector>
 #include "object.h"
 
 namespace ssp::base {
