@@ -21,3 +21,7 @@ add_executable(http_server unit_http_server.cpp)
 target_link_libraries(http_server PRIVATE ssp_base ssp_net)
 
 add_subdirectory(tldextract)
+
+find_package(glfw REQUIRED)
+add_executable(glfw_window unit_glfw_window.cpp)
+target_link_libraries(glfw_window PRIVATE ssp_base ssp_net glfw-interface ${GLFW_LIBRARIES})

@@ -39,8 +39,6 @@ bool HttpServer::OnConnection(TcpConnectionPtr conn)
 void HttpServer::OnMessage(TcpConnectionPtr conn, std::stringbuf &buffer, const TimeStamp &stamp)
 {
     auto str = util::trimRight(buffer.str(), '\n');
-    
-
     conn->Send("Hello\r\n", 7);
     conn->Close();
 }

@@ -1,0 +1,96 @@
+
+
+
+ArchiveLib --> 压缩文件共享库,支持zip,7z,rar,arj,tar等格式
+
+enum ArchiveType {
+    AT_UNKNOWN = 0,
+    AT_ZIP,
+    AT_7Z,
+    AT_RAR,
+    AT_ARJ,
+    AT_TAR,
+    AT_MAX
+};
+
+struct ArchiveItem {
+    std::string fileName;
+    uint32_t compressSize;
+    uint32_t unCompressSize;
+    ArchiveType type;
+};
+
+class Archive {
+public:
+/***
+ * @brief 打开压缩文件
+ * OpenArchive(const char *arcivehName)
+ * @param arcivehName 压缩文件名
+ * @return 0:成功,其他:失败
+ * @note 
+*/
+uint32_t OpenArchive(const char *arcivehName);
+
+/***
+ * @brief 创建压缩文件
+ * CreateArchive(const char *archiveName, ArchiveType type)
+ * @param archiveName 压缩文件名
+ * @param type 压缩文件类型,如zip,7z,rar,arj,tar等
+ * @return 0:成功,其他:失败
+ * @note 
+*/
+uint32_t CreateArchive(const char *archiveName, ArchiveType type);
+
+/***
+ * @brief 添加文件到压缩文件
+ * AddFile(const char *srcFileName, const char *archFileName)
+ * @param srcFileName 源文件名
+ * @param archFileName 压缩文件中文件名,archFileName为空则使用srcFileName
+ * @param type 压缩文件类型,如zip,7z,rar,arj,tar等
+ * @return 0:成功,其他:失败
+ * @note 
+*/
+uint32_t AddFile(const char *srcFileName, const char *archFileName, ArchiveType type);
+
+/***
+ * @brief 添加内容到压缩文件
+ * AddContent(void *buffer, uint32_t bufLength)
+ * @param buffer 内容缓冲区
+ * @param bufLength 缓冲区长度
+ * @return 0:成功,其他:失败
+*/
+uint32_t AddContent(void *buffer, uint32_t bufLength);
+
+/***
+ * @brief 从压缩文件中删除文件,此处仅支持删除压缩文件中
+ * RemoveFile(const char *fileName)
+ * @param fileName 压缩文件中文件名
+ * @return 0:成功,其他:失败
+ * @note 
+*/
+uint32_t RemoveFile(const char *fileName);
+
+/***
+ * @brief 关闭压缩文件
+ * CloseArchive()
+ * @return 0:成功,其他:失败
+*/
+void CloseArchive();
+
+/***
+ * @brief 获取压缩文件中文件数量
+ * GetFileItems()
+ * @return 压缩文件中文件数量
+ * @note 
+*/
+uint32_t GetFileItems();
+
+/**
+ * @brief Get the File Item object
+ * 
+ * @param index 
+ * @return ArchiveItem 
+ */
+ArchiveItem GetFileItem(uint32_t index);
+
+};

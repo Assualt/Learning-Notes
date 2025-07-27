@@ -9,7 +9,3 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake/modules"
 
 find_package(jsonc REQUIRED)
 find_package(openssl REQUIRED)
-if (OPENSSL_FOUND)
-else()
-    message(FATAL_ERROR "open ssl is not found")
-endif (OPENSSL_FOUND)

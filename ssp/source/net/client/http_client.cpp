@@ -38,7 +38,7 @@ HttpResponse HttpClient::Request(ssp::net::HttpType type, const std::string &url
     if (!u.IsValid()) {
         logger.Warning("url:%s is not normal .", url);
         return HttpResponse{false};
-    }
+    }   
 
     if (!Connect(u.host_, u.port_, u.scheme_ == "https", verbose)) {
         return HttpResponse{false};

@@ -10,6 +10,7 @@ set(test_base_files
     test_conf.cpp
     test_format.cpp
     test_jsonkit.cpp
+    test_any.cpp
 )
 
 add_executable(test_ssp_base ${test_base_files})

@@ -63,9 +63,8 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    auto                    &mainLog = Logger::GetLogger();
-    std::shared_ptr<LogImpl> _au(new StdoutLog);
-
+    auto &mainLog = Logger::GetLogger();
+    auto  _au     = std::make_shared<StdoutLog>();
     mainLog.BasicConfig(LogLevel::Info, "T:(%(appname)-%(threadName))[%(asctime):%(levelname)]%(message)", "filename",
                         "%Y-%m-%d");
     mainLog.AddLogHandle(_au.get());

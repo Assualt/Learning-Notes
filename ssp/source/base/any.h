@@ -21,7 +21,7 @@ public:
     }
 
 private:
-    T val_;
+    const T &val_;
 };
 
 }

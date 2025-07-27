@@ -3,3 +3,9 @@
 //
 
 #include "archive.h"
+
+using namespace ssp::crypto;
+
+Archive::~Archive()
+{
+}
